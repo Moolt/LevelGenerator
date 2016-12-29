@@ -2,7 +2,7 @@
 using System.Collections;
 
 [DisallowMultipleComponent]
-public class VariableBounds : MonoBehaviour, IAbstractAsset {
+public class VariableBounds : TransformingProperty {
 	public Vector3 minSize;
 	public Vector3 maxSize;
 	[HideInInspector]
@@ -30,16 +30,17 @@ public class VariableBounds : MonoBehaviour, IAbstractAsset {
 		return size;
 	}
 
-	public void Preview(){
+	public override void Preview(){
 		if (adaptToParent != null) {
 			SetBounds (adaptToParent.size);
 			this.minSize = this.maxSize = adaptToParent.size;
 		}
 	}
 
-	public void Generate(){
+	public override GameObject[] Generate(){
 		IVariableBounds[] children = gameObject.GetComponents<IVariableBounds> ();
 		RandomizeSize (children);
+		return null;
 	}
 
 	public void RandomizeSize(IVariableBounds[] variableObjects){

@@ -6,7 +6,7 @@ public enum DockingPosition { TOPLEFT, TOPRIGHT, BOTTOMLEFT, BOTTOMRIGHT, MID }
 public enum CoordinateType { ABSOLUTE, PERCENTAGE }
 
 [DisallowMultipleComponent]
-public class ObjectDocking : MonoBehaviour, IAbstractAsset {
+public class ObjectDocking : TransformingProperty {
 
 	public DockingPosition dockingPosition;
 	public CoordinateType interpolationMethod;
@@ -16,7 +16,7 @@ public class ObjectDocking : MonoBehaviour, IAbstractAsset {
 	private Dictionary<DockingPosition, Vector3> cornerMapping;
 	private float offsetRoomMagnitude;
 
-	public void Preview(){
+	public override void Preview(){		
 		variableBounds = GameObject.FindWithTag ("Chunk").GetComponent<VariableBounds> ();
 		Vector3 meshBounds = variableBounds.GetBounds ();
 		Vector3 newPos = new Vector3 ();
@@ -29,6 +29,11 @@ public class ObjectDocking : MonoBehaviour, IAbstractAsset {
 		} else {
 			this.transform.position = cornerMapping [dockingPosition] + (offset * (meshBounds.magnitude / offsetRoomMagnitude));
 		}
+	}
+
+	public override GameObject[] Generate(){
+		Debug.Log ("not yet implemented");
+		return null;
 	}
 
 	public void CalcOffset(){
@@ -48,8 +53,5 @@ public class ObjectDocking : MonoBehaviour, IAbstractAsset {
 		cornerMapping.Add(DockingPosition.TOPLEFT, new Vector3 (-meshBounds.x / 2f, oldY, meshBounds.z / 2f));
 		cornerMapping.Add(DockingPosition.TOPRIGHT, new Vector3 (meshBounds.x / 2f, oldY, meshBounds.z / 2f));
 		cornerMapping.Add(DockingPosition.MID, new Vector3 (0f, oldY, 0f));
-	}
-
-	public void Generate(){
 	}
 }

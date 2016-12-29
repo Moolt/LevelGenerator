@@ -100,7 +100,7 @@ Material:
       second: {r: 0.4, g: 0.39099997, b: 0.56, a: 0.7}
     - first:
         name: _BaseColor
-      second: {r: 0.30341694, g: 0.44852942, b: 0, a: 1}
+      second: {r: 0.45253026, g: 0.67425275, b: 0.6838235, a: 0.741}
     - first:
         name: _BumpDirection
       second: {r: 1, g: 30, b: 20, a: -20}

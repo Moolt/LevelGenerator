@@ -4,7 +4,7 @@ using System.Collections;
 public enum Direction { HORIZONTAL, VERTICAL, HEIGTH }
 
 [DisallowMultipleComponent]
-public class ObjectArray : MonoBehaviour, IAbstractAsset {
+public class ObjectArray : InstantiatingProperty {
 
 	[Range(1, 10)]
 	public int duplicateCount = 1;
@@ -46,11 +46,11 @@ public class ObjectArray : MonoBehaviour, IAbstractAsset {
 		}
 	}
 
-	public void Preview(){
+	public override void Preview(){
 		
 	}
 
-	public void Generate(){
+	public override GameObject[] Generate(){
 		/*Preparation ();
 		Vector3 meshSize = Vector3.Scale (meshFilter.sharedMesh.bounds.size, transform.localScale);
 		Vector3[] positions = CalculatePositions (meshSize, offset);
@@ -63,6 +63,7 @@ public class ObjectArray : MonoBehaviour, IAbstractAsset {
 				copy.transform.position = positions [i];
 			}
 		}*/
+		return new GameObject[]{ transform.gameObject  };
 	}
 
 	private Vector3[] CalculatePositions(Vector3 modelSize, Vector3 offset){

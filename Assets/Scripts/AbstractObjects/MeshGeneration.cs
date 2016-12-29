@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEditor;
 
 [RequireComponent (typeof(VariableBounds))]
-public class MeshGeneration : MonoBehaviour, IAbstractAsset, IVariableBounds{
+public class MeshGeneration : MeshProperty, IVariableBounds{
 
 	private Vector3 roomBounds;
 	[Range(1f, 5f)]
@@ -175,7 +175,7 @@ public class MeshGeneration : MonoBehaviour, IAbstractAsset, IVariableBounds{
 		mesh.Optimize();
 	}
 
-	public void Preview(){
+	public override void Preview(){
 		if (variableBounds == null) {
 			variableBounds = GetComponent<VariableBounds> ();
 		}
@@ -183,7 +183,7 @@ public class MeshGeneration : MonoBehaviour, IAbstractAsset, IVariableBounds{
 		GenerateMesh ();
 	}
 
-	public void Generate(){
+	public override GameObject[] Generate(){
 		GameObject gm = new GameObject ("Generated Chunk");
 		gm.AddComponent<MeshFilter> ();
 		gm.AddComponent<MeshRenderer> ();
@@ -193,6 +193,7 @@ public class MeshGeneration : MonoBehaviour, IAbstractAsset, IVariableBounds{
 		gm.GetComponent<MeshRenderer> ().sharedMaterials = GetComponent<MeshRenderer> ().sharedMaterials;
 		gm.GetComponent<MeshCollider>().sharedMesh = tempMesh;
 		gm.transform.Translate (Vector3.back * 50f);
+		return new GameObject[]{ transform.gameObject };
 	}
 
 	public void NotifyBoundsChanged(VariableBounds newBounds){

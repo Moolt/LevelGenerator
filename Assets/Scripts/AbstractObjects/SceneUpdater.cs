@@ -6,9 +6,9 @@ public static class SceneUpdater {
 	public static void UpdateScene(){
 		GameObject chunk = GameObject.FindGameObjectWithTag ("Chunk");
 		if (chunk != null) {
-			IAbstractAsset[] iaa = chunk.GetComponentsInChildren<IAbstractAsset> ();
+			AbstractProperty[] iaa = chunk.GetComponentsInChildren<AbstractProperty> ();
 
-			foreach (IAbstractAsset iaa_ in iaa) {
+			foreach (AbstractProperty iaa_ in iaa) {
 				iaa_.Preview ();
 			}
 		} else {

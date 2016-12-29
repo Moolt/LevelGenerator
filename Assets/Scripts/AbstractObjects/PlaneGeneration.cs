@@ -7,7 +7,7 @@ using UnityEditor;
 [RequireComponent (typeof(VariableBounds))]
 [RequireComponent (typeof(MeshFilter))]
 [RequireComponent (typeof(MeshRenderer))]
-public class PlaneGeneration : MonoBehaviour, IAbstractAsset, IVariableBounds{
+public class PlaneGeneration : MeshProperty, IVariableBounds{
 
 	private Vector3 roomBounds;
 	[Range(1f, 5f)]
@@ -94,7 +94,7 @@ public class PlaneGeneration : MonoBehaviour, IAbstractAsset, IVariableBounds{
 		mesh.Optimize();
 	}
 
-	public void Preview(){
+	public override void Preview(){
 		if (variableBounds == null) {
 			variableBounds = GetComponent<VariableBounds> ();
 		}
@@ -102,8 +102,9 @@ public class PlaneGeneration : MonoBehaviour, IAbstractAsset, IVariableBounds{
 		GenerateMesh ();
 	}
 
-	public void Generate(){
+	public override GameObject[] Generate(){
 		Debug.Log ("Yet to be implemented.");
+		return null;
 	}
 
 	public void NotifyBoundsChanged(VariableBounds newBounds){
