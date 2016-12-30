@@ -8,7 +8,7 @@ public class VariableBoundsEditor : Editor {
 
 	public override void OnInspectorGUI(){
 		VariableBounds varBounds = (VariableBounds)target;
-		IVariableBounds[] children = varBounds.gameObject.GetComponents<IVariableBounds> ();
+		ITransformable[] children = varBounds.gameObject.GetComponents<ITransformable> ();
 
 		if (DrawDefaultInspector ()) {
 			//Max size values cant be smaller that min size
@@ -38,9 +38,9 @@ public class VariableBoundsEditor : Editor {
 		input.z = Mathf.Max (input.z, minValue.z);
 	}
 		
-	private void ApplySize(IVariableBounds[] variableObjects, VariableBounds variableBounds){
+	private void ApplySize(ITransformable[] variableObjects, VariableBounds variableBounds){
 		Vector3 lerpedSize = Vector3.Lerp (variableBounds.minSize, variableBounds.maxSize, variableBounds.lerp);
-		variableBounds.SetBounds (lerpedSize);
+		variableBounds.Bounds = lerpedSize;
 		variableBounds.UpdateVariableBoundsDependencies (variableObjects);
 	}
 }

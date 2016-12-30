@@ -7,7 +7,8 @@ using UnityEditor;
 [RequireComponent (typeof(VariableBounds))]
 [RequireComponent (typeof(MeshFilter))]
 [RequireComponent (typeof(MeshRenderer))]
-public class PlaneGeneration : MeshProperty, IVariableBounds{
+[DisallowMultipleComponent]
+public class PlaneGeneration : MeshProperty, ITransformable{
 
 	private Vector3 roomBounds;
 	[Range(1f, 5f)]
@@ -30,11 +31,16 @@ public class PlaneGeneration : MeshProperty, IVariableBounds{
 		MeshFilter filter = gameObject.GetComponent< MeshFilter >();
 		Mesh mesh;
 
-		if (filter.sharedMesh == null) {
-			filter.sharedMesh = new Mesh ();
+		#if UNITY_EDITOR
+		Mesh meshCopy = Mesh.Instantiate(filter.sharedMesh);
+		mesh = filter.sharedMesh = meshCopy;
+		#else
+		if (filter.mesh == null) {
+		filter.mesh = new Mesh ();
 		}
 
-		mesh = filter.sharedMesh;
+		mesh = filter.mesh;
+		#endif
 
 		mesh.name = "Generated Mesh";
 		mesh.Clear();
@@ -98,12 +104,16 @@ public class PlaneGeneration : MeshProperty, IVariableBounds{
 		if (variableBounds == null) {
 			variableBounds = GetComponent<VariableBounds> ();
 		}
-		this.roomBounds = variableBounds.GetBounds();
+		this.roomBounds = variableBounds.Bounds;
 		GenerateMesh ();
 	}
 
 	public override GameObject[] Generate(){
-		Debug.Log ("Yet to be implemented.");
+		if (variableBounds == null) {
+			variableBounds = GetComponent<VariableBounds> ();
+		}
+		this.roomBounds = variableBounds.Bounds;
+		GenerateMesh ();
 		return null;
 	}
 

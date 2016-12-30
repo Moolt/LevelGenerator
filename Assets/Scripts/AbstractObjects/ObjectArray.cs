@@ -71,7 +71,7 @@ public class ObjectArray : InstantiatingProperty {
 		int calculatedCount = duplicateCount;
 		float calculatedSpace;
 		Preparation ();
-		Vector3 bounds = variableBounds.GetBounds ();
+		Vector3 bounds = variableBounds.Bounds;
 		//The positions the original object will stick to the variableBounds (room). Factors in the models size.
 		Vector3 boundsOrigin = new Vector3 (bounds.x * -0.5f + modelSize.x / 2f, 0f, bounds.z * -0.5f + modelSize.z / 2f);
 		//The right, forward and up vectors, depending on the direction the array should be applied to

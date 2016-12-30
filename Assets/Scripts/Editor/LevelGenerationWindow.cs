@@ -5,12 +5,15 @@ using System.Linq;
 using UnityEditor;
 using System;
 
-public class ChunkInstantiator{
+public class ChunkInstantiator : ScriptableObject{
 
 	private static Type[] executeOrder = { typeof(InstantiatingProperty), typeof(TransformingProperty), typeof(MeshGeneration) };
+	//There may  still be dependencies to transforming objects. Therefore they are destroyed last.
+	private ICollection<AbstractProperty> delayedRemovalCollection;
 	private Stack<GameObject> workStack;
 
 	public ChunkInstantiator(){
+		this.delayedRemovalCollection = new List<AbstractProperty> ();
 		this.workStack = new Stack<GameObject> ();
 	}
 
@@ -21,11 +24,16 @@ public class ChunkInstantiator{
 
 	public void InstiantiateChunk(GameObject chunk){
 		workStack.Push (chunk);
+		chunk.tag = "Untagged";
+
+		//Traversing, depth first
 		while(workStack.Count > 0){
 			GameObject currentObj = workStack.Pop ();
 			ExecuteAbstractProperties (currentObj);
 			PushChildrenToStack (currentObj);
 		};
+
+		CleanUp ();
 	}
 
 	private void PushChildrenToStack(GameObject parent){
@@ -46,12 +54,29 @@ public class ChunkInstantiator{
 
 		foreach (AbstractProperty property in properties) {
 			property.Generate ();
+			HandlePropertyRemoval (property);
+		}
+	}
+
+	//For purposes of cleaning up all abstract properties need to be removed during or after the creation process
+	//As there may be dependencies, the removal of several properties can be delayed until the end of the generation process
+	private void HandlePropertyRemoval(AbstractProperty property){
+		if (property.DelayRemoval) {
+			delayedRemovalCollection.Add (property);
+		} else {
+			DestroyImmediate (property);
 		}
 	}
 
 	//Sorts the Properties regarding to priority
 	private ICollection<AbstractProperty> SortAbstractProperties(ICollection<AbstractProperty> properties){
 		return properties.OrderBy (obj => obj.ExecutionOrder).ToList();
+	}
+
+	private void CleanUp(){
+		foreach (AbstractProperty property in delayedRemovalCollection) {
+			DestroyImmediate (property);
+		}
 	}
 }
 
@@ -71,15 +96,8 @@ public class LevelGenerationWindow : EditorWindow {
 			Vector3 pos = new Vector3 (chunk.transform.position.x + 100, chunk.transform.position.y, chunk.transform.position.z);
 			GameObject copiedChunk = (GameObject)GameObject.Instantiate (chunk, pos, Quaternion.identity);
 
-			ChunkInstantiator generator = new ChunkInstantiator ();
+			ChunkInstantiator generator = ScriptableObject.CreateInstance<ChunkInstantiator> ();
 			generator.InstiantiateChunk (copiedChunk);
-
-			/*
-			IAbstractAsset[] abstractAssets = chunk.GetComponents<IAbstractAsset> ();
-
-			foreach (IAbstractAsset comp in abstractAssets) {
-				comp.Generate ();
-			}*/
 		}
 	}
 }

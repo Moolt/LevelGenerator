@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public interface IVariableBounds {
+public interface ITransformable {
 
 	void NotifyBoundsChanged(VariableBounds newBounds);
 }

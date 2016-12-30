@@ -2,7 +2,7 @@
 using System.Collections;
 
 [DisallowMultipleComponent]
-public class VariableBounds : TransformingProperty {
+public class VariableBounds : TransformingProperty, IObjectBounds {
 	public Vector3 minSize;
 	public Vector3 maxSize;
 	[HideInInspector]
@@ -22,28 +22,33 @@ public class VariableBounds : TransformingProperty {
 		Gizmos.DrawWireCube (pos, maxSize);
 	}
 		
-	public void SetBounds(Vector3 size){
-		this.size = size;
+	public Vector3 Bounds{ 
+		get { return size; } 
+		set { this.size = value; } 
 	}
-
-	public Vector3 GetBounds(){
-		return size;
-	}
-
-	public override void Preview(){
+		
+	public override void Preview(){		
 		if (adaptToParent != null) {
-			SetBounds (adaptToParent.size);
+			Bounds = adaptToParent.size;
 			this.minSize = this.maxSize = adaptToParent.size;
 		}
 	}
 
 	public override GameObject[] Generate(){
-		IVariableBounds[] children = gameObject.GetComponents<IVariableBounds> ();
-		RandomizeSize (children);
+		if (fixedSize) {
+			size = maxSize;
+		} else {
+			RandomizeSize (null); //null because the children dont have to be updated
+		}
+		if (adaptToParent != null) {
+			Bounds = adaptToParent.size;
+		}
 		return null;
 	}
 
-	public void RandomizeSize(IVariableBounds[] variableObjects){
+	//Can be either used within the editor or within the generation process
+	//The editor requires child components to be updated, the generation process doesn't
+	public void RandomizeSize(ITransformable[] variableObjects){
 		Vector3 randomBounds;
 		if (keepAspectRatio) {
 			randomBounds = Vector3.Lerp (minSize, maxSize, Random.Range (0f, 1f));
@@ -53,12 +58,14 @@ public class VariableBounds : TransformingProperty {
 			float randomZ = Mathf.Lerp(minSize.z, maxSize.z, Random.Range(0f, 1f));
 			randomBounds = new Vector3 (randomX, randomY, randomZ);
 		}
-		SetBounds (randomBounds);
-		UpdateVariableBoundsDependencies (variableObjects);
+		Bounds = randomBounds;
+		if (variableObjects != null) {			
+			UpdateVariableBoundsDependencies (variableObjects);
+		}
 	}
 
-	public void UpdateVariableBoundsDependencies(IVariableBounds[] variableObjects){
-		foreach (IVariableBounds ivb in variableObjects) {
+	public void UpdateVariableBoundsDependencies(ITransformable[] variableObjects){
+		foreach (ITransformable ivb in variableObjects) {
 			ivb.NotifyBoundsChanged (this);
 		}
 	}

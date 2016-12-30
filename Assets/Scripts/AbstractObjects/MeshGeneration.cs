@@ -5,7 +5,10 @@ using System.Linq;
 using UnityEditor;
 
 [RequireComponent (typeof(VariableBounds))]
-public class MeshGeneration : MeshProperty, IVariableBounds{
+[RequireComponent (typeof(MeshFilter))]
+[RequireComponent (typeof(MeshRenderer))]
+[DisallowMultipleComponent]
+public class MeshGeneration : MeshProperty, ITransformable{
 
 	private Vector3 roomBounds;
 	[Range(1f, 5f)]
@@ -32,11 +35,17 @@ public class MeshGeneration : MeshProperty, IVariableBounds{
 		MeshFilter filter = gameObject.GetComponent< MeshFilter >();
 		Mesh mesh;
 
-		if (filter.sharedMesh == null) {
-			filter.sharedMesh = new Mesh ();
-		}
+		#if UNITY_EDITOR
+		Mesh meshCopy = Mesh.Instantiate(filter.sharedMesh);
+		mesh = filter.sharedMesh = meshCopy;
+		#else
+			if (filter.mesh == null) {
+			filter.mesh = new Mesh ();
+			}
 
-		mesh = filter.sharedMesh;
+			mesh = filter.mesh;
+		#endif
+
 
 		mesh.name = "Generated Mesh";
 		mesh.Clear();
@@ -179,20 +188,12 @@ public class MeshGeneration : MeshProperty, IVariableBounds{
 		if (variableBounds == null) {
 			variableBounds = GetComponent<VariableBounds> ();
 		}
-		this.roomBounds = variableBounds.GetBounds();
+		this.roomBounds = variableBounds.Bounds;
 		GenerateMesh ();
 	}
 
 	public override GameObject[] Generate(){
-		GameObject gm = new GameObject ("Generated Chunk");
-		gm.AddComponent<MeshFilter> ();
-		gm.AddComponent<MeshRenderer> ();
-		gm.AddComponent<MeshCollider> ();
-		Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate (GetComponent<MeshFilter> ().sharedMesh);
-		gm.GetComponent<MeshFilter> ().sharedMesh = tempMesh;
-		gm.GetComponent<MeshRenderer> ().sharedMaterials = GetComponent<MeshRenderer> ().sharedMaterials;
-		gm.GetComponent<MeshCollider>().sharedMesh = tempMesh;
-		gm.transform.Translate (Vector3.back * 50f);
+		this.Preview ();
 		return new GameObject[]{ transform.gameObject };
 	}
 

@@ -18,7 +18,7 @@ public class ObjectDocking : TransformingProperty {
 
 	public override void Preview(){		
 		variableBounds = GameObject.FindWithTag ("Chunk").GetComponent<VariableBounds> ();
-		Vector3 meshBounds = variableBounds.GetBounds ();
+		Vector3 meshBounds = variableBounds.Bounds;
 		Vector3 newPos = new Vector3 ();
 		float oldY = transform.position.y;
 
@@ -38,7 +38,7 @@ public class ObjectDocking : TransformingProperty {
 
 	public void CalcOffset(){
 		variableBounds = GameObject.FindWithTag ("Chunk").GetComponent<VariableBounds> ();
-		Vector3 meshBounds = variableBounds.GetBounds ();
+		Vector3 meshBounds = variableBounds.Bounds;
 
 		CalcCorners (meshBounds);
 		offset = transform.position - cornerMapping [dockingPosition];
