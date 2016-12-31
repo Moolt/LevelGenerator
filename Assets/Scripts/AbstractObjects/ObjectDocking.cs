@@ -10,14 +10,24 @@ public class ObjectDocking : TransformingProperty {
 
 	public DockingPosition dockingPosition;
 	public CoordinateType interpolationMethod;
-	[HideInInspector]
-	public Vector3 offset;
 	private VariableBounds variableBounds;
 	private Dictionary<DockingPosition, Vector3> cornerMapping;
 	private float offsetRoomMagnitude;
 
-	public override void Preview(){		
-		variableBounds = GameObject.FindWithTag ("Chunk").GetComponent<VariableBounds> ();
+	[HideInInspector]
+	public Vector3 offset;
+
+	public override void Preview(){
+		DockingLogic ();
+	}
+
+	public override GameObject[] Generate(){
+		DockingLogic ();
+		return null;
+	}
+
+	private void DockingLogic(){
+		variableBounds = GetComponentInParent<VariableBounds> ();
 		Vector3 meshBounds = variableBounds.Bounds;
 		Vector3 newPos = new Vector3 ();
 		float oldY = transform.position.y;
@@ -31,13 +41,7 @@ public class ObjectDocking : TransformingProperty {
 		}
 	}
 
-	public override GameObject[] Generate(){
-		Debug.Log ("not yet implemented");
-		return null;
-	}
-
-	public void CalcOffset(){
-		variableBounds = GameObject.FindWithTag ("Chunk").GetComponent<VariableBounds> ();
+	public void CalcOffset(){		
 		Vector3 meshBounds = variableBounds.Bounds;
 
 		CalcCorners (meshBounds);
