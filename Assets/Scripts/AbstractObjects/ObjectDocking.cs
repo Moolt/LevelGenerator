@@ -2,18 +2,17 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public enum DockingPosition { TOPLEFT, TOPRIGHT, BOTTOMLEFT, BOTTOMRIGHT, MID }
 public enum CoordinateType { ABSOLUTE, PERCENTAGE }
 
 [DisallowMultipleComponent]
 public class ObjectDocking : TransformingProperty {
 
-	public DockingPosition dockingPosition;
 	public CoordinateType interpolationMethod;
-	private VariableBounds variableBounds;
-	private Dictionary<DockingPosition, Vector3> cornerMapping;
-	private float offsetRoomMagnitude;
 
+	[HideInInspector]
+	public float offsetRoomMagnitude;
+	[HideInInspector]
+	public int cornerIndex;
 	[HideInInspector]
 	public Vector3 offset;
 
@@ -27,35 +26,33 @@ public class ObjectDocking : TransformingProperty {
 	}
 
 	private void DockingLogic(){
-		variableBounds = GetComponentInParent<VariableBounds> ();
-		Vector3 meshBounds = variableBounds.Bounds;
-		Vector3 newPos = new Vector3 ();
-		float oldY = transform.position.y;
+		Vector3[] corners = AbstractBounds.Corners;
 
-		CalcCorners (meshBounds);
+		Vector3 corner = corners [cornerIndex];
+		float currentSizeMagnitude = AbstractBounds.Bounds.magnitude;
 
 		if (interpolationMethod == CoordinateType.ABSOLUTE) {
-			this.transform.position = cornerMapping [dockingPosition] + offset;
+			this.transform.position = corners [cornerIndex] + offset;
 		} else {
-			this.transform.position = cornerMapping [dockingPosition] + (offset * (meshBounds.magnitude / offsetRoomMagnitude));
+			this.transform.position = corners [cornerIndex]+ (offset * (currentSizeMagnitude / offsetRoomMagnitude));
 		}
 	}
 
-	public void CalcOffset(){		
-		Vector3 meshBounds = variableBounds.Bounds;
-
-		CalcCorners (meshBounds);
-		offset = transform.position - cornerMapping [dockingPosition];
-		offsetRoomMagnitude = meshBounds.magnitude;
+	//Called from the EditorScript when the object has been modified / moved
+	public void UpdateOffset(){
+		Vector3[] corners = AbstractBounds.Corners;
+		offset = transform.position - corners [cornerIndex];
+		offsetRoomMagnitude = AbstractBounds.Bounds.magnitude;
 	}
 
-	private void CalcCorners(Vector3 meshBounds){
-		float oldY = transform.position.y;
-		cornerMapping = new Dictionary<DockingPosition, Vector3> ();
-		cornerMapping.Add(DockingPosition.BOTTOMLEFT, new Vector3 (-meshBounds.x / 2f, oldY, -meshBounds.z / 2f));
-		cornerMapping.Add(DockingPosition.BOTTOMRIGHT, new Vector3 (meshBounds.x / 2f, oldY, -meshBounds.z / 2f));
-		cornerMapping.Add(DockingPosition.TOPLEFT, new Vector3 (-meshBounds.x / 2f, oldY, meshBounds.z / 2f));
-		cornerMapping.Add(DockingPosition.TOPRIGHT, new Vector3 (meshBounds.x / 2f, oldY, meshBounds.z / 2f));
-		cornerMapping.Add(DockingPosition.MID, new Vector3 (0f, oldY, 0f));
+	public int SelectedCornerIndex {
+		get {
+			return cornerIndex;
+		}
+		set{
+			SceneUpdater.UpdateScene ();
+			offset = Vector3.zero;
+			cornerIndex = value;
+		}
 	}
 }

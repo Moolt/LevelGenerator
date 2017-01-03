@@ -7,7 +7,6 @@ using System;
 
 public class ChunkInstantiator : ScriptableObject{
 
-	private static Type[] executeOrder = { typeof(InstantiatingProperty), typeof(TransformingProperty), typeof(MeshGeneration) };
 	//There may  still be dependencies to transforming objects. Therefore they are destroyed last.
 	private ICollection<AbstractProperty> delayedRemovalCollection;
 	private Stack<GameObject> workStack;
@@ -73,6 +72,7 @@ public class ChunkInstantiator : ScriptableObject{
 		return properties.OrderBy (obj => obj.ExecutionOrder).ToList();
 	}
 
+	//Remove all components with delayed removal
 	private void CleanUp(){
 		foreach (AbstractProperty property in delayedRemovalCollection) {
 			DestroyImmediate (property);

@@ -3,11 +3,11 @@ using UnityEngine;
 using UnityEditor;
 
 
-[CustomEditor (typeof(VariableBounds))]
-public class VariableBoundsEditor : Editor {
+[CustomEditor (typeof(AbstractBounds))]
+public class AbstractBoundsEditor : Editor {
 
 	public override void OnInspectorGUI(){
-		VariableBounds varBounds = (VariableBounds)target;
+		AbstractBounds varBounds = (AbstractBounds)target;
 		ITransformable[] children = varBounds.gameObject.GetComponents<ITransformable> ();
 
 		if (DrawDefaultInspector ()) {
@@ -24,7 +24,7 @@ public class VariableBoundsEditor : Editor {
 		}
 	}
 
-	private void ClampValues(VariableBounds varBounds){
+	private void ClampValues(AbstractBounds varBounds){
 		if (varBounds.fixedSize) {
 			varBounds.minSize = varBounds.maxSize;
 		}
@@ -38,7 +38,7 @@ public class VariableBoundsEditor : Editor {
 		input.z = Mathf.Max (input.z, minValue.z);
 	}
 		
-	private void ApplySize(ITransformable[] variableObjects, VariableBounds variableBounds){
+	private void ApplySize(ITransformable[] variableObjects, AbstractBounds variableBounds){
 		Vector3 lerpedSize = Vector3.Lerp (variableBounds.minSize, variableBounds.maxSize, variableBounds.lerp);
 		variableBounds.Bounds = lerpedSize;
 		variableBounds.UpdateVariableBoundsDependencies (variableObjects);

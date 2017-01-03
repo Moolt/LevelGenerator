@@ -13,7 +13,7 @@ public class ObjectArray : InstantiatingProperty {
 	public Direction arrayOrientation;
 
 	private MeshFilter meshFilter;
-	private VariableBounds variableBounds;
+	private AbstractBounds abstractBounds;
 	private Vector3 offset;
 
 	private void Preparation(){
@@ -22,10 +22,10 @@ public class ObjectArray : InstantiatingProperty {
 		}
 
 		GameObject searchObject = gameObject;
-		while (searchObject.GetComponent<VariableBounds> () == null) {
+		while (searchObject.GetComponent<AbstractBounds> () == null) {
 			searchObject = searchObject.transform.parent.gameObject;
 		}
-		variableBounds = searchObject.GetComponent<VariableBounds> ();
+		abstractBounds = searchObject.GetComponent<AbstractBounds> ();
 		offset = searchObject.transform.position;
 	}
 
@@ -71,7 +71,7 @@ public class ObjectArray : InstantiatingProperty {
 		int calculatedCount = duplicateCount;
 		float calculatedSpace;
 		Preparation ();
-		Vector3 bounds = variableBounds.Bounds;
+		Vector3 bounds = abstractBounds.Bounds;
 		//The positions the original object will stick to the variableBounds (room). Factors in the models size.
 		Vector3 boundsOrigin = new Vector3 (bounds.x * -0.5f + modelSize.x / 2f, 0f, bounds.z * -0.5f + modelSize.z / 2f);
 		//The right, forward and up vectors, depending on the direction the array should be applied to

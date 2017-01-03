@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 
-[RequireComponent (typeof(VariableBounds))]
+[RequireComponent (typeof(AbstractBounds))]
 [RequireComponent (typeof(MeshFilter))]
 [RequireComponent (typeof(MeshRenderer))]
 [DisallowMultipleComponent]
@@ -18,7 +18,7 @@ public class MeshGeneration : MeshProperty, ITransformable{
 	public bool autoUpdate = false;
 	public Material wallMaterial;
 	public Material floorMaterial;
-	private VariableBounds variableBounds;
+	private AbstractBounds abstractBounds;
 
 	// Use this for initialization
 	void Awake () {
@@ -185,10 +185,10 @@ public class MeshGeneration : MeshProperty, ITransformable{
 	}
 
 	public override void Preview(){
-		if (variableBounds == null) {
-			variableBounds = GetComponent<VariableBounds> ();
+		if (abstractBounds == null) {
+			abstractBounds = GetComponent<AbstractBounds> ();
 		}
-		this.roomBounds = variableBounds.Bounds;
+		this.roomBounds = abstractBounds.Bounds;
 		GenerateMesh ();
 	}
 
@@ -197,7 +197,7 @@ public class MeshGeneration : MeshProperty, ITransformable{
 		return new GameObject[]{ transform.gameObject };
 	}
 
-	public void NotifyBoundsChanged(VariableBounds newBounds){
+	public void NotifyBoundsChanged(AbstractBounds newBounds){
 		Preview ();
 		SceneUpdater.UpdateScene ();
 	}

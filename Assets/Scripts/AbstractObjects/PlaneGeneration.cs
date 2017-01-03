@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 
-[RequireComponent (typeof(VariableBounds))]
+[RequireComponent (typeof(AbstractBounds))]
 [RequireComponent (typeof(MeshFilter))]
 [RequireComponent (typeof(MeshRenderer))]
 [DisallowMultipleComponent]
@@ -14,7 +14,7 @@ public class PlaneGeneration : MeshProperty, ITransformable{
 	[Range(1f, 5f)]
 	public float textureRepeat = 1f;
 	public Material material;
-	private VariableBounds variableBounds;
+	private AbstractBounds abstractBounds;
 
 	// Use this for initialization
 	void Awake () {
@@ -101,23 +101,23 @@ public class PlaneGeneration : MeshProperty, ITransformable{
 	}
 
 	public override void Preview(){
-		if (variableBounds == null) {
-			variableBounds = GetComponent<VariableBounds> ();
+		if (abstractBounds == null) {
+			abstractBounds = GetComponent<AbstractBounds> ();
 		}
-		this.roomBounds = variableBounds.Bounds;
+		this.roomBounds = abstractBounds.Bounds;
 		GenerateMesh ();
 	}
 
 	public override GameObject[] Generate(){
-		if (variableBounds == null) {
-			variableBounds = GetComponent<VariableBounds> ();
+		if (abstractBounds == null) {
+			abstractBounds = GetComponent<AbstractBounds> ();
 		}
-		this.roomBounds = variableBounds.Bounds;
+		this.roomBounds = abstractBounds.Bounds;
 		GenerateMesh ();
 		return null;
 	}
 
-	public void NotifyBoundsChanged(VariableBounds newBounds){
+	public void NotifyBoundsChanged(AbstractBounds newBounds){
 		Preview ();
 		SceneUpdater.UpdateScene ();
 	}

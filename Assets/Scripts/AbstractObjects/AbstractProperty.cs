@@ -12,6 +12,9 @@ abstract public class AbstractProperty : MonoBehaviour {
 
 	public abstract GameObject[] Generate();
 
+	public AbstractBounds AbstractBounds{
+		get { return GetComponentInParent<AbstractBounds> (); }
+	}
 }
 
 abstract public class InstantiatingProperty : AbstractProperty{
@@ -25,6 +28,8 @@ abstract public class InstantiatingProperty : AbstractProperty{
 }
 
 abstract public class TransformingProperty : AbstractProperty{
+	private AbstractBounds abstractBounds;
+
 	public override int ExecutionOrder{
 		get { return 2; }
 	}

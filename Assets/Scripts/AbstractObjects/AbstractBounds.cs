@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 [DisallowMultipleComponent]
-public class VariableBounds : TransformingProperty, IObjectBounds {
+public class AbstractBounds : TransformingProperty, IObjectBounds {
 	public Vector3 minSize;
 	public Vector3 maxSize;
 	[HideInInspector]
@@ -11,7 +12,7 @@ public class VariableBounds : TransformingProperty, IObjectBounds {
 	[Range(0f, 1f)]
 	public float lerp;
 	public bool keepAspectRatio;
-	public VariableBounds adaptToParent = null;
+	public AbstractBounds adaptToParent = null;
 
 	public void OnDrawGizmosSelected(){
 		Gizmos.color = (fixedSize) ? Color.yellow : Color.white;
@@ -67,6 +68,24 @@ public class VariableBounds : TransformingProperty, IObjectBounds {
 	public void UpdateVariableBoundsDependencies(ITransformable[] variableObjects){
 		foreach (ITransformable ivb in variableObjects) {
 			ivb.NotifyBoundsChanged (this);
+		}
+	}
+
+	public Vector3[] Corners{
+		get{
+			List<Vector3> corners = new List<Vector3> ();
+
+			Vector3 point = new Vector3 (size.x / 2f, size.y / 2f, size.z / 2f);
+
+			for (int i = 0; i < 3; i++) {
+				for (int j = 0; j < 3; j++) {
+					for (int k = 0; k < 3; k++) {
+						corners.Add (new Vector3(point.x * (k - 1), point.y * i, point.z * (j - 1)) + transform.position);
+					}
+				}
+			}
+
+			return corners.ToArray ();
 		}
 	}
 }
