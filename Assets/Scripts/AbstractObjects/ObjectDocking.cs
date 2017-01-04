@@ -32,9 +32,9 @@ public class ObjectDocking : TransformingProperty {
 		float currentSizeMagnitude = AbstractBounds.Bounds.magnitude;
 
 		if (interpolationMethod == CoordinateType.ABSOLUTE) {
-			this.transform.position = corners [cornerIndex] + offset;
+			this.transform.position = corner + offset;
 		} else {
-			this.transform.position = corners [cornerIndex]+ (offset * (currentSizeMagnitude / offsetRoomMagnitude));
+			this.transform.position = corner + (offset * (currentSizeMagnitude / offsetRoomMagnitude));
 		}
 	}
 
@@ -50,9 +50,9 @@ public class ObjectDocking : TransformingProperty {
 			return cornerIndex;
 		}
 		set{
-			SceneUpdater.UpdateScene ();
 			offset = Vector3.zero;
 			cornerIndex = value;
+			SceneUpdater.UpdateScene ();
 		}
 	}
 }
