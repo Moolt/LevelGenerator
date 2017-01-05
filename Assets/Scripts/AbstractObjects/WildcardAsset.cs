@@ -1,6 +1,8 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
+using System;
 
 [System.Serializable]
 public struct WildcardChance{
@@ -12,6 +14,59 @@ public class WildcardPreviewData{
 	public GameObject Asset{ get; set; }
 	public Mesh Mesh { get; set; }
 	public Transform Transform{ get; set; }
+}
+
+public static class ComponentExtension{
+
+	private static Dictionary<string, string> exceptions = new Dictionary<string, string>
+	{
+		{"material", "sharedMaterial"},
+		{"materials", "sharedMaterials"},
+		{"mesh", "sharedMesh"}
+	};
+
+	public static T GetCopyOf<T>(this Component comp, T other) where T : Component
+	{
+		Type type = comp.GetType(); //type of the copy
+		if (type != other.GetType()) return null; // type mis-match
+		BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Default;
+		PropertyInfo[] pinfos = type.GetProperties(flags);
+
+		//Handle variables
+		foreach (var pinfo in pinfos) {
+			if (pinfo.CanWrite) {
+				try {
+					//Ignore obsolete variables to avoid editor warnings
+					if(HasAnnotation<ObsoleteAttribute>(pinfo) || HasAnnotation<NotSupportedException>(pinfo)){
+						continue;
+					}
+
+					if(exceptions.ContainsKey(pinfo.Name)){
+						PropertyInfo exInfo = type.GetProperty(exceptions[pinfo.Name]);
+						exInfo.SetValue(comp, exInfo.GetValue(other, null), null);
+					} else {
+						pinfo.SetValue(comp, pinfo.GetValue(other, null), null);
+					}
+				}
+				catch { } 
+			}
+		}
+
+		//Handle properties
+		FieldInfo[] finfos = type.GetFields(flags);
+
+		foreach (var finfo in finfos) {
+			finfo.SetValue(comp, finfo.GetValue(other));
+		}
+
+		return comp as T;
+	}
+
+	public static bool HasAnnotation<T> (PropertyInfo pinfo){
+		object[] attr = pinfo.GetCustomAttributes(typeof(T), true);
+
+		return attr.Length > 0;
+	}
 }
 
 public class WildcardAsset : InstantiatingProperty {
@@ -31,17 +86,30 @@ public class WildcardAsset : InstantiatingProperty {
 	}
 
 	public override void Preview(){
-		
+		//Nothing to be done in preview
 	}
 
 	public override GameObject[] Generate(){
-		TestRandomFunctionality (10000);
-		return null;
-	}
 
+		GameObject chosenAsset = ChooseRandomAsset ();
+		Component[] components = chosenAsset.GetComponents<Component> ();
+
+		foreach (Component go in components) {
+			if (go is Transform) continue;
+			Component newComponent = gameObject.AddComponent (go.GetType ());
+			if (newComponent != null) {
+				newComponent.GetCopyOf (go);
+			}
+		}
+
+		return null;
+	}		
+
+	//Choses a random GameObject and returns it
+	//Chances are considered
 	private GameObject ChooseRandomAsset(){
 		float[] rangeTable = GenerateRangeTable ();
-		float randomFloat = Random.value;
+		float randomFloat = UnityEngine.Random.value;
 
 		for (int i = 0; i < rangeTable.Length; i++) {
 			if (randomFloat > rangeTable [i] && randomFloat < rangeTable [i + 1]) {
@@ -51,6 +119,8 @@ public class WildcardAsset : InstantiatingProperty {
 		return null;
 	}
 
+	//Creates a table with ranges from 0f to 1f which represent the chances given by each asset
+	//The table is later used to randomly choose an asset
 	private float[] GenerateRangeTable(){
 		float[] rangeTable = new float[chancesList.Count + 1];
 		float sum = 0f;

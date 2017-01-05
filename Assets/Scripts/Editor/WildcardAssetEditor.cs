@@ -40,7 +40,7 @@ public class WildcardAssetEditor : Editor {
 				SerializedProperty chanceRef = wildcardRef.FindPropertyRelative ("Chance");
 
 				assetRef.objectReferenceValue = (GameObject)EditorGUILayout.ObjectField (assetRef.objectReferenceValue, typeof(GameObject), true);
-				chanceRef.intValue = EditorGUILayout.IntField (chanceRef.intValue, GUILayout.Width(35));
+				chanceRef.intValue = EditorGUILayout.IntField (chanceRef.intValue, GUILayout.Width(30));
 
 				if (GUILayout.Button ("x", GUILayout.Width(20))) {
 					assetList.DeleteArrayElementAtIndex (i);
@@ -68,6 +68,10 @@ public class WildcardAssetEditor : Editor {
 
 		//Selected Asset as preview
 		EditorGUILayout.LabelField ("Asset: " + wildcard.chancesList [wildcard.selectedIndex].Asset.name);
+
+		if (GUILayout.Button ("generate")) {
+			wildcard.Generate ();
+		}
 
 		SceneUpdater.UpdateScene ();
 	}
