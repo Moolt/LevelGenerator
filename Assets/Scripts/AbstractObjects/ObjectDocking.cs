@@ -20,7 +20,7 @@ public class ObjectDocking : TransformingProperty {
 		DockingLogic ();
 	}
 
-	public override GameObject[] Generate(){
+	public override GameObject[] Generate(){		
 		DockingLogic ();
 		return null;
 	}
@@ -28,13 +28,15 @@ public class ObjectDocking : TransformingProperty {
 	private void DockingLogic(){
 		Vector3[] corners = AbstractBounds.Corners;
 
-		Vector3 corner = corners [cornerIndex];
-		float currentSizeMagnitude = AbstractBounds.Bounds.magnitude;
+		if (corners.Length > 0) {
+			Vector3 corner = corners [cornerIndex];
+			float currentSizeMagnitude = AbstractBounds.Bounds.magnitude;
 
-		if (interpolationMethod == CoordinateType.ABSOLUTE) {
-			this.transform.position = corner + offset;
-		} else {
-			this.transform.position = corner + (offset * (currentSizeMagnitude / offsetRoomMagnitude));
+			if (interpolationMethod == CoordinateType.ABSOLUTE) {
+				this.transform.position = corner + offset;
+			} else {
+				this.transform.position = corner + (offset * (currentSizeMagnitude / offsetRoomMagnitude));
+			}
 		}
 	}
 
@@ -45,6 +47,12 @@ public class ObjectDocking : TransformingProperty {
 		offsetRoomMagnitude = AbstractBounds.Bounds.magnitude;
 	}
 
+	//Used by Object Arrays to change docking position
+	public void AddToOffset(Vector3 additionalOffset){
+		offset += additionalOffset;
+	}
+
+	//Setter used by editor script, handle
 	public int SelectedCornerIndex {
 		get {
 			return cornerIndex;

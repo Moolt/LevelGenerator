@@ -29,18 +29,18 @@ public static class ComponentExtension{
 	{
 		Type type = comp.GetType(); //type of the copy
 		if (type != other.GetType()) return null; // type mis-match
-		BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Default;
+		BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Default  | BindingFlags.FlattenHierarchy;
 		PropertyInfo[] pinfos = type.GetProperties(flags);
 
 		//Handle variables
 		foreach (var pinfo in pinfos) {
 			if (pinfo.CanWrite) {
 				try {
+
 					//Ignore obsolete variables to avoid editor warnings
-					if(HasAnnotation<ObsoleteAttribute>(pinfo) || HasAnnotation<NotSupportedException>(pinfo)){
+					if(HasAnnotation<ObsoleteAttribute>(pinfo) || HasAnnotation<NotSupportedException>(pinfo) || HasAnnotation<System.ComponentModel.EditorBrowsableAttribute>(pinfo)){
 						continue;
 					}
-
 					if(exceptions.ContainsKey(pinfo.Name)){
 						PropertyInfo exInfo = type.GetProperty(exceptions[pinfo.Name]);
 						exInfo.SetValue(comp, exInfo.GetValue(other, null), null);
@@ -48,7 +48,7 @@ public static class ComponentExtension{
 						pinfo.SetValue(comp, pinfo.GetValue(other, null), null);
 					}
 				}
-				catch { } 
+				catch (System.Exception e) { Debug.Log (e.Message); } 
 			}
 		}
 
@@ -95,7 +95,13 @@ public class WildcardAsset : InstantiatingProperty {
 		Component[] components = chosenAsset.GetComponents<Component> ();
 
 		foreach (Component go in components) {
-			if (go is Transform) continue;
+			//Transform can't be copied, since every GameObject has a transform component
+			//Kopy scale and rotation values instead
+			if (go is Transform) {
+				AssignTransform (go as Transform);
+				continue;
+			}
+
 			Component newComponent = gameObject.AddComponent (go.GetType ());
 			if (newComponent != null) {
 				newComponent.GetCopyOf (go);
@@ -103,7 +109,16 @@ public class WildcardAsset : InstantiatingProperty {
 		}
 
 		return null;
-	}		
+	}
+
+	//Assign the scale and rotation instead of copying / adding the other transform
+	//Keep the position of the wildcard
+	private void AssignTransform(Transform otherTransform){
+		//Adding up rotation
+		transform.eulerAngles = otherTransform.rotation.eulerAngles + transform.rotation.eulerAngles;
+		//Adding up scale. Since default scale is 1, the scale should also stay 1 if both objects have the default scale
+		transform.localScale = otherTransform.localScale + transform.localScale - Vector3.one;
+	}
 
 	//Choses a random GameObject and returns it
 	//Chances are considered
@@ -186,6 +201,12 @@ public class WildcardAsset : InstantiatingProperty {
 
 		foreach (KeyValuePair<string, int> pair in results) {
 			Debug.Log (pair.Key + ": " + pair.Value * percent + "%");
+		}
+	}
+
+	public MeshFilter PreviewMesh{
+		get{
+			return chancesList [selectedIndex].Asset.GetComponent<MeshFilter>();
 		}
 	}
 }

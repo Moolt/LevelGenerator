@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public enum Direction { HORIZONTAL, VERTICAL, HEIGTH }
 
@@ -9,7 +10,7 @@ public class ObjectArray : InstantiatingProperty {
 	[Range(1, 10)]
 	public int duplicateCount = 1;
 	public bool autoCount;
-	public bool margin = false;
+	//public bool margin = false;
 	public Direction arrayOrientation;
 
 	private MeshFilter meshFilter;
@@ -17,22 +18,22 @@ public class ObjectArray : InstantiatingProperty {
 	private Vector3 offset;
 
 	private void Preparation(){
+		meshFilter = GetComponent<MeshFilter> ();
 		if (meshFilter == null) {
-			meshFilter = GetComponent<MeshFilter> ();
+			WildcardAsset wildcard = gameObject.GetComponent<WildcardAsset> ();
+			if (wildcard != null) {
+				meshFilter = wildcard.PreviewMesh;
+			}
 		}
 
-		GameObject searchObject = gameObject;
-		while (searchObject.GetComponent<AbstractBounds> () == null) {
-			searchObject = searchObject.transform.parent.gameObject;
-		}
-		abstractBounds = searchObject.GetComponent<AbstractBounds> ();
-		offset = searchObject.transform.position;
+		//AbstractBounds parentBounds = gameObject.GetComponentInParent<AbstractBounds> ();
+		abstractBounds = gameObject.GetComponentInParent<AbstractBounds> ();
+		offset = abstractBounds.transform.position;
 	}
 
-	void OnDrawGizmos(){
-		Preparation ();
-		Vector3 meshSize = Vector3.Scale (meshFilter.sharedMesh.bounds.size, transform.localScale);
-		Vector3[] positions = CalculatePositions (meshSize, offset);
+	void OnDrawGizmos(){		
+
+		Vector3[] positions = CalculatePositions (offset);
 
 		transform.position = positions [0];
 
@@ -47,39 +48,54 @@ public class ObjectArray : InstantiatingProperty {
 	}
 
 	public override void Preview(){
-		
+		//Not needed, as preview is handled by Gizmos
 	}
 
-	public override GameObject[] Generate(){
-		/*Preparation ();
-		Vector3 meshSize = Vector3.Scale (meshFilter.sharedMesh.bounds.size, transform.localScale);
-		Vector3[] positions = CalculatePositions (meshSize, offset);
+	public override GameObject[] Generate(){		
+		Vector3[] copyPositions = CalculatePositions (offset);
+		List<GameObject> copies = new List<GameObject> ();
 
-		transform.position = positions [0];
+		transform.position = copyPositions [0];
 
-		if (meshFilter != null) {
-			for (int i = 0; i < positions.Length; i++) {
-				GameObject copy = GameObject.Instantiate (gameObject);
-				copy.transform.position = positions [i];
+		for (int i = 1; i < copyPositions.Length; i++) {
+			GameObject copy = GameObject.Instantiate (gameObject);
+			//Array needs to be removed, since the copies are not under control of the Generator yet to handle removal
+			DestroyImmediate(copy.GetComponent<ObjectArray> ());
+			copy.transform.position = copyPositions [i];
+			copy.transform.SetParent (gameObject.transform.parent);
+			copies.Add (copy);
+		}
+
+		//HandleDockingOffset (copies, copyPositions [0]);
+
+		return copies.ToArray ();
+	}
+
+	private void HandleDockingOffset(ICollection<GameObject> copies, Vector3 origPos){
+		if (gameObject.GetComponent<ObjectDocking> () != null) {			
+			foreach(GameObject copy in copies){
+				ObjectDocking docking = copy.GetComponent<ObjectDocking> ();
+				Vector3 delta = copy.transform.position - origPos;
+				docking.AddToOffset (delta);
 			}
-		}*/
-		return new GameObject[]{ transform.gameObject  };
+		}
 	}
 
-	private Vector3[] CalculatePositions(Vector3 modelSize, Vector3 offset){
+	private Vector3[] CalculatePositions(Vector3 offset){
+		Preparation ();
+		Vector3 meshSize = Vector3.Scale (meshFilter.sharedMesh.bounds.size, transform.localScale);
 		Vector3 startPosition = transform.position;
 		int calculatedCount = duplicateCount;
 		float calculatedSpace;
-		Preparation ();
 		Vector3 bounds = abstractBounds.Bounds;
 		//The positions the original object will stick to the variableBounds (room). Factors in the models size.
-		Vector3 boundsOrigin = new Vector3 (bounds.x * -0.5f + modelSize.x / 2f, 0f, bounds.z * -0.5f + modelSize.z / 2f);
+		Vector3 boundsOrigin = new Vector3 (bounds.x * -0.5f + meshSize.x / 2f, 0f, bounds.z * -0.5f + meshSize.z / 2f);
 		//The right, forward and up vectors, depending on the direction the array should be applied to
 		Vector3 orientationVector = OrientationToVec (arrayOrientation);
 		//The space that is available to both the original and the copies.
 		float availableSpace = (Vector3.Scale(bounds, orientationVector)).magnitude;
 		//The models width, height or depth, depending on the orientation
-		float modelWidth = Vector3.Scale (modelSize, orientationVector).magnitude;
+		float modelWidth = Vector3.Scale (meshSize, orientationVector).magnitude;
 		availableSpace -= modelWidth;
 		//Position of the original, will be fixed on one axis and will therefore stick to a wall
 		startPosition = Vector3.Scale(startPosition, (Vector3.one - orientationVector)) + Vector3.Scale(boundsOrigin, orientationVector);

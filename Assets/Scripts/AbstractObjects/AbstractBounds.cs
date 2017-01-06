@@ -100,4 +100,8 @@ public class AbstractBounds : TransformingProperty, IObjectBounds {
 			return corners.ToArray ();
 		}
 	}
+
+	public override bool DelayRemoval{
+		get { return true; }
+	}
 }

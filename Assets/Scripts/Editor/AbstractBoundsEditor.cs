@@ -7,20 +7,22 @@ using UnityEditor;
 public class AbstractBoundsEditor : Editor {
 
 	public override void OnInspectorGUI(){
-		AbstractBounds varBounds = (AbstractBounds)target;
-		ITransformable[] children = varBounds.gameObject.GetComponents<ITransformable> ();
+		if (SceneUpdater.IsActive) {
+			AbstractBounds varBounds = (AbstractBounds)target;
+			ITransformable[] children = varBounds.gameObject.GetComponents<ITransformable> ();
 
-		if (DrawDefaultInspector ()) {
-			//Max size values cant be smaller that min size
+			if (DrawDefaultInspector ()) {
+				//Max size values cant be smaller that min size
 			
-			ClampValues (varBounds);
+				ClampValues (varBounds);
 
-			//Update bounds of all objects implementing the interface
-			ApplySize (children, varBounds);
-		}
+				//Update bounds of all objects implementing the interface
+				ApplySize (children, varBounds);
+			}
 
-		if (GUILayout.Button ("Randomize Size")) {
-			varBounds.RandomizeSize (children);
+			if (GUILayout.Button ("Randomize Size")) {
+				varBounds.RandomizeSize (children);
+			}
 		}
 	}
 

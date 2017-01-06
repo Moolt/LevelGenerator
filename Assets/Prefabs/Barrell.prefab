@@ -21,7 +21,6 @@ GameObject:
   - 4: {fileID: 4000012802852032}
   - 33: {fileID: 33000012093420448}
   - 23: {fileID: 23000013998213858}
-  - 95: {fileID: 95000011234573408}
   m_Layer: 0
   m_Name: Barrell
   m_TagString: Untagged
@@ -78,20 +77,3 @@ MeshFilter:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1000013949344952}
   m_Mesh: {fileID: 4300000, guid: 07582e5696ef18448b37a33fa6f2ce1f, type: 3}
---- !u!95 &95000011234573408
-Animator:
-  serializedVersion: 3
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1000013949344952}
-  m_Enabled: 1
-  m_Avatar: {fileID: 9000000, guid: 07582e5696ef18448b37a33fa6f2ce1f, type: 3}
-  m_Controller: {fileID: 0}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1

@@ -52,8 +52,21 @@ public class ChunkInstantiator : ScriptableObject{
 		}
 
 		foreach (AbstractProperty property in properties) {
-			property.Generate ();
-			HandlePropertyRemoval (property);
+			if(!property.IsDirty){
+				GameObject[] generatedObjects = property.Generate ();
+				HandleGeneratedObjects (generatedObjects); //Add generated objs to work stack
+				HandlePropertyRemoval (property); //Remove component after execution
+			}
+		}
+	}
+
+	//Arrays of the type InstantiatingProperty may generate Objects during generation time
+	//They have to be added to the working stack in case they inherit abstract properties
+	private void HandleGeneratedObjects(GameObject[] generatedObjects){
+		if (generatedObjects != null && generatedObjects.Length > 0) {
+			foreach (GameObject genObj in generatedObjects) {
+				workStack.Push (genObj);
+			}
 		}
 	}
 
@@ -61,7 +74,8 @@ public class ChunkInstantiator : ScriptableObject{
 	//As there may be dependencies, the removal of several properties can be delayed until the end of the generation process
 	private void HandlePropertyRemoval(AbstractProperty property){
 		if (property.DelayRemoval) {
-			delayedRemovalCollection.Add (property);
+			property.IsDirty = true; //Set dirty to avoid another execution
+			delayedRemovalCollection.Add (property);			
 		} else {
 			DestroyImmediate (property);
 		}
@@ -81,23 +95,38 @@ public class ChunkInstantiator : ScriptableObject{
 }
 
 public class LevelGenerationWindow : EditorWindow {
-	
+
+	private GameObject originalChunk;
+	private GameObject mostRecentChunk;
+
 	[MenuItem("Window/Level Generation")]
 	public static void ShowWindow(){
 		EditorWindow.GetWindow (typeof(LevelGenerationWindow));
 	}
 	// Use this for initialization
-	void OnGUI(){		
+	void OnGUI(){
+
+		if (originalChunk == null) {
+			originalChunk = GameObject.FindWithTag ("Chunk");
+		}
 
 		GUILayout.Space (20);
 
-		if (GUILayout.Button ("Generate Chunk")) {
-			GameObject chunk = GameObject.FindWithTag ("Chunk");
-			Vector3 pos = new Vector3 (chunk.transform.position.x + 100, chunk.transform.position.y, chunk.transform.position.z);
-			GameObject copiedChunk = (GameObject)GameObject.Instantiate (chunk, pos, Quaternion.identity);
+		if (GUILayout.Button ("Preview Chunk")) {
+			SceneUpdater.SetActive (false);
+			DestroyImmediate (mostRecentChunk); //Remove old generated chunk
+			originalChunk.SetActive (true); //Has to be active or else the copy could be inactive, too
+			mostRecentChunk = (GameObject)GameObject.Instantiate (originalChunk, originalChunk.transform.position , Quaternion.identity);
+			originalChunk.SetActive (false);
 
 			ChunkInstantiator generator = ScriptableObject.CreateInstance<ChunkInstantiator> ();
-			generator.InstiantiateChunk (copiedChunk);
+			generator.InstiantiateChunk (mostRecentChunk);
+		}
+
+		if (GUILayout.Button ("Restore")) {
+			DestroyImmediate (mostRecentChunk); //Destroy the generated chunk
+			originalChunk.SetActive(true);
+			SceneUpdater.SetActive (true);
 		}
 	}
 }
