@@ -108,13 +108,12 @@ public class PlaneGeneration : MeshProperty, ITransformable{
 		GenerateMesh ();
 	}
 
-	public override GameObject[] Generate(){
+	public override void Generate(){
 		if (abstractBounds == null) {
 			abstractBounds = GetComponent<AbstractBounds> ();
 		}
 		this.roomBounds = abstractBounds.Bounds;
 		GenerateMesh ();
-		return null;
 	}
 
 	public void NotifyBoundsChanged(AbstractBounds newBounds){

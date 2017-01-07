@@ -42,7 +42,7 @@ public class AbstractBounds : TransformingProperty, IObjectBounds {
 		}
 	}
 
-	public override GameObject[] Generate(){
+	public override void Generate(){
 		if (fixedSize) {
 			size = maxSize;
 		} else {
@@ -51,7 +51,6 @@ public class AbstractBounds : TransformingProperty, IObjectBounds {
 		if (adaptToParent != null) {
 			Bounds = adaptToParent.size;
 		}
-		return null;
 	}
 
 	//Can be either used within the editor or within the generation process

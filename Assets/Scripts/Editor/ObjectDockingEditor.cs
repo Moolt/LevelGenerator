@@ -19,7 +19,7 @@ public class ObjectDockingEditor : Editor {
 	public void OnSceneGUI(){
 		if (SceneUpdater.IsActive) {
 			ObjectDocking child = target as ObjectDocking;
-			Vector3[] corners = child.AbstractBounds.Corners;
+			Vector3[] corners = child.ParentsAbstractBounds.Corners;
 
 			//Drawing the Grid
 			Handles.color = Color.white;

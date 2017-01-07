@@ -10,7 +10,7 @@ public class ObjectArray : InstantiatingProperty {
 	[Range(1, 10)]
 	public int duplicateCount = 1;
 	public bool autoCount;
-	//public bool margin = false;
+	public float spacing = 0f;
 	public Direction arrayOrientation;
 
 	private MeshFilter meshFilter;
@@ -18,13 +18,7 @@ public class ObjectArray : InstantiatingProperty {
 	private Vector3 offset;
 
 	private void Preparation(){
-		meshFilter = GetComponent<MeshFilter> ();
-		if (meshFilter == null) {
-			WildcardAsset wildcard = gameObject.GetComponent<WildcardAsset> ();
-			if (wildcard != null) {
-				meshFilter = wildcard.PreviewMesh;
-			}
-		}
+		meshFilter = PreviewMesh;
 
 		//AbstractBounds parentBounds = gameObject.GetComponentInParent<AbstractBounds> ();
 		abstractBounds = gameObject.GetComponentInParent<AbstractBounds> ();
@@ -51,9 +45,8 @@ public class ObjectArray : InstantiatingProperty {
 		//Not needed, as preview is handled by Gizmos
 	}
 
-	public override GameObject[] Generate(){		
+	public override void Generate(){		
 		Vector3[] copyPositions = CalculatePositions (offset);
-		List<GameObject> copies = new List<GameObject> ();
 
 		transform.position = copyPositions [0];
 
@@ -63,12 +56,8 @@ public class ObjectArray : InstantiatingProperty {
 			DestroyImmediate(copy.GetComponent<ObjectArray> ());
 			copy.transform.position = copyPositions [i];
 			copy.transform.SetParent (gameObject.transform.parent);
-			copies.Add (copy);
+			GeneratedObjects.Add (copy);
 		}
-
-		//HandleDockingOffset (copies, copyPositions [0]);
-
-		return copies.ToArray ();
 	}
 
 	private void HandleDockingOffset(ICollection<GameObject> copies, Vector3 origPos){
@@ -102,7 +91,7 @@ public class ObjectArray : InstantiatingProperty {
 		offset = Vector3.Scale (offset, orientationVector);
 
 		if (autoCount) {
-			calculatedCount = (int)Mathf.Floor(availableSpace / modelWidth);
+			calculatedCount = (int)Mathf.Floor(availableSpace / (modelWidth + spacing));
 		}
 
 		calculatedSpace = availableSpace / calculatedCount;

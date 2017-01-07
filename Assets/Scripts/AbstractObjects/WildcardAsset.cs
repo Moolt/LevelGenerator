@@ -89,7 +89,7 @@ public class WildcardAsset : InstantiatingProperty {
 		//Nothing to be done in preview
 	}
 
-	public override GameObject[] Generate(){
+	public override void Generate(){
 
 		GameObject chosenAsset = ChooseRandomAsset ();
 		Component[] components = chosenAsset.GetComponents<Component> ();
@@ -106,9 +106,7 @@ public class WildcardAsset : InstantiatingProperty {
 			if (newComponent != null) {
 				newComponent.GetCopyOf (go);
 			}
-		}
-
-		return null;
+		}			
 	}
 
 	//Assign the scale and rotation instead of copying / adding the other transform
@@ -204,7 +202,7 @@ public class WildcardAsset : InstantiatingProperty {
 		}
 	}
 
-	public MeshFilter PreviewMesh{
+	public MeshFilter IndexedPreviewMesh{
 		get{
 			return chancesList [selectedIndex].Asset.GetComponent<MeshFilter>();
 		}

@@ -53,8 +53,8 @@ public class ChunkInstantiator : ScriptableObject{
 
 		foreach (AbstractProperty property in properties) {
 			if(!property.IsDirty){
-				GameObject[] generatedObjects = property.Generate ();
-				HandleGeneratedObjects (generatedObjects); //Add generated objs to work stack
+				property.Generate ();
+				HandleGeneratedObjects (property); //Add generated objs to work stack, if there are any
 				HandlePropertyRemoval (property); //Remove component after execution
 			}
 		}
@@ -62,9 +62,9 @@ public class ChunkInstantiator : ScriptableObject{
 
 	//Arrays of the type InstantiatingProperty may generate Objects during generation time
 	//They have to be added to the working stack in case they inherit abstract properties
-	private void HandleGeneratedObjects(GameObject[] generatedObjects){
-		if (generatedObjects != null && generatedObjects.Length > 0) {
-			foreach (GameObject genObj in generatedObjects) {
+	private void HandleGeneratedObjects(AbstractProperty property){		
+		if (property.GeneratedObjects != null && property.GeneratedObjects.Count > 0) {
+			foreach (GameObject genObj in property.GeneratedObjects) {
 				workStack.Push (genObj);
 			}
 		}

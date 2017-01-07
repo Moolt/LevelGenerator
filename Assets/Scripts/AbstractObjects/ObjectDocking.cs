@@ -20,17 +20,16 @@ public class ObjectDocking : TransformingProperty {
 		DockingLogic ();
 	}
 
-	public override GameObject[] Generate(){		
+	public override void Generate(){		
 		DockingLogic ();
-		return null;
 	}
 
 	private void DockingLogic(){
-		Vector3[] corners = AbstractBounds.Corners;
+		Vector3[] corners = ParentsAbstractBounds.Corners;
 
 		if (corners.Length > 0) {
 			Vector3 corner = corners [cornerIndex];
-			float currentSizeMagnitude = AbstractBounds.Bounds.magnitude;
+			float currentSizeMagnitude = ParentsAbstractBounds.Bounds.magnitude;
 
 			if (interpolationMethod == CoordinateType.ABSOLUTE) {
 				this.transform.position = corner + offset;

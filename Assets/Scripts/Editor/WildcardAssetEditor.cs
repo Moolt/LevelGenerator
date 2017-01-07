@@ -12,7 +12,7 @@ public class WildcardAssetEditor : Editor {
 	private int listSize;
 
 	void OnEnable(){
-		wildcard = (WildcardAsset)target;
+		wildcard = target as WildcardAsset;
 		getTarget = new SerializedObject (wildcard);
 		assetList = getTarget.FindProperty ("chancesList");
 	}

@@ -192,9 +192,8 @@ public class MeshGeneration : MeshProperty, ITransformable{
 		GenerateMesh ();
 	}
 
-	public override GameObject[] Generate(){
+	public override void Generate(){
 		this.Preview ();
-		return null;
 	}
 
 	public void NotifyBoundsChanged(AbstractBounds newBounds){
