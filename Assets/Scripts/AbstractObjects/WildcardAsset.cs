@@ -175,7 +175,7 @@ public class WildcardAsset : InstantiatingProperty {
 				Gizmos.color = Color.cyan;
 				Gizmos.DrawMesh (previewData.Mesh, transform.position, 
 					previewData.Transform.rotation,
-					previewData.Transform.localScale);				
+					previewData.Transform.localScale + transform.localScale - Vector3.one);				
 			}
 		}
 	}

@@ -5,11 +5,14 @@ using UnityEditor;
 
 [CustomEditor (typeof(ObjectDocking))]
 public class ObjectDockingEditor : Editor {
+	private ObjectDocking child;
+
+	void OnEnable(){
+		child = target as ObjectDocking;
+	}
 
 	public override void OnInspectorGUI(){
 		if (SceneUpdater.IsActive) {
-			ObjectDocking child = target as ObjectDocking;
-
 			child.UpdateOffset ();
 		}
 		if (DrawDefaultInspector ()) {

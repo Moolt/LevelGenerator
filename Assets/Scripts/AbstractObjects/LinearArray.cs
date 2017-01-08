@@ -2,12 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public enum Direction { HORIZONTAL, VERTICAL, HEIGTH }
+public enum Direction { XAXIS, YAXIS, ZAXIS }
 
 [DisallowMultipleComponent]
-public class ObjectArray : InstantiatingProperty {
+public class LinearArray : InstantiatingProperty {
 
-	[Range(1, 10)]
 	public int duplicateCount = 1;
 	public bool autoCount;
 	public float spacing = 0f;
@@ -53,7 +52,7 @@ public class ObjectArray : InstantiatingProperty {
 		for (int i = 1; i < copyPositions.Length; i++) {
 			GameObject copy = GameObject.Instantiate (gameObject);
 			//Array needs to be removed, since the copies are not under control of the Generator yet to handle removal
-			DestroyImmediate(copy.GetComponent<ObjectArray> ());
+			DestroyImmediate(copy.GetComponent<LinearArray> ());
 			copy.transform.position = copyPositions [i];
 			copy.transform.SetParent (gameObject.transform.parent);
 			GeneratedObjects.Add (copy);
@@ -108,12 +107,12 @@ public class ObjectArray : InstantiatingProperty {
 
 	public Vector3 OrientationToVec(Direction dir){
 		switch (dir) {
-		case Direction.HORIZONTAL:
+		case Direction.XAXIS:
 			return Vector3.right;
-		case Direction.VERTICAL:
-			return Vector3.forward;
-		case Direction.HEIGTH:
+		case Direction.YAXIS:
 			return Vector3.up;
+		case Direction.ZAXIS:
+			return Vector3.forward;
 		}
 		return Vector3.forward;
 	}
