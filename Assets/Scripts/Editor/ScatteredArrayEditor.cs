@@ -41,7 +41,7 @@ public class ScatteredArrayEditor : Editor {
 			} else {
 				sArray.preventOverlapping = EditorGUILayout.Toggle ("Prevent overlapping", sArray.preventOverlapping);
 				//Duplicate count is variable and cannot be set
-				sArray.duplicateCount = EditorGUILayout.IntField ("Duplicate Count", sArray.duplicateCount);
+				sArray.duplicateCount = EditorGUILayout.IntField ("Duplicates", sArray.duplicateCount, GUILayout.ExpandWidth(false));
 			}
 
 			sArray.spacing = EditorGUILayout.FloatField ("Spacing", sArray.spacing);
@@ -52,7 +52,8 @@ public class ScatteredArrayEditor : Editor {
 		SceneUpdater.UpdateScene ();
 	}
 
-	public void OnSceneGUI(){		
+	public void OnSceneGUI(){
+
 		if(sArray.areaType == AreaType.SPHERICAL){
 			RadiusDisc (sArray.radius, Color.yellow);
 		}

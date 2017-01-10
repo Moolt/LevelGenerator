@@ -5,11 +5,13 @@ using System.Linq;
 
 public enum AreaType{ SPHERICAL, RECT, ABSTRACTBOUNDS }
 
-[DisallowMultipleComponent]
-public class ScatteredArray : InstantiatingProperty {
+public class ScatteredArray : MultiplyingProperty {
 
 	public int editorSeed = 100; //Only used within editor
+
 	public int duplicateCount = 3;
+	public bool randomizeCount = false;
+
 	public float radius = 1f; //Radius of Area of type SPHERICAL
 	public Vector2 rectArea = new Vector2(5f, 5f);
 	public bool preventOverlapping = true; //Slow
@@ -31,12 +33,8 @@ public class ScatteredArray : InstantiatingProperty {
 	public override void Preview(){
 		
 	}
-
-	public override void Generate(){
 		
-	}
-
-	private Vector3[] CalculatePositions(){
+	protected override Vector3[] CalculatePositions(){
 		ICollection<Vector3> positions = new List<Vector3> ();
 		float meshSize = PreviewMesh.sharedMesh.bounds.extents.magnitude;
 		Vector3 meshBounds = PreviewMesh.sharedMesh.bounds.size;

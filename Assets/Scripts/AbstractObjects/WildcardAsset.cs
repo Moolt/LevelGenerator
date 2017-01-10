@@ -36,7 +36,6 @@ public static class ComponentExtension{
 		foreach (var pinfo in pinfos) {
 			if (pinfo.CanWrite) {
 				try {
-
 					//Ignore obsolete variables to avoid editor warnings
 					if(HasAnnotation<ObsoleteAttribute>(pinfo) || HasAnnotation<NotSupportedException>(pinfo) || HasAnnotation<System.ComponentModel.EditorBrowsableAttribute>(pinfo)){
 						continue;

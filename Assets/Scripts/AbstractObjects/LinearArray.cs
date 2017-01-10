@@ -4,8 +4,7 @@ using System.Collections.Generic;
 
 public enum Direction { XAXIS, YAXIS, ZAXIS }
 
-[DisallowMultipleComponent]
-public class LinearArray : InstantiatingProperty {
+public class LinearArray : MultiplyingProperty {
 
 	public int duplicateCount = 1;
 	public bool autoCount;
@@ -26,7 +25,7 @@ public class LinearArray : InstantiatingProperty {
 
 	void OnDrawGizmos(){		
 
-		Vector3[] positions = CalculatePositions (offset);
+		Vector3[] positions = CalculatePositions ();
 
 		transform.position = positions [0];
 
@@ -44,21 +43,6 @@ public class LinearArray : InstantiatingProperty {
 		//Not needed, as preview is handled by Gizmos
 	}
 
-	public override void Generate(){		
-		Vector3[] copyPositions = CalculatePositions (offset);
-
-		transform.position = copyPositions [0];
-
-		for (int i = 1; i < copyPositions.Length; i++) {
-			GameObject copy = GameObject.Instantiate (gameObject);
-			//Array needs to be removed, since the copies are not under control of the Generator yet to handle removal
-			DestroyImmediate(copy.GetComponent<LinearArray> ());
-			copy.transform.position = copyPositions [i];
-			copy.transform.SetParent (gameObject.transform.parent);
-			GeneratedObjects.Add (copy);
-		}
-	}
-
 	private void HandleDockingOffset(ICollection<GameObject> copies, Vector3 origPos){
 		if (gameObject.GetComponent<ObjectDocking> () != null) {			
 			foreach(GameObject copy in copies){
@@ -69,7 +53,7 @@ public class LinearArray : InstantiatingProperty {
 		}
 	}
 
-	private Vector3[] CalculatePositions(Vector3 offset){
+	protected override Vector3[] CalculatePositions(){
 		Preparation ();
 		Vector3 meshSize = Vector3.Scale (meshFilter.sharedMesh.bounds.size, transform.localScale);
 		Vector3 startPosition = transform.position;
