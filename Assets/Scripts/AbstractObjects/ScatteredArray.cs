@@ -120,7 +120,8 @@ public class ScatteredArray : MultiplyingProperty {
 		if (areaType == AreaType.RECT || areaType == AreaType.SPHERICAL) {
 			return transform.position;
 		} else {
-			return ParentsAbstractBounds.transform.position;
+			Vector3 yAxisOffset = Vector3.Scale (Vector3.up, transform.position);
+			return ParentsAbstractBounds.transform.position + yAxisOffset;
 		}
 	}
 

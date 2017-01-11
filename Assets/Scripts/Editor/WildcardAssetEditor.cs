@@ -1,7 +1,7 @@
-﻿using UnityEngine;
-using UnityEditor;
+﻿using System.Collections.Generic;
 using System.Collections;
-using System.Collections.Generic;
+using UnityEngine;
+using UnityEditor;
 
 [CustomEditor (typeof(WildcardAsset))]
 public class WildcardAssetEditor : Editor {
@@ -26,14 +26,23 @@ public class WildcardAssetEditor : Editor {
 
 			if (showAssets) {
 				int currentSum = wildcard.SumUpChances ();
+
+				//Show a warning, if there are null refs in the asset list
+				if (NullRefsInList ()) {
+					EditorGUILayout.HelpBox ("Please remove all null references from the asset list", MessageType.Warning);
+				}
+
+				//Show a warning if the chances don't sum up to 100
 				if (currentSum != 100) {
 					EditorGUILayout.HelpBox ("Probabilities have to sum up to a total of 100%" +
 					"\nCurrent sum: " + currentSum.ToString () +
 					"\nDelta: " + (100 - currentSum).ToString (),
 						MessageType.Error);
 				}
+					
 				EditorGUILayout.Space ();
 
+				//Draw list with object picker, int picker, deletion button
 				for (int i = 0; i < assetList.arraySize; i++) {
 					EditorGUILayout.BeginHorizontal ();
 					SerializedProperty wildcardRef = assetList.GetArrayElementAtIndex (i);
@@ -72,5 +81,15 @@ public class WildcardAssetEditor : Editor {
 
 			SceneUpdater.UpdateScene ();
 		}
+	}
+		
+	//Returns true, if there are null refs in the list of assets
+	private bool NullRefsInList(){
+		foreach (WildcardChance chance in wildcard.chancesList) {
+			if (chance.Asset == null) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

@@ -7,10 +7,11 @@ public enum Direction { XAXIS, YAXIS, ZAXIS }
 public class LinearArray : MultiplyingProperty {
 
 	public int duplicateCount = 1;
-	public bool autoCount;
-	public float spacing = 0f;
-	public Direction arrayOrientation;
+	public bool autoCount; //If set to true, as many objects as fit are created
+	public float spacing = 0f; //Space between objects
+	public Direction arrayOrientation; //The axis the objects are duplicated upon
 
+	//Used for both GizmoPreview and position calculation, as the size of the mesh is considered
 	private MeshFilter meshFilter;
 	private AbstractBounds abstractBounds;
 	private Vector3 offset;
@@ -24,7 +25,6 @@ public class LinearArray : MultiplyingProperty {
 	}
 
 	void OnDrawGizmos(){		
-
 		Vector3[] positions = CalculatePositions ();
 
 		transform.position = positions [0];
@@ -43,7 +43,7 @@ public class LinearArray : MultiplyingProperty {
 		//Not needed, as preview is handled by Gizmos
 	}
 
-	private void HandleDockingOffset(ICollection<GameObject> copies, Vector3 origPos){
+	/*private void HandleDockingOffset(ICollection<GameObject> copies, Vector3 origPos){
 		if (gameObject.GetComponent<ObjectDocking> () != null) {			
 			foreach(GameObject copy in copies){
 				ObjectDocking docking = copy.GetComponent<ObjectDocking> ();
@@ -51,11 +51,12 @@ public class LinearArray : MultiplyingProperty {
 				docking.AddToOffset (delta);
 			}
 		}
-	}
+	}*/
 
 	protected override Vector3[] CalculatePositions(){
 		Preparation ();
-		Vector3 meshSize = Vector3.Scale (meshFilter.sharedMesh.bounds.size, transform.localScale);
+		Vector3 meshFilterSize = (meshFilter != null) ? meshFilter.sharedMesh.bounds.size : Vector3.one;
+		Vector3 meshSize = Vector3.Scale (meshFilterSize, transform.localScale);
 		Vector3 startPosition = transform.position;
 		int calculatedCount = duplicateCount;
 		float calculatedSpace;

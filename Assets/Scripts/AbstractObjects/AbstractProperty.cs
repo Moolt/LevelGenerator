@@ -42,6 +42,19 @@ abstract public class AbstractProperty : MonoBehaviour {
 			return meshFilter;
 		}
 	}
+
+	/*private static bool IsChildOfChunk(){
+		Transform t = ;
+
+		do {
+			if (t.tag == "Chunk") {
+				return true;
+			}
+			t = t.parent;
+		} while (t.parent != null);
+
+		return false;
+	}*/
 }
 
 abstract public class ValueProperty : AbstractProperty{

@@ -89,23 +89,24 @@ public class WildcardAsset : InstantiatingProperty {
 	}
 
 	public override void Generate(){
-
 		GameObject chosenAsset = ChooseRandomAsset ();
-		Component[] components = chosenAsset.GetComponents<Component> ();
+		if (chosenAsset != null) {
+			Component[] components = chosenAsset.GetComponents<Component> ();
 
-		foreach (Component go in components) {
-			//Transform can't be copied, since every GameObject has a transform component
-			//Kopy scale and rotation values instead
-			if (go is Transform) {
-				AssignTransform (go as Transform);
-				continue;
-			}
+			foreach (Component go in components) {
+				//Transform can't be copied, since every GameObject has a transform component
+				//Kopy scale and rotation values instead
+				if (go is Transform) {
+					AssignTransform (go as Transform);
+					continue;
+				}
 
-			Component newComponent = gameObject.AddComponent (go.GetType ());
-			if (newComponent != null) {
-				newComponent.GetCopyOf (go);
+				Component newComponent = gameObject.AddComponent (go.GetType ());
+				if (newComponent != null) {
+					newComponent.GetCopyOf (go);
+				}
 			}
-		}			
+		}
 	}
 
 	//Assign the scale and rotation instead of copying / adding the other transform

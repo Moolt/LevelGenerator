@@ -55,41 +55,20 @@ public class ScatteredArrayEditor : Editor {
 	public void OnSceneGUI(){
 
 		if(sArray.areaType == AreaType.SPHERICAL){
-			RadiusDisc (sArray.radius, Color.yellow);
+			EditorGUIExtension.RadiusDisc (sArray.transform.position, sArray.radius, Color.yellow);
 		}
 
 		if(sArray.areaType == AreaType.RECT){
-			AreaRect (sArray.rectArea, sArray.transform.position, Color.yellow);
+			EditorGUIExtension.AreaRect (sArray.rectArea, sArray.transform.position, Color.yellow);
 		}
 
 		if (sArray.areaType == AreaType.ABSTRACTBOUNDS) {
 			Vector3 bounds = sArray.ParentsAbstractBounds.Bounds;
 			Vector3 origin = sArray.ParentsAbstractBounds.transform.position;
 			Vector2 rect = new Vector2 (bounds.x, bounds.z);
-			AreaRect (rect, origin, Color.yellow);
+			EditorGUIExtension.AreaRect (rect, origin, Color.yellow);
 		}
 		//float spacingRadius = sArray.spacing + sArray.PreviewMesh.sharedMesh.bounds.extents.magnitude;
 		//RadiusDisc (spacingRadius, Color.black);
-	}
-
-	private void RadiusDisc(float radius, Color color){
-		Handles.color = new Color(color.r, color.g, color.b, 0.1f);
-		Handles.DrawSolidDisc (sArray.transform.position, Vector3.up, radius);
-		Handles.color = color;
-		Handles.DrawWireDisc (sArray.transform.position, Vector3.up, radius);
-	}
-
-	private void AreaRect(Vector2 area, Vector3 origin, Color color){
-		Color faceColor = new Color(color.r, color.g, color.b, 0.1f);
-		Vector2 rect = area / 2f;
-
-		Vector3[] verts = new Vector3[] { 
-			new Vector3 (origin.x - rect.x, origin.y, origin.z - rect.y),
-			new Vector3 (origin.x + rect.x, origin.y, origin.z - rect.y),
-			new Vector3 (origin.x + rect.x, origin.y, origin.z + rect.y),
-			new Vector3 (origin.x - rect.x, origin.y, origin.z + rect.y)
-		};
-
-		Handles.DrawSolidRectangleWithOutline(verts, faceColor, color);
 	}
 }
