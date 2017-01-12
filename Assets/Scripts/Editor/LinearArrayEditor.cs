@@ -13,14 +13,16 @@ public class LinearArrayEditor : Editor {
 	public override void OnInspectorGUI(){
 		if (SceneUpdater.IsActive) {
 			lArray.autoCount = EditorGUILayout.Toggle ("Autocount", lArray.autoCount);
+			lArray.closeGap = !EditorGUILayout.Toggle ("Auto spacing", !lArray.closeGap);
 
-			if (lArray.autoCount) {
+			if (lArray.autoCount && !lArray.closeGap) {
 				lArray.spacing = EditorGUILayout.FloatField ("Spacing", lArray.spacing);
 				lArray.spacing = Mathf.Max (lArray.spacing, 0f);
-			} else {
+			} else if(!lArray.autoCount) {
 				lArray.duplicateCount = EditorGUILayout.IntField ("Copies", lArray.duplicateCount);
 				lArray.duplicateCount = Mathf.Max (lArray.duplicateCount, 0);
 			}
+
 		}
 		SceneUpdater.UpdateScene ();
 	}

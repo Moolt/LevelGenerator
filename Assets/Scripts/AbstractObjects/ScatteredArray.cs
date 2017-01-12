@@ -95,7 +95,7 @@ public class ScatteredArray : MultiplyingProperty {
 			return GetRandomPosInRect(rectArea, meshSize);
 		}
 		if (areaType == AreaType.ABSTRACTBOUNDS) {
-			Vector3 bounds = ParentsAbstractBounds.Bounds;
+			Vector3 bounds = AbstractBounds.Bounds;
 			Vector2 boundsRect = new Vector2 (bounds.x, bounds.z);
 			return GetRandomPosInRect(boundsRect, meshSize);
 		}
@@ -121,7 +121,7 @@ public class ScatteredArray : MultiplyingProperty {
 			return transform.position;
 		} else {
 			Vector3 yAxisOffset = Vector3.Scale (Vector3.up, transform.position);
-			return ParentsAbstractBounds.transform.position + yAxisOffset;
+			return AbstractBounds.transform.position + yAxisOffset;
 		}
 	}
 

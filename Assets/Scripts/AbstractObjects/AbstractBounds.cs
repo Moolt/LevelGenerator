@@ -14,8 +14,6 @@ public class AbstractBounds : TransformingProperty, IObjectBounds {
 	public bool keepAspectRatio;
 	public AbstractBounds adaptToParent = null;
 
-	//set to true, if the bounds changed. the corners have to be recalculated then
-	private bool cornerDirtyFlag = true;
 	private List<Vector3> corners;
 
 	public void OnDrawGizmosSelected(){
@@ -31,7 +29,6 @@ public class AbstractBounds : TransformingProperty, IObjectBounds {
 		get { return size; } 
 		set { 
 			this.size = value;
-			cornerDirtyFlag = true;
 		}
 	}
 		
@@ -82,20 +79,18 @@ public class AbstractBounds : TransformingProperty, IObjectBounds {
 	public Vector3[] Corners {
 		get {
 			//Only recalculate if the bounds changed since the last time
-			if (cornerDirtyFlag) {
-				corners = new List<Vector3> ();
+			corners = new List<Vector3> ();
 
-				Vector3 point = new Vector3 (size.x / 2f, size.y / 2f, size.z / 2f);
+			Vector3 point = new Vector3 (size.x / 2f, size.y / 2f, size.z / 2f);
 
-				for (int i = 0; i < 3; i++) {
-					for (int j = 0; j < 3; j++) {
-						for (int k = 0; k < 3; k++) {
-							corners.Add (new Vector3 (point.x * (k - 1), point.y * i, point.z * (j - 1)) + transform.position);
-						}
+			for (int i = 0; i < 3; i++) {
+				for (int j = 0; j < 3; j++) {
+					for (int k = 0; k < 3; k++) {
+						corners.Add (new Vector3 (point.x * (k - 1), point.y * i, point.z * (j - 1)) + transform.position);
 					}
 				}
-				cornerDirtyFlag = false;
 			}
+
 			return corners.ToArray ();
 		}
 	}

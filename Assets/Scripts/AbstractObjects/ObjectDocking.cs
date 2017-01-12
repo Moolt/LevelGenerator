@@ -8,12 +8,8 @@ public enum CoordinateType { ABSOLUTE, PERCENTAGE }
 public class ObjectDocking : TransformingProperty {
 
 	public CoordinateType interpolationMethod;
-
-	[HideInInspector]
 	public float offsetRoomMagnitude;
-	[HideInInspector]
 	public int cornerIndex;
-	[HideInInspector]
 	public Vector3 offset;
 
 	public override void Preview(){
@@ -41,9 +37,9 @@ public class ObjectDocking : TransformingProperty {
 
 	//Called from the EditorScript when the object has been modified / moved
 	public void UpdateOffset(){
-		Vector3[] corners = AbstractBounds.Corners;
+		Vector3[] corners = ParentsAbstractBounds.Corners;
 		offset = transform.position - corners [cornerIndex];
-		offsetRoomMagnitude = AbstractBounds.Bounds.magnitude;
+		offsetRoomMagnitude = ParentsAbstractBounds.Bounds.magnitude;
 	}
 
 	//Used by Object Arrays to change docking position

@@ -14,8 +14,6 @@ public static class SceneUpdater {
 				foreach (AbstractProperty iaa_ in iaa) {
 					iaa_.Preview ();
 				}
-			} else {
-				Debug.LogError ("SceneUpdater didn't find an object with the tag \"Chunk\".");
 			}
 		}
 	}

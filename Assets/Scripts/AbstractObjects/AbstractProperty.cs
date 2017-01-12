@@ -39,6 +39,9 @@ abstract public class AbstractProperty : MonoBehaviour {
 					meshFilter = wildcard.IndexedPreviewMesh;
 				}
 			}
+			if (meshFilter == null) {
+				meshFilter = gameObject.GetComponentInChildren<MeshFilter> ();
+			}
 			return meshFilter;
 		}
 	}
