@@ -30,12 +30,17 @@ public class LinearArray : MultiplyingProperty {
 
 		transform.position = positions [0];
 
-		if (meshFilter != null) {
+		if (MeshFound ()) {
 			for (int i = 1; i < positions.Length; i++) {
-				Gizmos.color = new Color32(0, 0, 0, 50);
-				Gizmos.DrawMesh (meshFilter.sharedMesh, positions[i], transform.rotation, transform.localScale);
-				Gizmos.color = new Color32(0, 0, 0, 200);
-				Gizmos.DrawWireMesh (meshFilter.sharedMesh, positions[i], transform.rotation, transform.localScale);
+				Gizmos.color = new Color32 (149, 255, 69, 255);
+				Gizmos.DrawMesh (meshFilter.sharedMesh, positions [i], transform.rotation, transform.localScale);
+				//Gizmos.color = new Color32 (149, 255, 69, 255);
+				//Gizmos.DrawWireMesh (meshFilter.sharedMesh, positions [i], transform.rotation, transform.localScale);
+			}
+		} else {
+			for (int i = 0; i < positions.Length; i++) {
+				Gizmos.color = new Color32 (149, 255, 69, 255);
+				Gizmos.DrawCube (positions [i], new Vector3 (1f, 1f, 1f));
 			}
 		}
 	}
@@ -44,19 +49,9 @@ public class LinearArray : MultiplyingProperty {
 		//Not needed, as preview is handled by Gizmos
 	}
 
-	/*private void HandleDockingOffset(ICollection<GameObject> copies, Vector3 origPos){
-		if (gameObject.GetComponent<ObjectDocking> () != null) {			
-			foreach(GameObject copy in copies){
-				ObjectDocking docking = copy.GetComponent<ObjectDocking> ();
-				Vector3 delta = copy.transform.position - origPos;
-				docking.AddToOffset (delta);
-			}
-		}
-	}*/
-
 	protected override Vector3[] CalculatePositions(){
 		Preparation ();
-		Vector3 meshFilterSize = (meshFilter != null) ? meshFilter.sharedMesh.bounds.size : Vector3.one;	
+		Vector3 meshFilterSize = (MeshFound()) ? meshFilter.sharedMesh.bounds.size : Vector3.one;	
 		Vector3 meshSize = Vector3.Scale (meshFilterSize, transform.localScale);
 		Vector3 startPosition = transform.position;
 		int calculatedCount = duplicateCount;

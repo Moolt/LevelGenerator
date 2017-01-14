@@ -93,7 +93,7 @@ public class AbstractValue : ValueProperty {
 	//For bool, true of false are being returned with a chance of 50/50
 	//For color, a random color from the list is being returned
 	private object GetRandomValue(){
-		UnityEngine.Random.InitState (System.DateTime.Now.Millisecond);
+		//UnityEngine.Random.InitState (System.DateTime.Now.Millisecond);
 		Type varType = Type.GetType (varInfo.Type);
 
 		if (varType == typeof(int)) {

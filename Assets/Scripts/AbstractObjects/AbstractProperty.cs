@@ -46,18 +46,10 @@ abstract public class AbstractProperty : MonoBehaviour {
 		}
 	}
 
-	/*private static bool IsChildOfChunk(){
-		Transform t = ;
-
-		do {
-			if (t.tag == "Chunk") {
-				return true;
-			}
-			t = t.parent;
-		} while (t.parent != null);
-
-		return false;
-	}*/
+	//Should be called before using the PreviewMesh AutoProp to avoid nullref
+	public bool MeshFound(){
+		return PreviewMesh != null && PreviewMesh.sharedMesh != null;
+	}
 }
 
 abstract public class ValueProperty : AbstractProperty{

@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - Chunk
+  - ChunkCopy
   layers:
   - Default
   - TransparentFX

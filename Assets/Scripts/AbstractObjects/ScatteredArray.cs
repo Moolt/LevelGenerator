@@ -26,7 +26,11 @@ public class ScatteredArray : MultiplyingProperty {
 	void OnDrawGizmos(){
 		Vector3[] positions = CalculatePositions ();
 		for (int i = 0; i < positions.Length; i++) {
-			Gizmos.DrawMesh (PreviewMesh.sharedMesh, positions [i]);
+			if (MeshFound()) {
+				Gizmos.DrawMesh (PreviewMesh.sharedMesh, positions [i]);
+			} else {
+				Gizmos.DrawCube(positions[i], new Vector3(1f, 1f, 1f));
+			}
 		}
 	}
 
@@ -36,13 +40,13 @@ public class ScatteredArray : MultiplyingProperty {
 		
 	protected override Vector3[] CalculatePositions(){
 		ICollection<Vector3> positions = new List<Vector3> ();
-		float meshSize = PreviewMesh.sharedMesh.bounds.extents.magnitude;
-		Vector3 meshBounds = PreviewMesh.sharedMesh.bounds.size;
+		float meshSize = (MeshFound()) ? PreviewMesh.sharedMesh.bounds.extents.magnitude : 1f;
+		Vector3 meshBounds = (MeshFound()) ? PreviewMesh.sharedMesh.bounds.size : new Vector3(1f, 1f, 1f);
 		int producedPositions = 0;
 		bool done = false;
 
 		//Only use the seed when both in edit mode and not while generating
-		if (Application.isEditor && SceneUpdater.IsActive) {
+		if (Application.isEditor && SceneUpdater.IsActive) {			
 			Random.InitState (editorSeed);
 		}
 
