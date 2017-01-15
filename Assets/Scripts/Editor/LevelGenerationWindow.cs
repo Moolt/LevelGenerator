@@ -97,10 +97,16 @@ public class ChunkInstantiator : ScriptableObject{
 public class LevelGenerationWindow : EditorWindow {
 
 	private GameObject originalChunk;
-	private GameObject mostRecentChunk;
+	private GameObject mostRecentCopy;
 	private int seed;
 	private int prevSeed;
-	private string path = @"Assets/Resources/Chunks";
+	private string chunkFolderName = "Chunks";
+	private string path;
+	private int durationMillis = 0;
+
+	void OnEnable(){
+		path = @"Assets/Resources/" + chunkFolderName;
+	}
 
 	[MenuItem("Window/Level Generation")]
 	public static void ShowWindow(){
@@ -109,12 +115,11 @@ public class LevelGenerationWindow : EditorWindow {
 	// Use this for initialization
 	void OnGUI(){
 
-		if (originalChunk == null) {
-			originalChunk = GameObject.FindWithTag ("Chunk");
+		if (OriginalChunk == null) {
+			OriginalChunk = GameObject.FindWithTag ("Chunk");
 		}
 
-		EditorGUILayout.LabelField ("Chunk name", "");
-		EditorGUILayout.LabelField ("Path", path);
+		EditorGUILayout.Space();
 
 		EditorGUILayout.BeginHorizontal ();
 
@@ -132,14 +137,10 @@ public class LevelGenerationWindow : EditorWindow {
 
 		EditorGUILayout.EndHorizontal ();
 
+		EditorGUILayout.LabelField ("Chunk name", originalChunk.name);
+		EditorGUILayout.LabelField ("Path", path);
+
 		GUILayout.Space (20);
-
-		seed = EditorGUILayout.IntField ("Seed", seed);
-
-		//Update Scene when seed changes
-		if (seed != prevSeed) {
-			InstantiateChunk (seed);
-		}
 
 		EditorGUILayout.Space ();
 
@@ -153,40 +154,64 @@ public class LevelGenerationWindow : EditorWindow {
 		}
 		EditorGUILayout.EndHorizontal ();
 
+		seed = EditorGUILayout.IntField ("Seed", seed);
+		EditorGUILayout.LabelField ("Generation time", durationMillis.ToString() + " ms");
+
+		//Update Scene when seed changes
+		if (seed != prevSeed) {
+			InstantiateChunk (seed);
+		}
+
 		prevSeed = seed;
 	}
 
 	private void InstantiateChunk(int _seed){
+		int startMillis = DateTime.Now.Millisecond;
 		UnityEngine.Random.InitState (_seed);
 
 		SceneUpdater.SetActive (false);
 		DestroyOldCopy (); //Remove old generated chunk
-		originalChunk.SetActive (true); //Has to be active or else the copy could be inactive, too
-		mostRecentChunk = (GameObject)GameObject.Instantiate (originalChunk, originalChunk.transform.position , Quaternion.identity);
-		mostRecentChunk.tag = "ChunkCopy";
-		originalChunk.SetActive (false);
+		OriginalChunk.SetActive (true); //Has to be active or else the copy could be inactive, too
+		MostRecentCopy = (GameObject)GameObject.Instantiate (OriginalChunk, OriginalChunk.transform.position , Quaternion.identity);
+		MostRecentCopy.tag = "ChunkCopy";
+		OriginalChunk.SetActive (false);
 
 		ChunkInstantiator generator = ScriptableObject.CreateInstance<ChunkInstantiator> ();
-		generator.InstiantiateChunk (mostRecentChunk);
+		generator.InstiantiateChunk (MostRecentCopy);
+		durationMillis = DateTime.Now.Millisecond - startMillis;
 	}
 
+	//Remvoes any old copy of the chunk and sets the original, abstract chunk active
 	private void Restore(){
 		DestroyOldCopy (); //Destroy the generated chunk
-		originalChunk.SetActive(true);
+		OriginalChunk.SetActive(true);
 		SceneUpdater.SetActive (true);
 	}
 
+	//If there is an instantiated copy of the chunk in the scene, remove it
 	private void DestroyOldCopy(){
-		if (mostRecentChunk == null) {
-			mostRecentChunk = GameObject.FindGameObjectWithTag ("ChunkCopy");
-		}
-		if (mostRecentChunk != null) {
-			DestroyImmediate (mostRecentChunk);
+		if (MostRecentCopy != null) {
+			DestroyImmediate (MostRecentCopy);
 		}
 	}
 
-	private void CreateNewChunk(){		
-		GameObject.Instantiate(Resources.Load("EmptyChunk"));
+	//Shows a Dialog, asking whether the current chunk should be saved first
+	//Used by "New" and "Load", since the remove the current chunk
+	private void ShowSaveFirstDialog(){
+		bool dialogResult = EditorUtility.DisplayDialog ("Save progress", "Loading a new Chunk into the scene requires the old one to be removed first. " +
+			"Do you want to safe your progress before loading?", "Save", "Don't save");
+
+		if (dialogResult) {
+			SaveChunk ();
+		}
+	}
+
+	private void CreateNewChunk(){
+		Restore ();
+		ShowSaveFirstDialog ();
+		DestroyImmediate (OriginalChunk);
+		OriginalChunk = (GameObject)GameObject.Instantiate(Resources.Load("EmptyChunk"));
+		SceneUpdater.UpdateScene ();
 	}
 
 	private void SaveChunk(){
@@ -196,12 +221,9 @@ public class LevelGenerationWindow : EditorWindow {
 			System.IO.Directory.CreateDirectory (path); //Create folders if they don't yet exist
 			string dialogPath = EditorUtility.SaveFilePanelInProject ("Save Chunk", chunk.name, "prefab", "", path);
 
-			/*Debug.Log (dialogPath);
-			if (!dialogPath.StartsWith (path)) {
-				EditorUtility.DisplayDialog("Wrong filepath", "Please note, that the algorithm will only search the \"Chunks\" folder for the generation process.", "OK");
-			}*/
-
-			PrefabUtility.CreatePrefab (dialogPath, chunk, ReplacePrefabOptions.ReplaceNameBased);
+			if (dialogPath.Length > 0) {
+				PrefabUtility.CreatePrefab (dialogPath, chunk, ReplacePrefabOptions.ReplaceNameBased);
+			}
 
 		} else {
 			EditorUtility.DisplayDialog("No chunk found", "There is no GameObject with the tag \"Chunk\" in your scene or it is set inactive", "OK");
@@ -210,16 +232,51 @@ public class LevelGenerationWindow : EditorWindow {
 
 	private void LoadChunk(){
 		Restore ();
-
+		ShowSaveFirstDialog ();
 		System.IO.Directory.CreateDirectory (path); //Create folders if they don't yet exist
 		string dialogPath = EditorUtility.OpenFilePanel("Load Chunk", path, "prefab");
+		if (dialogPath.Length > 0) {
+			//Since the dialog outputs the complete path, which Resources.Load doesn't work with, a relative path is used
+			//Resources.Load only works with files inside the Resources folder. The path therefore only has to contain the folder the chunks
+			//Are stored in
+			string filePath = chunkFolderName + "/" + System.IO.Path.GetFileNameWithoutExtension (dialogPath);
 
-		/*Debug.Log (dialogPath);
-		if (!dialogPath.StartsWith (path)) {
-			EditorUtility.DisplayDialog("Wrong filepath", "Please note, that the algorithm will only search the \"Chunks\" folder for the generation process.", "OK");
-		}*/
+			DestroyImmediate (OriginalChunk);
+			OriginalChunk = (GameObject)GameObject.Instantiate (Resources.Load (filePath));
+			SceneUpdater.UpdateScene ();
+		}
+	}
 
-		GameObject.Instantiate (Resources.Load (dialogPath));
+	//Getter will search for the GO in the scene by tag if the reference is null
+	private GameObject MostRecentCopy{
+		get{
+			if (mostRecentCopy == null) {
+				mostRecentCopy = FindInactiveWithTag ("ChunkCopy");
+			}
+			return mostRecentCopy;
+		}
+		set{ mostRecentCopy = value; }
+	}
 
+	private GameObject OriginalChunk{
+		get{
+			if (originalChunk == null) {
+				originalChunk = FindInactiveWithTag ("Chunk");
+			}
+			return originalChunk;
+		}
+		set { originalChunk = value; }
+	}
+
+	//Since FindByTag only works for active objects, this function iterates through all
+	//Objects in the scene and compares the tags
+	private GameObject FindInactiveWithTag(string tag){
+		Transform[] sceneObjects = Resources.FindObjectsOfTypeAll<Transform> ();
+		foreach (Transform t in sceneObjects) {
+			if (t.tag == tag) {
+				return t.gameObject;
+			}
+		}
+		return null;
 	}
 }

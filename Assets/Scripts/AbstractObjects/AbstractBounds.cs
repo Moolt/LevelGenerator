@@ -98,4 +98,10 @@ public class AbstractBounds : TransformingProperty, IObjectBounds {
 	public override bool DelayRemoval{
 		get { return true; }
 	}
+
+	public Vector3 Center{
+		get{
+			return transform.position + new Vector3(0f, size.y / 2f, 0f);
+		}
+	}
 }

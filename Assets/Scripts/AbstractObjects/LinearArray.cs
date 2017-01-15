@@ -32,15 +32,15 @@ public class LinearArray : MultiplyingProperty {
 
 		if (MeshFound ()) {
 			for (int i = 1; i < positions.Length; i++) {
-				Gizmos.color = new Color32 (149, 255, 69, 255);
-				Gizmos.DrawMesh (meshFilter.sharedMesh, positions [i], transform.rotation, transform.localScale);
+				Gizmos.color = Color.black;
+				Gizmos.DrawWireMesh (meshFilter.sharedMesh, positions [i], transform.rotation, transform.localScale);
 				//Gizmos.color = new Color32 (149, 255, 69, 255);
 				//Gizmos.DrawWireMesh (meshFilter.sharedMesh, positions [i], transform.rotation, transform.localScale);
 			}
 		} else {
 			for (int i = 0; i < positions.Length; i++) {
-				Gizmos.color = new Color32 (149, 255, 69, 255);
-				Gizmos.DrawCube (positions [i], new Vector3 (1f, 1f, 1f));
+				Gizmos.color = Color.black;
+				Gizmos.DrawWireCube (positions [i], new Vector3 (1f, 1f, 1f));
 			}
 		}
 	}

@@ -14,7 +14,7 @@ public class AbstractScaling : TransformingProperty {
 	public int maxVal = 5;
 
 	public override void Preview(){
-		
+		//Handled by OnDrawGizmosSelected
 	}
 
 	public override void Generate(){

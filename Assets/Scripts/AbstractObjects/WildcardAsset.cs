@@ -68,6 +68,7 @@ public static class ComponentExtension{
 	}
 }
 
+[DisallowMultipleComponent]
 public class WildcardAsset : InstantiatingProperty {
 	[HideInInspector]
 	public List<WildcardChance> chancesList = new List<WildcardChance>(0);

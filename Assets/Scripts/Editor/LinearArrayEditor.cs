@@ -28,20 +28,16 @@ public class LinearArrayEditor : Editor {
 	}
 
 	public void OnSceneGUI(){
-		float sizeFactor = HandleUtility.GetHandleSize (Vector3.zero);
+		Vector3 pos = lArray.transform.position;
+		float sizeFactor = HandleUtility.GetHandleSize (pos);
+		float length = 0.6f;
 
-		if (DirectionHandle (Vector3.right, sizeFactor, Color.red)) {
+		if (EditorGUIExtension.DirectionHandle (pos, Vector3.right * length, sizeFactor, Color.red)) {
 			lArray.arrayOrientation = Direction.XAXIS;
-		} else if (DirectionHandle (Vector3.up, sizeFactor, Color.green)) {
+		} else if (EditorGUIExtension.DirectionHandle (pos, Vector3.up * length, sizeFactor, Color.green)) {
 			lArray.arrayOrientation = Direction.YAXIS;
-		} else if (DirectionHandle (Vector3.forward, sizeFactor, Color.blue)) {
+		} else if (EditorGUIExtension.DirectionHandle (pos, Vector3.forward * length, sizeFactor, Color.blue)) {
 			lArray.arrayOrientation = Direction.ZAXIS;
 		}
-	}
-
-	private bool DirectionHandle(Vector3 direction, float sizeFactor, Color color){
-		Handles.color = color;
-		Handles.DrawDottedLine (Vector3.zero, direction * sizeFactor, 3.5f);
-		return Handles.Button (direction * sizeFactor, Quaternion.identity, sizeFactor / 5f, sizeFactor / 5f, Handles.SphereCap);
 	}
 }

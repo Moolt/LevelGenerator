@@ -19,6 +19,7 @@ public class MeshGeneration : MeshProperty, ITransformable{
 	public Material wallMaterial;
 	public Material floorMaterial;
 	private AbstractBounds abstractBounds;
+	private MeshFilter meshfilter;
 
 	// Use this for initialization
 	void Awake () {
@@ -32,12 +33,12 @@ public class MeshGeneration : MeshProperty, ITransformable{
 	}
 
 	private void GenerateCube(){
-		MeshFilter filter = gameObject.GetComponent< MeshFilter >();
+		meshfilter = gameObject.GetComponent< MeshFilter >();
 		Mesh mesh;
 
 		#if UNITY_EDITOR
-		Mesh meshCopy = Mesh.Instantiate(filter.sharedMesh);
-		mesh = filter.sharedMesh = meshCopy;
+		Mesh meshCopy = Mesh.Instantiate(meshfilter.sharedMesh);
+		mesh = meshfilter.sharedMesh = meshCopy;
 		#else
 			if (filter.mesh == null) {
 			filter.mesh = new Mesh ();
@@ -190,10 +191,18 @@ public class MeshGeneration : MeshProperty, ITransformable{
 		}
 		this.roomBounds = abstractBounds.Bounds;
 		GenerateMesh ();
+		UpdateMeshCollider ();
 	}
 
 	public override void Generate(){
 		this.Preview ();
+	}
+
+	private void UpdateMeshCollider(){
+		MeshCollider meshCollider = GetComponent<MeshCollider> () as MeshCollider;
+		if (meshCollider != null) {
+			meshCollider.sharedMesh = meshfilter.sharedMesh;
+		}
 	}
 
 	public void NotifyBoundsChanged(AbstractBounds newBounds){

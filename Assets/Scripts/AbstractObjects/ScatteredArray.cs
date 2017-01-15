@@ -27,9 +27,11 @@ public class ScatteredArray : MultiplyingProperty {
 		Vector3[] positions = CalculatePositions ();
 		for (int i = 0; i < positions.Length; i++) {
 			if (MeshFound()) {
-				Gizmos.DrawMesh (PreviewMesh.sharedMesh, positions [i]);
+				Gizmos.color = Color.black;
+				Gizmos.DrawWireMesh (PreviewMesh.sharedMesh, positions [i]);
 			} else {
-				Gizmos.DrawCube(positions[i], new Vector3(1f, 1f, 1f));
+				Gizmos.color = Color.black;
+				Gizmos.DrawWireCube(positions[i], new Vector3(1f, 1f, 1f));
 			}
 		}
 	}
