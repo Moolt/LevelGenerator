@@ -39,7 +39,8 @@ public class AbstractValue : ValueProperty {
 
 	public int minIntVal, maxIntVal;
 	public float minFloatVal, maxFloatVal;
-	public Vector3 minVecVal, maxVecVal;
+	public Vector3 minVec3Val, maxVec3Val;
+	public Vector2 minVec2Val, maxVec2Val;
 	public List<Vector4> randomColors = new List<Vector4>(0);
 	public bool showPreview = true; //Used by OnDrawGizmosSelected
 
@@ -73,17 +74,20 @@ public class AbstractValue : ValueProperty {
 	//Draw a preview Gizmo, if showPreview is enabled
 	//For int and float, a disc for the min and max values is drawn
 	//For vector3, a box for each min and max value is drawn
-	void OnDrawGizmosSelected(){
+	public override void DrawEditorGizmos(){
 		if (component != null && showPreview) {
 			if (IsSelectedOfType (typeof(int))) {
-				EditorGUIExtension.RadiusDisc (transform.position, minIntVal, Color.yellow);
+				EditorGUIExtension.RadiusDisc (transform.position, minIntVal, Color.red);
 				EditorGUIExtension.RadiusDisc (transform.position, maxIntVal, Color.green);
 			} else if (IsSelectedOfType (typeof(Single))) {
-				EditorGUIExtension.RadiusDisc (transform.position, minFloatVal, Color.yellow);
+				EditorGUIExtension.RadiusDisc (transform.position, minFloatVal, Color.red);
 				EditorGUIExtension.RadiusDisc (transform.position, maxFloatVal, Color.green);
 			} else if (IsSelectedOfType(typeof(Vector3))){
-				EditorGUIExtension.DrawPreviewCube (transform.position, minVecVal, Color.yellow);
-				EditorGUIExtension.DrawPreviewCube (transform.position, maxVecVal, Color.green);
+				EditorGUIExtension.DrawPreviewCube (transform.position, minVec3Val, Color.red);
+				EditorGUIExtension.DrawPreviewCube (transform.position, maxVec3Val, Color.green);
+			} else if (IsSelectedOfType(typeof(Vector2))){
+				EditorGUIExtension.AreaRect(minVec2Val, transform.position, Color.red);
+				EditorGUIExtension.AreaRect(maxVec2Val, transform.position, Color.green);
 			}
 		}
 	}
@@ -93,12 +97,15 @@ public class AbstractValue : ValueProperty {
 	//For bool, true of false are being returned with a chance of 50/50
 	//For color, a random color from the list is being returned
 	private object GetRandomValue(){
-		//UnityEngine.Random.InitState (System.DateTime.Now.Millisecond);
+		//Randomize the seed when in editor mode, but not durin generation process
+		if (Application.isEditor && SceneUpdater.IsActive) {
+			UnityEngine.Random.InitState (System.DateTime.Now.Millisecond);			
+		}
+
 		Type varType = Type.GetType (varInfo.Type);
 
 		if (varType == typeof(int)) {
 			return UnityEngine.Random.Range (minIntVal, maxIntVal);
-			//return (int)Mathf.Lerp((int)varInterval.MinValue, (int)varInterval.MaxValue, UnityEngine.Random.value);
 		}
 
 		else if (varType == typeof(float)) {
@@ -106,7 +113,11 @@ public class AbstractValue : ValueProperty {
 		}
 
 		else if (varType == typeof(Vector3)) {
-			return Vector3.Lerp (minVecVal, maxVecVal, UnityEngine.Random.value);
+			return Vector3.Lerp (minVec3Val, maxVec3Val, UnityEngine.Random.value);
+		}
+
+		else if (varType == typeof(Vector2)) {
+			return Vector2.Lerp (minVec2Val, maxVec2Val, UnityEngine.Random.value);
 		}
 
 		else if (varType == typeof(Color)) {

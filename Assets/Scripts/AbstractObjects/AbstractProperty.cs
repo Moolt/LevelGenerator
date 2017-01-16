@@ -2,11 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 
+public enum GizmoPreviewState { HIDDEN, ONSELECTION, ALWAYS }
 public enum PropertyType { INSTANTIATING, TRANSFORMING, MESHGENERATION };
 
 abstract public class AbstractProperty : MonoBehaviour {
 	private bool isDirty = false;
 	private ICollection<GameObject> generatedObjects = new List<GameObject> ();
+	private GizmoPreviewState previewState = GizmoPreviewState.ONSELECTION;
 
 	//Dirty flag used for components with delayed removal.
 	//Helps the generator to never execute a component twice
@@ -43,6 +45,26 @@ abstract public class AbstractProperty : MonoBehaviour {
 				meshFilter = gameObject.GetComponentInChildren<MeshFilter> ();
 			}
 			return meshFilter;
+		}
+	}
+
+	public GizmoPreviewState GizmoPreviewState{
+		get{ return previewState; }
+		set{ previewState = value; }
+	}
+
+	public virtual void DrawEditorGizmos (){
+	}
+
+	void OnDrawGizmos(){
+		if (previewState == GizmoPreviewState.ALWAYS) {
+			DrawEditorGizmos ();
+		}
+	}
+
+	void OnDrawGizmosSelected(){
+		if (previewState == GizmoPreviewState.ONSELECTION) {
+			DrawEditorGizmos ();
 		}
 	}
 

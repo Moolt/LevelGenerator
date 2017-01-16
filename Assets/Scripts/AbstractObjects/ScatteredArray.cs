@@ -23,7 +23,7 @@ public class ScatteredArray : MultiplyingProperty {
 	private MeshFilter meshFilter;
 	private int iterationsUntilOverflow = 150; //Max. amount of iteration until process stops
 
-	void OnDrawGizmos(){
+	public override void DrawEditorGizmos(){
 		Vector3[] positions = CalculatePositions ();
 		for (int i = 0; i < positions.Length; i++) {
 			if (MeshFound()) {

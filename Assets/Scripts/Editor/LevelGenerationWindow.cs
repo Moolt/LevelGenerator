@@ -35,11 +35,17 @@ public class ChunkInstantiator : ScriptableObject{
 		CleanUp ();
 	}
 
-	private void PushChildrenToStack(GameObject parent){
+	private void PushChildrenToStack(GameObject parent){		
+		Stack<Transform> children = new Stack<Transform>();
+
 		foreach (Transform t in parent.transform) {
 			if (t.gameObject.activeSelf) {
-				workStack.Push (t.gameObject);
+				children.Push (t);
 			}
+		}
+
+		while (children.Count > 0) {
+			workStack.Push (children.Pop().gameObject);
 		}
 	}
 
@@ -173,11 +179,11 @@ public class LevelGenerationWindow : EditorWindow {
 		DestroyOldCopy (); //Remove old generated chunk
 		OriginalChunk.SetActive (true); //Has to be active or else the copy could be inactive, too
 		MostRecentCopy = (GameObject)GameObject.Instantiate (OriginalChunk, OriginalChunk.transform.position , Quaternion.identity);
-		MostRecentCopy.tag = "ChunkCopy";
 		OriginalChunk.SetActive (false);
 
 		ChunkInstantiator generator = ScriptableObject.CreateInstance<ChunkInstantiator> ();
 		generator.InstiantiateChunk (MostRecentCopy);
+		MostRecentCopy.tag = "ChunkCopy";
 		durationMillis = DateTime.Now.Millisecond - startMillis;
 	}
 

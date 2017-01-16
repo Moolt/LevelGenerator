@@ -37,9 +37,11 @@ public class ObjectDocking : TransformingProperty {
 
 	//Called from the EditorScript when the object has been modified / moved
 	public void UpdateOffset(){
-		Vector3[] corners = ParentsAbstractBounds.Corners;
-		offset = transform.position - corners [cornerIndex];
-		offsetRoomMagnitude = ParentsAbstractBounds.Bounds.magnitude;
+		if (ParentsAbstractBounds != null) {
+			Vector3[] corners = ParentsAbstractBounds.Corners;
+			offset = transform.position - corners [cornerIndex];
+			offsetRoomMagnitude = ParentsAbstractBounds.Bounds.magnitude;
+		}
 	}
 
 	//Used by Object Arrays to change docking position

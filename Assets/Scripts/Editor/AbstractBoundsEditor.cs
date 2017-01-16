@@ -5,23 +5,30 @@ using UnityEditor;
 
 [CustomEditor (typeof(AbstractBounds))]
 public class AbstractBoundsEditor : Editor {
+	private AbstractBounds abstractBounds;
+
+	void OnEnable(){
+		abstractBounds = target as AbstractBounds;
+	}
 
 	public override void OnInspectorGUI(){
 		if (SceneUpdater.IsActive) {
-			AbstractBounds varBounds = (AbstractBounds)target;
-			ITransformable[] children = varBounds.gameObject.GetComponents<ITransformable> ();
+			abstractBounds.GizmoPreviewState = (GizmoPreviewState)EditorGUILayout.EnumPopup ("Gizmo visibility", abstractBounds.GizmoPreviewState);
+			EditorGUILayout.Space ();
+
+			ITransformable[] children = abstractBounds.gameObject.GetComponents<ITransformable> ();
 
 			if (DrawDefaultInspector ()) {
 				//Max size values cant be smaller that min size
 			
-				ClampValues (varBounds);
+				ClampValues (abstractBounds);
 
 				//Update bounds of all objects implementing the interface
-				ApplySize (children, varBounds);
+				ApplySize (children, abstractBounds);
 			}
 
 			if (GUILayout.Button ("Randomize Size")) {
-				varBounds.RandomizeSize (children);
+				abstractBounds.RandomizeSize (children);
 			}
 		}
 	}

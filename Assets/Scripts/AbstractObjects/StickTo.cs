@@ -12,7 +12,7 @@ public class StickTo : TransformingProperty {
 	private Collider attachedCollider;
 	private Vector3 origin;
 
-	void OnDrawGizmos(){
+	public override void DrawEditorGizmos (){
 		Logic ();
 
 		if (hit.collider != null && attachedCollider != null) {
@@ -45,17 +45,13 @@ public class StickTo : TransformingProperty {
 	private Vector3 Logic(){
 		attachedCollider = (Collider) GetComponentInChildren<Collider> ();
 
-		if (!SceneUpdater.IsActive) {
-			int i = 0;
-		}
-
 		if (attachedCollider != null) {
 			//Collider itselt only stores the center + position in world coordinates
 			//Calculate the center to substract it from the final position
 			//The origin is 0,0,0 - if the center is any other than the origin, the offset will be removed
 			Vector3 center = attachedCollider.bounds.center - transform.position;
 
-			origin = attachedCollider.bounds.center - Vector3.Scale (attachedCollider.bounds.size, stickDirection) * 0.4f;
+			origin = attachedCollider.bounds.center - Vector3.Scale (attachedCollider.bounds.size, stickDirection) * 0.49f;
 
 			Ray ray = new Ray (origin, stickDirection);
 			Physics.Raycast (ray, out hit);
@@ -83,16 +79,4 @@ public class StickTo : TransformingProperty {
 	public override int ExecutionOrder{
 		get { return 5; }
 	}
-
-	/*private Vector3 ActualCenter{
-		get{
-			if (attachedCollider != null) {
-				attachedCollider.bounds.max
-				Vector3 extends = attachedCollider.bounds.extents;
-				return new Vector3 (extends.x, extends.y, extends.z);
-			} else {
-				return Vector3.one;
-			}
-		}
-	}*/
 }

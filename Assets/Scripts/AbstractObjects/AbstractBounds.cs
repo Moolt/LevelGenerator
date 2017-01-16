@@ -16,7 +16,7 @@ public class AbstractBounds : TransformingProperty, IObjectBounds {
 
 	private List<Vector3> corners;
 
-	public void OnDrawGizmosSelected(){
+	public override void DrawEditorGizmos(){
 		Gizmos.color = (fixedSize) ? Color.yellow : Color.white;
 		Vector3 pos = transform.position;
 		pos.y = minSize.y / 2f;

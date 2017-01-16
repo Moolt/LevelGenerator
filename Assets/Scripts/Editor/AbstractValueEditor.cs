@@ -8,7 +8,7 @@ using System;
 
 [CustomEditor (typeof(AbstractValue))]
 public class AbstractValueEditor : Editor {
-	public List<string> supportedTypes = new List<string>{ "Color", "Single", "Vector3", "Int32" };
+	public List<string> supportedTypes = new List<string>{ "Color", "Single", "Vector3", "Vector2", "Int32" };
 	public List<AbstractVariableInfo> variableInfos = new List<AbstractVariableInfo>();
 	public List<string> variableNames = new List<string>();
 	public AbstractValue aValue;
@@ -22,9 +22,10 @@ public class AbstractValueEditor : Editor {
 
 	public override void OnInspectorGUI(){
 		if (SceneUpdater.IsActive) {
-			
-			aValue.component = EditorGUILayout.ObjectField ("Target", aValue.component, typeof(Component), true) as Component;
+			aValue.GizmoPreviewState = (GizmoPreviewState)EditorGUILayout.EnumPopup ("Gizmo visibility", aValue.GizmoPreviewState);
+			EditorGUILayout.Space ();
 
+			aValue.component = EditorGUILayout.ObjectField ("Target", aValue.component, typeof(Component), true) as Component;
 			EditorGUILayout.Space ();
 
 			if (aValue.component != null) {
@@ -64,8 +65,11 @@ public class AbstractValueEditor : Editor {
 					aValue.minFloatVal = EditorGUILayout.FloatField ("Min value", aValue.minFloatVal);
 					aValue.maxFloatVal = EditorGUILayout.FloatField ("Max value", aValue.maxFloatVal);
 				} else if (aValue.IsSelectedOfType (typeof(Vector3))) {
-					aValue.minVecVal = EditorGUILayout.Vector3Field ("Min value", aValue.minVecVal);
-					aValue.maxVecVal = EditorGUILayout.Vector3Field ("Max value", aValue.maxVecVal);
+					aValue.minVec3Val = EditorGUILayout.Vector3Field ("Min value", aValue.minVec3Val);
+					aValue.maxVec3Val = EditorGUILayout.Vector3Field ("Max value", aValue.maxVec3Val);
+				}else if (aValue.IsSelectedOfType (typeof(Vector2))) {
+					aValue.minVec2Val = EditorGUILayout.Vector2Field ("Min value", aValue.minVec2Val);
+					aValue.maxVec2Val = EditorGUILayout.Vector2Field ("Max value", aValue.maxVec2Val);
 				} else if (aValue.IsSelectedOfType (typeof(bool))) {
 					
 				} else if (aValue.IsSelectedOfType (typeof(Color))) {

@@ -19,6 +19,9 @@ public class WildcardAssetEditor : Editor {
 
 	public override void OnInspectorGUI(){
 		if (SceneUpdater.IsActive) {
+			wildcard.GizmoPreviewState = (GizmoPreviewState)EditorGUILayout.EnumPopup ("Gizmo visibility", wildcard.GizmoPreviewState);
+			EditorGUILayout.Space ();
+
 			//Update the list
 			getTarget.Update ();
 

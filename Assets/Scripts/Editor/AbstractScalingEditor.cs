@@ -11,7 +11,10 @@ public class AbstractScalingEditor : Editor {
 	}
 
 	public override void OnInspectorGUI(){
-		if (SceneUpdater.IsActive) {			
+		if (SceneUpdater.IsActive) {
+			aScaling.GizmoPreviewState = (GizmoPreviewState)EditorGUILayout.EnumPopup ("Gizmo visibility", aScaling.GizmoPreviewState);
+			EditorGUILayout.Space ();
+
 			aScaling.uniformScaling = EditorGUILayout.Toggle ("Uniform scale", aScaling.uniformScaling);
 			aScaling.maxVal = EditorGUILayout.DelayedIntField ("Interval max value", aScaling.maxVal);
 			aScaling.maxVal = Mathf.Max (1, aScaling.maxVal);

@@ -14,15 +14,16 @@ public class ObjectDockingEditor : Editor {
 	public override void OnInspectorGUI(){
 		if (SceneUpdater.IsActive) {
 			child.UpdateOffset ();
-
 			child.interpolationMethod = (CoordinateType)EditorGUILayout.EnumPopup ("Interpolation method", child.interpolationMethod);
 			child.offset = EditorGUILayout.Vector3Field ("Offset", child.offset);
+			//SceneUpdater.UpdateScene ();
 		}
 	}
 
 	public void OnSceneGUI(){
 		if (SceneUpdater.IsActive) {
 			ObjectDocking child = target as ObjectDocking;
+			child.UpdateOffset ();
 			Vector3[] corners = child.ParentsAbstractBounds.Corners;
 
 			//Drawing the Grid

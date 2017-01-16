@@ -12,6 +12,8 @@ public class ScatteredArrayEditor : Editor {
 
 	public override void OnInspectorGUI(){
 		if (SceneUpdater.IsActive) {
+			sArray.GizmoPreviewState = (GizmoPreviewState)EditorGUILayout.EnumPopup ("Gizmo visibility", sArray.GizmoPreviewState);
+			EditorGUILayout.Space ();
 
 			if (sArray.hasOverflow && !sArray.autoFill) {
 				EditorGUILayout.HelpBox ("Overflow detected. Please reduce the amount of copies.", MessageType.Error);

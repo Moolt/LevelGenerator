@@ -26,7 +26,7 @@ public class AbstractScaling : TransformingProperty {
 		}
 	}
 
-	void OnDrawGizmosSelected(){
+	public override void DrawEditorGizmos(){
 		MeshFilter meshfilter = PreviewMesh;
 
 		if (meshfilter != null) {

@@ -162,7 +162,7 @@ public class WildcardAsset : InstantiatingProperty {
 		return sum;
 	}
 
-	void OnDrawGizmos(){
+	public override void DrawEditorGizmos(){
 		if (chancesList.Count > 0) {
 			
 			WildcardPreviewData previewData = new WildcardPreviewData ();

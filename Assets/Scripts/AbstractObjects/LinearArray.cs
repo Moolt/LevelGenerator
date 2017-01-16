@@ -25,7 +25,7 @@ public class LinearArray : MultiplyingProperty {
 		//offset = abstractBounds.transform.position;
 	}
 
-	void OnDrawGizmos(){		
+	public override void DrawEditorGizmos(){		
 		Vector3[] positions = CalculatePositions ();
 
 		transform.position = positions [0];

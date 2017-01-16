@@ -14,6 +14,8 @@ public class StickToEditor : Editor {
 
 	public override void OnInspectorGUI(){
 		if (SceneUpdater.IsActive) {
+			stickTo.GizmoPreviewState = (GizmoPreviewState)EditorGUILayout.EnumPopup ("Gizmo visibility", stickTo.GizmoPreviewState);
+			EditorGUILayout.Space ();
 
 			if (!ColliderFound ()) {
 				EditorGUILayout.HelpBox ("StickTo needs a collider on this or any child Game Objects in order to work.\n" +
@@ -30,23 +32,24 @@ public class StickToEditor : Editor {
 		}
 	}
 
-	public void OnSceneGUI(){		
-		float sizeFactor = HandleUtility.GetHandleSize (roomCenter);
+	public void OnSceneGUI(){
+		if (SceneUpdater.IsActive) {
+			float sizeFactor = HandleUtility.GetHandleSize (roomCenter);
 
-		if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.right, sizeFactor, Color.red)) {
-			stickTo.stickDirection = Vector3.right;
-		} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.up, sizeFactor, Color.green)) {
-			stickTo.stickDirection = Vector3.up;
-		} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.forward, sizeFactor, Color.blue)) {
-			stickTo.stickDirection = Vector3.forward;
-		} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.left, sizeFactor, Color.red)) {
-			stickTo.stickDirection = Vector3.left;
-		} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.down, sizeFactor, Color.green)) {
-			stickTo.stickDirection = Vector3.down;
-		} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.back, sizeFactor, Color.blue)) {
-			stickTo.stickDirection = Vector3.back;
+			if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.right, sizeFactor, Color.red)) {
+				stickTo.stickDirection = Vector3.right;
+			} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.up, sizeFactor, Color.green)) {
+				stickTo.stickDirection = Vector3.up;
+			} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.forward, sizeFactor, Color.blue)) {
+				stickTo.stickDirection = Vector3.forward;
+			} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.left, sizeFactor, Color.red)) {
+				stickTo.stickDirection = Vector3.left;
+			} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.down, sizeFactor, Color.green)) {
+				stickTo.stickDirection = Vector3.down;
+			} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.back, sizeFactor, Color.blue)) {
+				stickTo.stickDirection = Vector3.back;
+			}
 		}
-		SceneUpdater.UpdateScene ();
 	}
 
 	private string SticksTo(){

@@ -22,8 +22,4 @@ public class AbstractRotation : TransformingProperty {
 		rotationVector = rotationVector * rotationVal;
 		transform.Rotate (rotationVector);
 	}
-
-	void OnDrawGizmos(){
-
-	}
 }

@@ -12,6 +12,9 @@ public class LinearArrayEditor : Editor {
 
 	public override void OnInspectorGUI(){
 		if (SceneUpdater.IsActive) {
+			lArray.GizmoPreviewState = (GizmoPreviewState)EditorGUILayout.EnumPopup ("Gizmo visibility", lArray.GizmoPreviewState);
+			EditorGUILayout.Space ();
+
 			lArray.autoCount = EditorGUILayout.Toggle ("Autocount", lArray.autoCount);
 			lArray.closeGap = !EditorGUILayout.Toggle ("Auto spacing", !lArray.closeGap);
 
