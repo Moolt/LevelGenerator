@@ -97,14 +97,14 @@ public class PlaneGeneration : MeshProperty, ITransformable{
 
 		mesh.RecalculateBounds();
 		mesh.RecalculateNormals ();
-		mesh.Optimize();
+		;
 	}
 
 	public override void Preview(){
 		if (abstractBounds == null) {
 			abstractBounds = GetComponent<AbstractBounds> ();
 		}
-		this.roomBounds = abstractBounds.Bounds;
+		this.roomBounds = abstractBounds.Size;
 		GenerateMesh ();
 	}
 
@@ -112,7 +112,7 @@ public class PlaneGeneration : MeshProperty, ITransformable{
 		if (abstractBounds == null) {
 			abstractBounds = GetComponent<AbstractBounds> ();
 		}
-		this.roomBounds = abstractBounds.Bounds;
+		this.roomBounds = abstractBounds.Size;
 		GenerateMesh ();
 	}
 

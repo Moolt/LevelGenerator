@@ -106,6 +106,7 @@ abstract public class TransformingProperty : AbstractProperty{
 	}
 }
 
+[DisallowMultipleComponent]
 abstract public class MeshProperty : AbstractProperty{
 	public override int ExecutionOrder{
 		get { return 4; }

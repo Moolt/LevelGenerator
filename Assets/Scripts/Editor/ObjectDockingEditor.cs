@@ -42,7 +42,7 @@ public class ObjectDockingEditor : Editor {
 			for (int i = 0; i < corners.Length; i++) {
 				Handles.color = (i == child.SelectedCornerIndex) ? Color.red : Color.blue;
 
-				if (Handles.Button (corners [i], Quaternion.identity, 0.7f, 1f, Handles.SphereCap)) {
+				if (Handles.Button (corners [i], Quaternion.identity, 0.7f, 1f, Handles.DotHandleCap)) {
 					//Logic for moving etc. is inside the property itself
 					child.SelectedCornerIndex = i;
 				}

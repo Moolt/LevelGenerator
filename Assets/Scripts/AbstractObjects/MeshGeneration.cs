@@ -8,7 +8,7 @@ using UnityEditor;
 [RequireComponent (typeof(MeshFilter))]
 [RequireComponent (typeof(MeshRenderer))]
 [DisallowMultipleComponent]
-public class MeshGeneration : MeshProperty, ITransformable{
+public class MeshGeneration : MeshProperty{
 
 	private Vector3 roomBounds;
 	[Range(1f, 5f)]
@@ -95,7 +95,7 @@ public class MeshGeneration : MeshProperty, ITransformable{
 		Vector3[] normals = new Vector3[]
 		{
 			// Bottom
-			down, down, down, down,
+			up, up, up, up,
 
 			// Left
 			left, left, left, left,
@@ -110,7 +110,7 @@ public class MeshGeneration : MeshProperty, ITransformable{
 			right, right, right, right,
 
 			// Top
-			up, up, up, up
+			down, down, down, down
 		};
 		#endregion	
 
@@ -182,14 +182,14 @@ public class MeshGeneration : MeshProperty, ITransformable{
 
 		mesh.RecalculateBounds();
 		mesh.RecalculateNormals ();
-		mesh.Optimize();
+		;
 	}
 
 	public override void Preview(){
 		if (abstractBounds == null) {
 			abstractBounds = GetComponent<AbstractBounds> ();
 		}
-		this.roomBounds = abstractBounds.Bounds;
+		this.roomBounds = abstractBounds.Size;
 		GenerateMesh ();
 		UpdateMeshCollider ();
 	}

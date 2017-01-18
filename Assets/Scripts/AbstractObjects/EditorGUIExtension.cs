@@ -38,4 +38,21 @@ public static class EditorGUIExtension {
 		Handles.DrawDottedLine (position, position + direction * sizeFactor, 3.5f);
 		return Handles.Button (position + direction * sizeFactor, Quaternion.identity, sizeFactor / 5f, sizeFactor / 5f, Handles.SphereCap);
 	}
+
+	public static Vector3 DirectionHandleVec(Vector3 position, float sizeFactor, Vector3 initialDir, Vector3 axis){
+		if (axis.x == 1f && EditorGUIExtension.DirectionHandle (position, Vector3.right, sizeFactor, Color.red)) {
+			return Vector3.right;
+		} else if (axis.y == 1f && EditorGUIExtension.DirectionHandle (position, Vector3.up, sizeFactor, Color.green)) {
+			return Vector3.up;
+		} else if (axis.z == 1f && EditorGUIExtension.DirectionHandle (position, Vector3.forward, sizeFactor, Color.blue)) {
+			return Vector3.forward;
+		} else if (axis.x == 1f && EditorGUIExtension.DirectionHandle (position, Vector3.left, sizeFactor, Color.red)) {
+			return Vector3.left;
+		} else if (axis.y == 1f &&EditorGUIExtension.DirectionHandle (position, Vector3.down, sizeFactor, Color.green)) {
+			return Vector3.down;
+		} else if (axis.z == 1f && EditorGUIExtension.DirectionHandle (position, Vector3.back, sizeFactor, Color.blue)) {
+			return Vector3.back;
+		}
+		return initialDir;
+	}
 }

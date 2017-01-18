@@ -101,7 +101,7 @@ public class ScatteredArray : MultiplyingProperty {
 			return GetRandomPosInRect(rectArea, meshSize);
 		}
 		if (areaType == AreaType.ABSTRACTBOUNDS) {
-			Vector3 bounds = AbstractBounds.Bounds;
+			Vector3 bounds = AbstractBounds.Size;
 			Vector2 boundsRect = new Vector2 (bounds.x, bounds.z);
 			return GetRandomPosInRect(boundsRect, meshSize);
 		}

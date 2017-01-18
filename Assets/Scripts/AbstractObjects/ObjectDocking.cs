@@ -25,7 +25,7 @@ public class ObjectDocking : TransformingProperty {
 
 		if (corners.Length > 0) {
 			Vector3 corner = corners [cornerIndex];
-			float currentSizeMagnitude = ParentsAbstractBounds.Bounds.magnitude;
+			float currentSizeMagnitude = ParentsAbstractBounds.Size.magnitude;
 
 			if (interpolationMethod == CoordinateType.ABSOLUTE) {
 				this.transform.position = corner + offset;
@@ -40,7 +40,7 @@ public class ObjectDocking : TransformingProperty {
 		if (ParentsAbstractBounds != null) {
 			Vector3[] corners = ParentsAbstractBounds.Corners;
 			offset = transform.position - corners [cornerIndex];
-			offsetRoomMagnitude = ParentsAbstractBounds.Bounds.magnitude;
+			offsetRoomMagnitude = ParentsAbstractBounds.Size.magnitude;
 		}
 	}
 

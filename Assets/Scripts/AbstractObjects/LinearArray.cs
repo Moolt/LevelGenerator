@@ -56,7 +56,7 @@ public class LinearArray : MultiplyingProperty {
 		Vector3 startPosition = transform.position;
 		int calculatedCount = duplicateCount;
 		float calculatedSpace;
-		Vector3 bounds = abstractBounds.Bounds;
+		Vector3 bounds = abstractBounds.Size;
 		//The positions the original object will stick to the variableBounds (room). Factors in the models size.
 		Vector3 boundsOrigin = new Vector3 (bounds.x * -0.5f + meshSize.x / 2f, meshSize.y / 2f, bounds.z * -0.5f + meshSize.z / 2f) + abstractBounds.transform.position;
 		//The right, forward and up vectors, depending on the direction the array should be applied to

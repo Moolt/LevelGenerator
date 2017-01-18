@@ -65,7 +65,7 @@ public class ScatteredArrayEditor : Editor {
 		}
 
 		if (sArray.areaType == AreaType.ABSTRACTBOUNDS) {
-			Vector3 bounds = sArray.AbstractBounds.Bounds;
+			Vector3 bounds = sArray.AbstractBounds.Size;
 			Vector3 origin = sArray.AbstractBounds.transform.position;
 			Vector2 rect = new Vector2 (bounds.x, bounds.z);
 			EditorGUIExtension.AreaRect (rect, origin, Color.yellow);

@@ -35,20 +35,7 @@ public class StickToEditor : Editor {
 	public void OnSceneGUI(){
 		if (SceneUpdater.IsActive) {
 			float sizeFactor = HandleUtility.GetHandleSize (roomCenter);
-
-			if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.right, sizeFactor, Color.red)) {
-				stickTo.stickDirection = Vector3.right;
-			} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.up, sizeFactor, Color.green)) {
-				stickTo.stickDirection = Vector3.up;
-			} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.forward, sizeFactor, Color.blue)) {
-				stickTo.stickDirection = Vector3.forward;
-			} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.left, sizeFactor, Color.red)) {
-				stickTo.stickDirection = Vector3.left;
-			} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.down, sizeFactor, Color.green)) {
-				stickTo.stickDirection = Vector3.down;
-			} else if (EditorGUIExtension.DirectionHandle (roomCenter, Vector3.back, sizeFactor, Color.blue)) {
-				stickTo.stickDirection = Vector3.back;
-			}
+			stickTo.stickDirection = EditorGUIExtension.DirectionHandleVec (roomCenter, sizeFactor, stickTo.stickDirection, Vector3.one);
 		}
 	}
 

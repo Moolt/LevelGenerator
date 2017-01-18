@@ -30,6 +30,7 @@ public class AbstractBoundsEditor : Editor {
 			if (GUILayout.Button ("Randomize Size")) {
 				abstractBounds.RandomizeSize (children);
 			}
+			SceneUpdater.UpdateScene ();
 		}
 	}
 
@@ -49,7 +50,7 @@ public class AbstractBoundsEditor : Editor {
 		
 	private void ApplySize(ITransformable[] variableObjects, AbstractBounds variableBounds){
 		Vector3 lerpedSize = Vector3.Lerp (variableBounds.minSize, variableBounds.maxSize, variableBounds.lerp);
-		variableBounds.Bounds = lerpedSize;
+		variableBounds.Size = lerpedSize;
 		variableBounds.UpdateVariableBoundsDependencies (variableObjects);
 	}
 }
