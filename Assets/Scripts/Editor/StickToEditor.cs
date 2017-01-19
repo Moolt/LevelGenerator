@@ -29,6 +29,7 @@ public class StickToEditor : Editor {
 			stickTo.distance = Mathf.Min (stickTo.MaxDistance, stickTo.distance);
 			stickTo.distance = EditorGUILayout.Slider ("Distance", stickTo.distance, 0f, stickTo.MaxDistance);
 			stickTo.distance = Mathf.Max (0f, stickTo.distance);
+			SceneUpdater.UpdateScene ();
 		}
 	}
 

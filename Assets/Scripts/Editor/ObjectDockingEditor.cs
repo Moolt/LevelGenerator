@@ -14,7 +14,7 @@ public class ObjectDockingEditor : Editor {
 	public override void OnInspectorGUI(){
 		if (SceneUpdater.IsActive) {
 			child.UpdateOffset ();
-			child.interpolationMethod = (CoordinateType)EditorGUILayout.EnumPopup ("Interpolation method", child.interpolationMethod);
+			child.offsetType = (OffsetType)EditorGUILayout.EnumPopup ("Interpolation method", child.offsetType);
 			child.offset = EditorGUILayout.Vector3Field ("Offset", child.offset);
 			//SceneUpdater.UpdateScene ();
 		}

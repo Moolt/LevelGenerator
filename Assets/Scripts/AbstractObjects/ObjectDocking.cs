@@ -2,13 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public enum CoordinateType { ABSOLUTE, PERCENTAGE }
+public enum OffsetType { ABSOLUTE, RELATIVE, RELATIVEUNIFORM }
 
 [DisallowMultipleComponent]
 public class ObjectDocking : TransformingProperty {
 
-	public CoordinateType interpolationMethod;
+	public OffsetType offsetType;
 	public float offsetRoomMagnitude;
+	public Vector3 offsetRoomMagnitudeVec;
 	public int cornerIndex;
 	public Vector3 offset;
 
@@ -27,10 +28,12 @@ public class ObjectDocking : TransformingProperty {
 			Vector3 corner = corners [cornerIndex];
 			float currentSizeMagnitude = ParentsAbstractBounds.Size.magnitude;
 
-			if (interpolationMethod == CoordinateType.ABSOLUTE) {
+			if (offsetType == OffsetType.ABSOLUTE) {
 				this.transform.position = corner + offset;
-			} else {
-				this.transform.position = corner + (offset * (currentSizeMagnitude / offsetRoomMagnitude));
+			} else if (offsetType == OffsetType.RELATIVE) {
+				this.transform.position = corner + (Vector3.Scale (offset, RelativeOffsetFactor ()));
+			} else if (offsetType == OffsetType.RELATIVEUNIFORM) {
+				this.transform.position = corner + offset * (ParentsAbstractBounds.Size.magnitude / offsetRoomMagnitude);
 			}
 		}
 	}
@@ -41,7 +44,16 @@ public class ObjectDocking : TransformingProperty {
 			Vector3[] corners = ParentsAbstractBounds.Corners;
 			offset = transform.position - corners [cornerIndex];
 			offsetRoomMagnitude = ParentsAbstractBounds.Size.magnitude;
+			offsetRoomMagnitudeVec = ParentsAbstractBounds.Size;
 		}
+	}
+
+	private Vector3 RelativeOffsetFactor(){
+		Vector3 offsetFactor = Vector3.zero;
+		offsetFactor.x = ParentsAbstractBounds.Size.x / offsetRoomMagnitudeVec.x;
+		offsetFactor.y = ParentsAbstractBounds.Size.y / offsetRoomMagnitudeVec.y;
+		offsetFactor.z = ParentsAbstractBounds.Size.z / offsetRoomMagnitudeVec.z;
+		return offsetFactor;
 	}
 
 	//Used by Object Arrays to change docking position

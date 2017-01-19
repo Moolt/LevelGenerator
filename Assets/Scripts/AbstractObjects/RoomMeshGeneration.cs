@@ -90,6 +90,7 @@ public class RoomMeshGeneration : MeshProperty {
 	public override void Preview(){
 		Preparation ();
 		UpdateMesh ();
+		UpdateMeshCollider ();
 	}
 
 	private void UpdateMesh(){
@@ -122,5 +123,13 @@ public class RoomMeshGeneration : MeshProperty {
 	public override void Generate(){
 		Preparation ();
 		UpdateMesh ();
+		UpdateMeshCollider ();
+	}
+
+	private void UpdateMeshCollider(){
+		MeshCollider meshCollider = GetComponent<MeshCollider> () as MeshCollider;
+		if (meshCollider != null) {
+			meshCollider.sharedMesh = meshFilter.sharedMesh;
+		}
 	}
 }

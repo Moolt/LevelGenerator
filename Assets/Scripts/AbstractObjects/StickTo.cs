@@ -51,7 +51,7 @@ public class StickTo : TransformingProperty {
 			//The origin is 0,0,0 - if the center is any other than the origin, the offset will be removed
 			Vector3 center = attachedCollider.bounds.center - transform.position;
 
-			origin = attachedCollider.bounds.center - Vector3.Scale (attachedCollider.bounds.size, stickDirection) * 0.49f;
+			origin = attachedCollider.bounds.center - Vector3.Scale (attachedCollider.bounds.size, stickDirection) * 0.40f;
 
 			Ray ray = new Ray (origin, stickDirection);
 			Physics.Raycast (ray, out hit);

@@ -14,7 +14,7 @@ public class AbstractPositionEditor : Editor {
 		if (SceneUpdater.IsActive) {
 			aPosition.GizmoPreviewState = (GizmoPreviewState)EditorGUILayout.EnumPopup ("Gizmo visibility", aPosition.GizmoPreviewState);
 			EditorGUILayout.Space ();
-					
+
 			aPosition.useRaycast = EditorGUILayout.Toggle ("Raycast", aPosition.useRaycast);
 			aPosition.useAvailableSpace = EditorGUILayout.Toggle ("Fill", aPosition.useAvailableSpace);
 

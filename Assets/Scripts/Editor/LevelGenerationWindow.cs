@@ -192,6 +192,7 @@ public class LevelGenerationWindow : EditorWindow {
 		DestroyOldCopy (); //Destroy the generated chunk
 		OriginalChunk.SetActive(true);
 		SceneUpdater.SetActive (true);
+		SceneUpdater.UpdateScene ();
 	}
 
 	//If there is an instantiated copy of the chunk in the scene, remove it
