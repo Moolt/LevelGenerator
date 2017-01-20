@@ -121,6 +121,11 @@ public class AbstractBounds : TransformingProperty {
 		return new int[0];
 	}
 
+	public Vector3 FindCorner(int relativeIndex, Vector3 direction){
+		int[] absoluteIndices = CornerIndicesByDirection (direction);
+		return Corners [absoluteIndices [relativeIndex]];
+	}
+
 	public override bool DelayRemoval{
 		get { return true; }
 	}

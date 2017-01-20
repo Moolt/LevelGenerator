@@ -13,7 +13,7 @@ abstract public class AbstractProperty : MonoBehaviour {
 	//Dirty flag used for components with delayed removal.
 	//Helps the generator to never execute a component twice
 	public bool IsDirty { get { return isDirty; } set { isDirty = value; } }
-	public abstract int ExecutionOrder { get; }
+	public abstract float ExecutionOrder { get; }
 	//If true, the component only gets removed at the end of the generator process
 	//After execution the dirty flag will be set to true
 	public abstract bool DelayRemoval { get; }
@@ -75,7 +75,7 @@ abstract public class AbstractProperty : MonoBehaviour {
 }
 
 abstract public class ValueProperty : AbstractProperty{
-	public override int ExecutionOrder{
+	public override float ExecutionOrder{
 		get { return 1; }
 	}
 
@@ -85,7 +85,7 @@ abstract public class ValueProperty : AbstractProperty{
 }
 
 abstract public class InstantiatingProperty : AbstractProperty{
-	public override int ExecutionOrder{
+	public override float ExecutionOrder{
 		get { return 3; }
 	}
 
@@ -97,7 +97,7 @@ abstract public class InstantiatingProperty : AbstractProperty{
 abstract public class TransformingProperty : AbstractProperty{
 	private AbstractBounds abstractBounds;
 
-	public override int ExecutionOrder{
+	public override float ExecutionOrder{
 		get { return 2; }
 	}
 
@@ -107,8 +107,19 @@ abstract public class TransformingProperty : AbstractProperty{
 }
 
 [DisallowMultipleComponent]
+abstract public class DoorProperty : AbstractProperty{
+	public override float ExecutionOrder{
+		get { return 3.9f; }
+	}
+
+	public override bool DelayRemoval{
+		get { return true; }
+	}
+}
+
+[DisallowMultipleComponent]
 abstract public class MeshProperty : AbstractProperty{
-	public override int ExecutionOrder{
+	public override float ExecutionOrder{
 		get { return 4; }
 	}
 

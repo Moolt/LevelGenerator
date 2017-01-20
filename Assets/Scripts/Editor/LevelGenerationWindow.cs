@@ -23,7 +23,7 @@ public class ChunkInstantiator : ScriptableObject{
 
 	public void InstiantiateChunk(GameObject chunk){
 		workStack.Push (chunk);
-		chunk.tag = "Untagged";
+		//chunk.tag = "Untagged";
 
 		//Traversing, depth first
 		while(workStack.Count > 0){

@@ -76,7 +76,7 @@ public class StickTo : TransformingProperty {
 		}
 	}
 		
-	public override int ExecutionOrder{
+	public override float ExecutionOrder{
 		get { return 5; }
 	}
 }
