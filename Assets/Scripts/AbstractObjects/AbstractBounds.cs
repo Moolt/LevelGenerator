@@ -93,9 +93,9 @@ public class AbstractBounds : TransformingProperty {
 
 			Vector3 point = new Vector3 (Extends.x,  Extends.y, Extends.z);
 
-			//7  8  9 -> 16  17  18 -> 25 26 27
-			//4  5  6 -> 13  14  15 -> 22 23 24
-			//1  2  3 -> 10  11  12 -> 19 20 21
+			//6  7  8 -> 15  16  17 -> 24 25 26
+			//3  4  5 -> 12  13  14 -> 21 22 23
+			//0  1  2 -> 9   10  11 -> 18 19 20
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
 					for (int k = 0; k < 3; k++) {
@@ -103,7 +103,6 @@ public class AbstractBounds : TransformingProperty {
 					}
 				}
 			}
-
 			return corners.ToArray ();
 		}
 	}
@@ -124,6 +123,14 @@ public class AbstractBounds : TransformingProperty {
 	public Vector3 FindCorner(int relativeIndex, Vector3 direction){
 		int[] absoluteIndices = CornerIndicesByDirection (direction);
 		return Corners [absoluteIndices [relativeIndex]];
+	}
+
+	public Vector3[] RelativeCorners(params int[] corners){
+		List<Vector3> relCorners = new List<Vector3> ();
+		foreach (int index in corners) {
+			relCorners.Add (Corners[index] - transform.position);
+		}
+		return relCorners.ToArray ();
 	}
 
 	public override bool DelayRemoval{

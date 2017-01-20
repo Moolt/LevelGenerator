@@ -18,14 +18,14 @@ public class StickTo : TransformingProperty {
 		if (hit.collider != null && attachedCollider != null) {
 			Gizmos.color = Color.cyan;
 			Gizmos.DrawLine (origin, hit.point);
-			Gizmos.DrawSphere (hit.point - (Vector3.Scale (Vector3.one * 0.5f, stickDirection)), 0.8f);
+			Gizmos.DrawSphere (hit.point - (Vector3.Scale (Vector3.one * 0.3f, stickDirection)), 0.3f);
 		}
 
 		Gizmos.color = Color.red;
-		Gizmos.DrawSphere(objectPosition , 0.8f);
+		Gizmos.DrawSphere(objectPosition , 0.3f);
 		Gizmos.color = new Color(1f, 0f, 0f, .5f);
 		if (MeshFound()) {
-			Gizmos.DrawWireMesh (PreviewMesh.sharedMesh, objectPosition, Quaternion.identity, transform.localScale);
+			Gizmos.DrawWireMesh (PreviewMesh.sharedMesh, objectPosition, transform.rotation, transform.localScale);
 		}
 
 		if (updateInEditor) {

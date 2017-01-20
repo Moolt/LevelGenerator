@@ -25,12 +25,21 @@ public class DoorPositionsEditor : Editor {
 			serDoorPositions = new SerializedObject (doorPositions);
 			serDoorList = serDoorPositions.FindProperty ("doors");
 			int selectedIndex = doorPositions.doors.IndexOf (selectedDoor);
+			SerializedProperty serPreviewDoors = serDoorPositions.FindProperty ("previewDoors");
+
+			//PREVIEW DOOR toggle
+			EditorGUILayout.Space ();
+			string onOff = serPreviewDoors.boolValue ? "On" : "Off";
+			if (GUILayout.Button ("Mesh preview: " + onOff)) {
+				serPreviewDoors.boolValue = !serPreviewDoors.boolValue;
+			}
 
 			if (!SceneUpdater.HideGizmos) {
 				EditorGUILayout.Space ();
 				if (GUILayout.Button ("Enter edit mode")) {
 					SceneUpdater.HideGizmos = true;
 				}
+
 				EditorGUILayout.Space ();
 			}
 
@@ -61,6 +70,10 @@ public class DoorPositionsEditor : Editor {
 
 					if (GUILayout.Button ("x", GUILayout.Width (20))) {
 						serDoorList.DeleteArrayElementAtIndex (i);
+						//In case the selected door has been deleted
+						if (doorPositions.doors.IndexOf (selectedDoor) == i) {
+							selectedDoor = null;
+						}
 					}
 					EditorGUILayout.EndHorizontal ();
 				}
@@ -111,7 +124,6 @@ public class DoorPositionsEditor : Editor {
 			}
 
 			foreach (DoorDefinition door in doorPositions.doors) {
-				ClampPosition(door, doorPositions.AbstractBounds);
 				Handles.color = (door == selectedDoor) ? Color.red : Color.blue;
 				if (Handles.Button (door.Position, Quaternion.LookRotation(door.Direction), door.Extends.x, door.Extends.x, Handles.RectangleHandleCap)) {
 					selectedDoor = door;
@@ -120,18 +132,20 @@ public class DoorPositionsEditor : Editor {
 
 			if (selectedDoor != null) {
 				Vector3 horHandleDir = Vector3.Cross (Vector3.up, selectedDoor.Direction);
-				selectedDoor.Position = Handles.Slider (selectedDoor.Position, horHandleDir, selectedDoor.Extends.x * 1.3f, Handles.ArrowCap, 1f);
-				selectedDoor.Position = Handles.Slider (selectedDoor.Position, Vector3.up, selectedDoor.Extends.y * 1.3f, Handles.ArrowCap, 1f);
+				float sliderSize = HandleUtility.GetHandleSize (selectedDoor.Position);
+				selectedDoor.Position = Handles.Slider (selectedDoor.Position, horHandleDir, selectedDoor.Extends.x * sliderSize, Handles.ArrowCap, 1f);
+				selectedDoor.Position = Handles.Slider (selectedDoor.Position, Vector3.up, selectedDoor.Extends.y * sliderSize, Handles.ArrowCap, 1f);
 
-				//Clamp coordinates before calculating the offset
-				ClampPosition(selectedDoor, doorPositions.AbstractBounds);
+				//Eventhough the position is already being clamped in the preview function of doorsPositions,
+				//This clamp is important since several frames may pass before the next call of preview
+				doorPositions.ClampPosition (selectedDoor);
 
 				//Calculate Offset
 				selectedDoor.Offset = selectedDoor.Position - doorPositions.AbstractBounds.Corners[selectedDoor.CornerIndex];
 				Vector3 roomCenter = doorPositions.AbstractBounds.Center;
-				float sizeFactor = HandleUtility.GetHandleSize (roomCenter);
+				float directionHandleSize = HandleUtility.GetHandleSize (roomCenter) * 0.8f;
 
-				Vector3 newDirection = EditorGUIExtension.DirectionHandleVec (roomCenter, sizeFactor * 1.3f, selectedDoor.Direction, new Vector3(1f, 0f, 1f));
+				Vector3 newDirection = EditorGUIExtension.DirectionHandleVec (roomCenter, directionHandleSize, selectedDoor.Direction, new Vector3(1f, 0f, 1f));
 				if (newDirection != selectedDoor.Direction) {
 					selectedDoor.Direction = newDirection;
 					selectedDoor.CornerIndex = doorPositions.AbstractBounds.CornerIndicesByDirection (newDirection) [1];
@@ -141,45 +155,13 @@ public class DoorPositionsEditor : Editor {
 				int[] indices = doorPositions.AbstractBounds.CornerIndicesByDirection (selectedDoor.Direction);
 
 				foreach (int i in indices) {
-					if (Handles.Button (doorPositions.AbstractBounds.Corners [i], Quaternion.identity, .5f, .5f, Handles.DotHandleCap)) {
+					float dockHandleSize = HandleUtility.GetHandleSize (doorPositions.AbstractBounds.Corners[i]) * 0.1f;
+					if (Handles.Button (doorPositions.AbstractBounds.Corners [i], Quaternion.identity, dockHandleSize, dockHandleSize, Handles.DotHandleCap)) {
 						selectedDoor.Position = doorPositions.AbstractBounds.Corners [i];
 						selectedDoor.CornerIndex = i;
 					}
 				}
 			}
 		}
-	}		
-
-	//Hinders the door to be placed outside of the room
-	private void ClampPosition(DoorDefinition door, AbstractBounds bounds){
-		int[] cornerIndices = bounds.CornerIndicesByDirection (door.Direction);
-		if (cornerIndices.Length > 0) {
-			//Min and Max Points of the wall the door is facing
-			//As to the order of the corners in AbstractBounds, these are not always the actual min and max values
-			//The exceptions are handles by the clamp function below, which calculates min and max if they are unknown
-			Vector3 roomBottomLeft = bounds.Corners [cornerIndices [0]];
-			Vector3 roomTopRight = bounds.Corners [cornerIndices [cornerIndices.Length - 1]];
-
-			//Either (1,1,0) or (0,1,1). Y Axis is always the same since we always want to clamp on the Y-Axis
-			Vector3 clampFilter = VectorAbs (Vector3.Cross (door.Direction, Vector3.up) + Vector3.up);
-			//Clamp on all axis. Depending on the direction the door is facing, one axis' value is going to be discarded using the clampFilter
-			Vector3 clampedPos;
-			clampedPos.x = Clamp (door.Position.x, roomBottomLeft.x, roomTopRight.x, door.Extends.x);
-			clampedPos.y = Clamp (door.Position.y, roomBottomLeft.y, roomTopRight.y, door.Extends.y);
-			clampedPos.z = Clamp (door.Position.z, roomBottomLeft.z, roomTopRight.z, door.Extends.z);
-			door.Position = Vector3.Scale (clampedPos, clampFilter) + Vector3.Scale (door.Position, VectorAbs (door.Direction));
-		}
-	}
-
-	//Clamp function that calculated min and max. Border is used to include the doors size into the calculation
-	private float Clamp(float val, float lim1, float lim2, float border){
-		float min = Mathf.Min (lim1, lim2) + border;
-		float max = Mathf.Max (lim1, lim2) - border;
-		return Mathf.Clamp (val, min, max);
-	}
-
-	//Makes all values of a vector positive
-	private Vector3 VectorAbs(Vector3 vec){
-		return new Vector3(Mathf.Abs(vec.x), Mathf.Abs(vec.y), Mathf.Abs(vec.z));
 	}
 }

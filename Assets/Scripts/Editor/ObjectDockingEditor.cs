@@ -41,8 +41,9 @@ public class ObjectDockingEditor : Editor {
 			//When one handle is klicked, the corner index of the object docking component is set
 			for (int i = 0; i < corners.Length; i++) {
 				Handles.color = (i == child.SelectedCornerIndex) ? Color.red : Color.blue;
+				float handleSize = HandleUtility.GetHandleSize (corners [i]) * 0.1f;
 
-				if (Handles.Button (corners [i], Quaternion.identity, 0.7f, 1f, Handles.DotHandleCap)) {
+				if (Handles.Button (corners [i], Quaternion.identity, handleSize, handleSize, Handles.DotHandleCap)) {
 					//Logic for moving etc. is inside the property itself
 					child.SelectedCornerIndex = i;
 				}

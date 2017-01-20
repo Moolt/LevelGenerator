@@ -25,46 +25,15 @@ public class RoomMeshData{
 	private float height = 1f;
 	private float length = 1f;
 
-	//MeshInfo
-	private Vector3[] vertices;
-
-	public Vector3[] Vertices{
-		get{
-			if (dirty) {
-				vertices = new Vector3[] {
-					new Vector3 (-width, height, length),
-					new Vector3 (width, height, length),
-					new Vector3 (width, 0f, length),
-					new Vector3 (-width, 0f, length),
-					new Vector3 (width, height, -length),
-					new Vector3 (-width, height, -length),
-					new Vector3 (-width, 0f, -length),
-					new Vector3 (width, 0f, -length)
-				};
-				dirty = false;
-			}
-			return vertices;
-		}
-	}
-
-	public List<Vector3> NewVertices {
+	public List<Vector3> Vertices {
 		get;
 		set;
 	}
 
-	public List<int> NewTriangles {
+	public List<int> Triangles {
 		get;
 		set;
 	}
-
-	private int[][] tris = new int[][] {
-		new int[] { 0, 1, 2, 3 },
-		new int[] { 1, 4, 7, 2 },
-		new int[] { 4, 5, 6, 7 },
-		new int[] { 5, 0, 3, 6 },
-		new int[] { 3, 2, 7, 6 },
-		new int[] { 1, 0, 5, 4 }
-	};
 
 	public Vector3 Extends{
 		set{
@@ -84,32 +53,19 @@ public class RoomMeshData{
 		}
 	}
 
-	public int[][] Triangles{
-		get{
-			return tris;
-		}
-	}
-
-	public Vector3[] FaceVertices(int direction){
-		Vector3[] faceVertices = new Vector3[4];
-
-		for (int i = 0; i < faceVertices.Length; i++) {
-			faceVertices [i] = Vertices [Triangles [direction] [i]];
-		}
-		return faceVertices;
-	}
-
 	public void ConstructRoom(){
-		NewVertices = new List<Vector3> ();
-		NewTriangles = new List<int> ();
+		Vertices = new List<Vector3> ();
+		Triangles = new List<int> ();
 
-		PrepareCoordinateGrid (Vector3.forward);
-		PrepareCoordinateGrid (Vector3.back);
-		PrepareCoordinateGrid (Vector3.right);
-		PrepareCoordinateGrid (Vector3.left);
+		CalculateWallMesh (Vector3.forward);
+		CalculateWallMesh (Vector3.back);
+		CalculateWallMesh (Vector3.right);
+		CalculateWallMesh (Vector3.left);
+		BuildPlaneMesh (0, 6, 8, 2);
+		BuildPlaneMesh (20, 26, 24, 18);
 	}
 
-	public void PrepareCoordinateGrid(Vector3 direction){
+	public void CalculateWallMesh(Vector3 direction){
 		if (doors != null) {
 			Rect[] doorRects = GetDoorsAsRect (direction);
 			Rect wallRect = GetWallRect (direction);
@@ -117,13 +73,21 @@ public class RoomMeshData{
 			BuildCoordinateGrid (doorRects, wallRect);
 			DoorGridElement[] gridElements = PopulateGrid (doorRects);
 			BuildWallMesh(gridElements, direction);
-			//Vector3 recreatedOrigin = Vec2ToVec3 (_2DOrigin, bottomLeftOrigin, direction);
-			//Vector3 recreatedSize = Vec2ToVec3 (_2DSize, Extends * 2f, direction);
 		}
 	}
 
+	private void BuildPlaneMesh(params int[] cornerIndices){
+		Vertices.AddRange (abstractBounds.RelativeCorners (cornerIndices[0], cornerIndices[1], cornerIndices[2], cornerIndices[3]));
+		int length = Vertices.Count;
+		Triangles.AddRange (new int[]{ length - 4, length - 3, length - 1 });
+		Triangles.AddRange (new int[]{ length - 1, length - 3, length - 2 });
+	}
+
 	private void BuildWallMesh(DoorGridElement[] gridElements, Vector3 direction){
-		Vector3 backVec = abstractBounds.FindCorner (0, direction);
+		//Back Vector is used to transform a 2DVec back to a 3DVec
+		//It doesn't matter which point on the plane / wall it actually is, as long as it stores the 
+		//X or Y coordinate that is missing from the 2DVec. Subtract position to get coordinate in object space
+		Vector3 backVec = abstractBounds.FindCorner (0, direction) - abstractBounds.transform.position;
 		foreach (DoorGridElement gridElement in gridElements) {
 			if (!gridElement.IsInsideDoor) {
 				Rect elementRect = gridElement.Rect;
@@ -131,10 +95,17 @@ public class RoomMeshData{
 				Vector3 x1y2 = Vec2ToVec3 (new Vector2 (elementRect.position.x, elementRect.position.y + elementRect.height), backVec, direction);
 				Vector3 x2y2 = Vec2ToVec3 (elementRect.position + elementRect.size, backVec, direction);
 				Vector3 x2y1 = Vec2ToVec3 (new Vector2 (elementRect.position.x + elementRect.width, elementRect.position.y), backVec, direction);
-				NewVertices.AddRange (new Vector3[]{ x1y1, x1y2, x2y2, x2y1 });
-				int length = NewVertices.Count;
-				NewTriangles.AddRange (new int[]{ length - 4, length - 3, length - 1 });
-				NewTriangles.AddRange (new int[]{ length - 1, length - 3, length - 2 });
+				Vertices.AddRange (new Vector3[]{ x1y1, x1y2, x2y2, x2y1 });
+				int length = Vertices.Count;
+
+				//Walls should face inward. Triangle order therefore depends on the walls direction
+				if (direction == Vector3.forward || direction == Vector3.left) {
+					Triangles.AddRange (new int[]{ length - 4, length - 3, length - 1 });
+					Triangles.AddRange (new int[]{ length - 1, length - 3, length - 2 });
+				} else {
+					Triangles.AddRange (new int[]{ length - 1, length - 2, length - 4 });
+					Triangles.AddRange (new int[]{ length - 4, length - 2, length - 3 });
+				}
 			}
 		}
 	}
@@ -174,8 +145,8 @@ public class RoomMeshData{
 	}
 
 	private bool HasIntersectionWithDoor(Rect[] doorRects, Rect gridElementRect){
-		foreach (Rect doorRect in doorRects) {
-			if (doorRect.Overlaps (gridElementRect)) {
+		foreach (Rect doorRect in doorRects) {			
+			if (doorRect.Contains (gridElementRect.center)) {
 				return true;
 			}
 		}
@@ -298,30 +269,10 @@ public class RoomMeshGeneration : MeshProperty {
 		meshData.Extends = roomExtends;
 		meshData.ConstructRoom ();
 
-		mesh.vertices = meshData.NewVertices.ToArray ();
-		mesh.triangles = meshData.NewTriangles.ToArray ();
+		mesh.vertices = meshData.Vertices.ToArray ();
+		mesh.triangles = meshData.Triangles.ToArray ();
 
-		/*vertices = new List<Vector3> ();
-		triangles = new List<int> ();
-
-		for (int i = 0; i < 6; i++) {
-			MakeFace (i);
-		}
-
-		mesh.vertices = vertices.ToArray ();
-		mesh.triangles = triangles.ToArray ();*/
 		mesh.RecalculateNormals ();
-	}
-
-	void MakeFace(int direction){
-		vertices.AddRange (meshData.FaceVertices(direction));
-
-		triangles.Add (vertices.Count - 4);
-		triangles.Add (vertices.Count - 4 + 1);
-		triangles.Add (vertices.Count - 4 + 2);
-		triangles.Add (vertices.Count - 4);
-		triangles.Add (vertices.Count - 4 + 2);
-		triangles.Add (vertices.Count - 4 + 3);
 	}
 
 	public override void Generate(){
@@ -342,7 +293,7 @@ public class RoomMeshGeneration : MeshProperty {
 		DoorDefinitions doorDefinitions = GetComponent<DoorDefinitions> () as DoorDefinitions;
 		if (doorDefinitions != null) {
 			doors.Clear ();
-			doors.AddRange (doorDefinitions.doors);
+			doors.AddRange (doorDefinitions.RandomDoors);
 			meshData.Doors = doors;
 		}
 	}
