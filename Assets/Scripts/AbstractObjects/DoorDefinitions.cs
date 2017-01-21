@@ -25,6 +25,8 @@ public class DoorDefinitions : DoorProperty {
 	public OffsetType offsetType = OffsetType.ABSOLUTE;
 	public float doorSize;
 	public bool previewDoors = true;
+	public int minCount = 1;
+	public int maxCount = 1;
 
 	public override void Preview(){
 		UpdateDoors ();
@@ -32,8 +34,20 @@ public class DoorDefinitions : DoorProperty {
 
 	public override void Generate(){
 		UpdateDoors ();
+		ChooseRandomDoors ();
+	}
+
+	private void ChooseRandomDoors(){
 		randomDoors.Clear ();
-		randomDoors.AddRange (doors);
+		List<DoorDefinition> allDoors = new List<DoorDefinition> ();
+		allDoors.AddRange (doors);
+		int quantity = (int)(Mathf.Round (Random.value * (maxCount - minCount)) + minCount);
+
+		for (int i = 0; i < quantity; i++) {
+			int index = (int)(Mathf.Round((allDoors.Count - 1) * Random.value));
+			randomDoors.Add (allDoors [index]);
+			allDoors.RemoveAt (index);
+		}
 	}
 
 	//Updates positions with offset, clamps values
@@ -42,6 +56,8 @@ public class DoorDefinitions : DoorProperty {
 			door.Position = AbstractBounds.Corners [door.CornerIndex] + door.Offset;
 			ClampPosition (door);
 			door.RelPosition = door.Position - transform.position;
+			//The doorsize should never be larger thant the actual room
+			doorSize = Mathf.Clamp (doorSize, 1f, AbstractBounds.minSize.y);
 		}
 	}
 
