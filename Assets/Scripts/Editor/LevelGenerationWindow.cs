@@ -216,7 +216,7 @@ public class LevelGenerationWindow : EditorWindow {
 	private void CreateNewChunk(){
 		Restore ();
 		ShowSaveFirstDialog ();
-		DestroyImmediate (OriginalChunk);
+		DestroyImmediate (OriginalChunk, true);
 		OriginalChunk = (GameObject)GameObject.Instantiate(Resources.Load("EmptyChunk"));
 		SceneUpdater.UpdateScene ();
 	}
@@ -248,7 +248,7 @@ public class LevelGenerationWindow : EditorWindow {
 			//Are stored in
 			string filePath = chunkFolderName + "/" + System.IO.Path.GetFileNameWithoutExtension (dialogPath);
 
-			DestroyImmediate (OriginalChunk);
+			DestroyImmediate (OriginalChunk, true);
 			OriginalChunk = (GameObject)GameObject.Instantiate (Resources.Load (filePath));
 			SceneUpdater.UpdateScene ();
 		}

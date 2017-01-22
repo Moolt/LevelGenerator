@@ -86,6 +86,7 @@ public class RoomMeshData{
 		}
 	}
 
+	//Used for floor and ceil
 	private void BuildPlaneMesh(int subMesh, Vector3 direction, params int[] cornerIndices){
 		Triangles [subMesh] = new List<int> ();
 		Vertices.AddRange (abstractBounds.RelativeCorners (cornerIndices[0], cornerIndices[1], cornerIndices[2], cornerIndices[3]));
@@ -130,8 +131,8 @@ public class RoomMeshData{
 		for (int i = 0; i < vertCount; i++) {
 			int index = Vertices.Count - vertCount + i;
 			Vector2 uv = Vec3ToVec2 (Vertices [index], direction);
-			uv.x %= tiling;
-			uv.y %= tiling;
+			uv.x *= tiling;
+			uv.y *= tiling;
 			planeUVs [i] = uv;
 		}
 		UVs.AddRange (planeUVs);
@@ -170,7 +171,7 @@ public class RoomMeshData{
 		}
 		return gridElements.ToArray ();
 	}
-
+		
 	private bool HasIntersectionWithDoor(Rect[] doorRects, Rect gridElementRect){
 		foreach (Rect doorRect in doorRects) {			
 			if (doorRect.Contains (gridElementRect.center)) {
@@ -180,6 +181,8 @@ public class RoomMeshData{
 		return false;
 	}
 
+	//Retrieves all x- and y-values from both the wall and all doors
+	//Doubles are removed and the lists are sorted
 	private void BuildCoordinateGrid(Rect[] doorRects, Rect wallRect){
 		xCoordinates.Clear ();
 		yCoordinates.Clear ();
@@ -192,7 +195,7 @@ public class RoomMeshData{
 		xCoordinates.Sort ();
 		yCoordinates.Sort ();
 	}
-
+		
 	private void AddRectCoords(Rect rect){
 		AddCoord (xCoordinates, rect.xMin);
 		AddCoord (xCoordinates, rect.xMax);
@@ -206,9 +209,9 @@ public class RoomMeshData{
 		}
 	}
 
+	//Transforms the wall defined by the direction to 2D and creates a Rect
 	private Rect GetWallRect(Vector3 direction){
 		Vector3 origin = new Vector3 (-Extends.x, 0f, -Extends.z);
-		//Vector3 bottomLeftOrigin = abstractBounds.FindCorner (0, direction);
 		Vector2 _2DOrigin = Vec3ToVec2 (origin, direction);
 		Vector2 _2DSize = Vec3ToVec2 (Size, direction);
 		return new Rect (_2DOrigin, _2DSize);
@@ -290,7 +293,12 @@ public class RoomMeshGenerator : MeshProperty {
 		meshFilter = GetComponent<MeshFilter> ();
 		meshRenderer = GetComponent<MeshRenderer> ();
 		meshData = new RoomMeshData (abstractBounds);
+
+		if(meshFilter.sharedMesh == null){
+			meshFilter.sharedMesh = new Mesh ();
+		}
 		mesh = meshFilter.sharedMesh;
+
 		roomExtends = abstractBounds.Extends;
 
 		if (Application.isEditor) {

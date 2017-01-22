@@ -2,9 +2,10 @@
 using System.Collections;
 
 public class StickTo : TransformingProperty {
+	public bool updateInEditor = false;
 	public Vector3 objectPosition;
 	public Vector3 stickDirection;
-	public bool updateInEditor = false;
+	public float tolerance = 1f;
 	public float distance = 0f;
 	public RaycastHit hit;
 
@@ -18,11 +19,13 @@ public class StickTo : TransformingProperty {
 		if (hit.collider != null && attachedCollider != null) {
 			Gizmos.color = Color.cyan;
 			Gizmos.DrawLine (origin, hit.point);
-			Gizmos.DrawSphere (hit.point - (Vector3.Scale (Vector3.one * 0.3f, stickDirection)), 0.3f);
+			Gizmos.DrawSphere (hit.point - (Vector3.Scale (Vector3.one * 0.125f, stickDirection)), 0.125f);
 		}
 
 		Gizmos.color = Color.red;
-		Gizmos.DrawSphere(objectPosition , 0.3f);
+		Gizmos.DrawSphere(objectPosition , 0.125f);
+		Gizmos.color = Color.green;
+		Gizmos.DrawSphere(origin , 0.125f);
 		Gizmos.color = new Color(1f, 0f, 0f, .5f);
 		if (MeshFound()) {
 			Gizmos.DrawWireMesh (PreviewMesh.sharedMesh, objectPosition, transform.rotation, transform.localScale);
@@ -51,7 +54,7 @@ public class StickTo : TransformingProperty {
 			//The origin is 0,0,0 - if the center is any other than the origin, the offset will be removed
 			Vector3 center = attachedCollider.bounds.center - transform.position;
 
-			origin = attachedCollider.bounds.center - Vector3.Scale (attachedCollider.bounds.size, stickDirection) * 0.40f;
+			origin = attachedCollider.bounds.center - Vector3.Scale (attachedCollider.bounds.size, stickDirection) * (-0.48f + tolerance);
 
 			Ray ray = new Ray (origin, stickDirection);
 			Physics.Raycast (ray, out hit);
