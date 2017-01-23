@@ -13,6 +13,7 @@ public class RoomMeshData{
 	private List<float> xCoordinates = new List<float> ();
 	private List<float> yCoordinates = new List<float> ();
 	private float tiling = 32;
+    private bool isDirty = true;
 
 	public RoomMeshData(AbstractBounds abstractBounds){
 		this.abstractBounds = abstractBounds;
@@ -40,9 +41,12 @@ public class RoomMeshData{
 
 	public Vector3 Extends{
 		set{
-			width = value.x;
-			height = value.y * 2f;
-			length = value.z;
+            if(value.x != width || value.y * 2f != height || value.z != length) {
+			    width = value.x;
+			    height = value.y * 2f;
+			    length = value.z;
+                isDirty = true;
+            }
 		}
 		get{
 			return new Vector3 (width, height, length);
@@ -51,7 +55,10 @@ public class RoomMeshData{
 
 	public float Tiling {
 		set {
-			tiling = value;
+            if(tiling != value){
+			    tiling = value;
+                isDirty = true;
+            }
 		}
 	}
 
@@ -62,16 +69,19 @@ public class RoomMeshData{
 	}
 
 	public void ConstructRoom(){
-		Vertices = new List<Vector3> ();
-		Triangles = new List<int>[6];
-		UVs = new List<Vector2> ();
+        if (isDirty) {
+		    Vertices = new List<Vector3> ();
+		    Triangles = new List<int>[6];
+		    UVs = new List<Vector2> ();
 
-		CalculateWallMesh (0, Vector3.forward);
-		CalculateWallMesh (1, Vector3.back);
-		CalculateWallMesh (2, Vector3.right);
-		CalculateWallMesh (3, Vector3.left);
-		BuildPlaneMesh (4, Vector3.up, 0, 6, 8, 2);
-		BuildPlaneMesh (5, Vector3.down, 20, 26, 24, 18);
+		    CalculateWallMesh (0, Vector3.forward);
+		    CalculateWallMesh (1, Vector3.back);
+		    CalculateWallMesh (2, Vector3.right);
+		    CalculateWallMesh (3, Vector3.left);
+		    BuildPlaneMesh (4, Vector3.up, 0, 6, 8, 2);
+		    BuildPlaneMesh (5, Vector3.down, 20, 26, 24, 18);
+            isDirty = false;
+        }
 	}
 
 	public void CalculateWallMesh(int subMesh, Vector3 direction){
@@ -281,18 +291,21 @@ public class RoomMeshGenerator : MeshProperty {
 	private Vector3 roomExtends;
 	//Procedural Data
 	private List<Vector3> vertices;
-	private RoomMeshData meshData;
+	private RoomMeshData meshData = null;
 	private List<int> triangles;
 	//Mesh components
 	private MeshRenderer meshRenderer;
 	private MeshFilter meshFilter;
 	private Mesh mesh;
 
-	void Init(){
-		abstractBounds = GetComponent<AbstractBounds> ();
-		meshFilter = GetComponent<MeshFilter> ();
-		meshRenderer = GetComponent<MeshRenderer> ();
-		meshData = new RoomMeshData (abstractBounds);
+    void Init() {
+        abstractBounds = GetComponent<AbstractBounds>();
+        meshFilter = GetComponent<MeshFilter>();
+        meshRenderer = GetComponent<MeshRenderer>();
+
+        if (meshData == null){
+            meshData = new RoomMeshData(abstractBounds);
+        }
 
 		if(meshFilter.sharedMesh == null){
 			meshFilter.sharedMesh = new Mesh ();
