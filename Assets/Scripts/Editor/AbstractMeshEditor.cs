@@ -13,15 +13,31 @@ public class AbstractMeshEditor : Editor{
 
 	public override void OnInspectorGUI(){
 		abstractMesh.meshShape = (MeshShape)EditorGUILayout.EnumPopup ("Shape", abstractMesh.meshShape);
-		abstractMesh.extends = EditorGUILayout.Vector3Field ("Extends", abstractMesh.extends);
-		abstractMesh.material = EditorGUILayout.ObjectField (abstractMesh.material, typeof(Material)) as Material;
-		abstractMesh.tiling = EditorGUILayout.FloatField ("Tiling", abstractMesh.tiling);
+		EditorGUILayout.Space ();
 
-		if (abstractMesh.meshShape == MeshShape.CYLINDER) {
-			abstractMesh.iterations = (int)EditorGUILayout.Slider ("Iterations", abstractMesh.iterations, 3, 50);
+		if (abstractMesh.HasAbstractBounds) {
+			EditorGUILayout.HelpBox ("Extends is currently modified by AbstractBounds", MessageType.Info);
 		}
 
+		GUI.enabled = !abstractMesh.HasAbstractBounds;
+		abstractMesh.extends = EditorGUILayout.Vector3Field ("Extends", abstractMesh.extends);
+		GUI.enabled = true;
+
+		if (abstractMesh.meshShape == MeshShape.CYLINDER) {
+			abstractMesh.iterations = (int)EditorGUILayout.Slider ("Iterations", abstractMesh.iterations, 3, 20);
+		}
+
+		EditorGUILayout.Space ();
+
+		abstractMesh.material = EditorGUILayout.ObjectField ("Material", abstractMesh.material, typeof(Material)) as Material;
+		abstractMesh.tiling = EditorGUILayout.FloatField ("Tiling", abstractMesh.tiling);
+
+		EditorGUILayout.Space ();
+
+		if (GUILayout.Button ("Break Shared Mesh")) {
+			abstractMesh.BreakSharedMeshLink ();
+		}
+			
 		SceneUpdater.UpdateScene ();
 	}
-
 }

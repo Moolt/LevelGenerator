@@ -29,7 +29,13 @@ abstract public class AbstractProperty : MonoBehaviour {
 		get { return GetComponentInParent<AbstractBounds> (); }
 	}
 	public AbstractBounds ParentsAbstractBounds{
-		get { return transform.parent.GetComponentInParent<AbstractBounds> (); }
+		get { 
+			if (transform.parent != null) {
+				return transform.parent.GetComponentInParent<AbstractBounds> (); 
+			} else {
+				return null;
+			}
+		}
 	}
 
 	public MeshFilter PreviewMesh{

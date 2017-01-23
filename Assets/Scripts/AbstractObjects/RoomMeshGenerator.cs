@@ -351,6 +351,7 @@ public class RoomMeshGenerator : MeshProperty {
 	private void UpdateMeshCollider(){
 		MeshCollider meshCollider = GetComponent<MeshCollider> () as MeshCollider;
 		if (meshCollider != null) {
+			meshCollider.convex = false;
 			meshCollider.sharedMesh = meshFilter.sharedMesh;
 		}
 	}

@@ -42,6 +42,7 @@ public class DoorDefinitions : DoorProperty {
 		List<DoorDefinition> allDoors = new List<DoorDefinition> ();
 		allDoors.AddRange (doors);
 		int quantity = (int)(Mathf.Round (Random.value * (maxCount - minCount)) + minCount);
+		quantity = Mathf.Min (quantity, doors.Count);
 
 		for (int i = 0; i < quantity; i++) {
 			int index = (int)(Mathf.Round((allDoors.Count - 1) * Random.value));

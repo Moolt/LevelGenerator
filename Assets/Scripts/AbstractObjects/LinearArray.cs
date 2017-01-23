@@ -14,15 +14,10 @@ public class LinearArray : MultiplyingProperty {
 
 	//Used for both GizmoPreview and position calculation, as the size of the mesh is considered
 	private MeshFilter meshFilter;
-	private AbstractBounds abstractBounds;
 	//private Vector3 offset;
 
 	private void Preparation(){
 		meshFilter = PreviewMesh;
-
-		//AbstractBounds parentBounds = gameObject.GetComponentInParent<AbstractBounds> ();
-		abstractBounds = gameObject.GetComponentInParent<AbstractBounds> ();
-		//offset = abstractBounds.transform.position;
 	}
 
 	public override void DrawEditorGizmos(){		
@@ -56,9 +51,9 @@ public class LinearArray : MultiplyingProperty {
 		Vector3 startPosition = transform.position;
 		int calculatedCount = duplicateCount;
 		float calculatedSpace;
-		Vector3 bounds = abstractBounds.Size;
+		Vector3 bounds = ParentsAbstractBounds.Size;
 		//The positions the original object will stick to the variableBounds (room). Factors in the models size.
-		Vector3 boundsOrigin = new Vector3 (bounds.x * -0.5f + meshSize.x / 2f, meshSize.y / 2f, bounds.z * -0.5f + meshSize.z / 2f) + abstractBounds.transform.position;
+		Vector3 boundsOrigin = new Vector3 (bounds.x * -0.5f + meshSize.x / 2f, meshSize.y / 2f, bounds.z * -0.5f + meshSize.z / 2f) + ParentsAbstractBounds.transform.position;
 		//The right, forward and up vectors, depending on the direction the array should be applied to
 		Vector3 orientationVector = OrientationToVec (arrayOrientation);
 		//The space that is available to both the original and the copies.

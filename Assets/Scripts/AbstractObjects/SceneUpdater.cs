@@ -13,7 +13,9 @@ public static class SceneUpdater {
 		if (isActive) {
 			GameObject chunk = GameObject.FindGameObjectWithTag ("Chunk");
 			if (chunk != null) {
-				AbstractProperty[] iaa = chunk.GetComponentsInChildren<AbstractProperty> ();
+				List<AbstractProperty> iaa = new List<AbstractProperty> ();
+				iaa.AddRange (chunk.GetComponents<AbstractProperty> ());
+				iaa.AddRange (chunk.GetComponentsInChildren<AbstractProperty> ());
 
 				foreach (AbstractProperty iaa_ in iaa) {
 					iaa_.Preview ();

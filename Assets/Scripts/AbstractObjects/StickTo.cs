@@ -14,17 +14,18 @@ public class StickTo : TransformingProperty {
 	private Vector3 origin;
 
 	public override void DrawEditorGizmos (){
-		Logic ();
+		CalculateParameters ();
 
 		if (hit.collider != null && attachedCollider != null) {
 			Gizmos.color = Color.cyan;
 			Gizmos.DrawLine (origin, hit.point);
+			Gizmos.color = Color.red;
 			Gizmos.DrawSphere (hit.point - (Vector3.Scale (Vector3.one * 0.125f, stickDirection)), 0.125f);
 		}
 
-		Gizmos.color = Color.red;
-		Gizmos.DrawSphere(objectPosition , 0.125f);
 		Gizmos.color = Color.green;
+		Gizmos.DrawSphere(objectPosition , 0.125f);
+		Gizmos.color = Color.yellow;
 		Gizmos.DrawSphere(origin , 0.125f);
 		Gizmos.color = new Color(1f, 0f, 0f, .5f);
 		if (MeshFound()) {
@@ -32,7 +33,7 @@ public class StickTo : TransformingProperty {
 		}
 
 		if (updateInEditor) {
-			transform.position = objectPosition;
+			Apply ();
 		}
 	}
 
@@ -41,11 +42,15 @@ public class StickTo : TransformingProperty {
 	}
 
 	public override void Generate(){
-		Logic ();
+		CalculateParameters ();
+		Apply ();
+	}
+
+	private void Apply(){
 		transform.position = objectPosition;
 	}
 
-	private Vector3 Logic(){
+	private Vector3 CalculateParameters(){
 		attachedCollider = (Collider) GetComponentInChildren<Collider> ();
 
 		if (attachedCollider != null) {
@@ -62,6 +67,12 @@ public class StickTo : TransformingProperty {
 			if (hit.collider != null) {
 				objectPositionWithoutDistance = hit.point - Vector3.Scale (attachedCollider.bounds.size, stickDirection * 0.5f);
 				objectPosition = objectPositionWithoutDistance - Vector3.Scale (Vector3.one * distance, stickDirection) - center;
+				//objectRotation = (applyDirection) ? hit.normal : transform.eulerAngles;
+
+				if (attachedCollider == hit.collider) {
+					objectPosition = transform.position;
+				}
+
 				return objectPosition;
 			} 
 		}
