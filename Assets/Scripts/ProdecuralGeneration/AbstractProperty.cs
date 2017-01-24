@@ -2,9 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public enum GizmoPreviewState { HIDDEN, ONSELECTION, ALWAYS }
-public enum PropertyType { INSTANTIATING, TRANSFORMING, MESHGENERATION };
-
 abstract public class AbstractProperty : MonoBehaviour {
 	private bool isDirty = false;
 	private ICollection<GameObject> generatedObjects = new List<GameObject> ();

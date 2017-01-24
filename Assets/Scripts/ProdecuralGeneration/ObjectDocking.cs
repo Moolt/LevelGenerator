@@ -2,8 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public enum OffsetType { ABSOLUTE, RELATIVE, RELATIVEUNIFORM }
-
 [DisallowMultipleComponent]
 public class ObjectDocking : TransformingProperty {
 

@@ -5,11 +5,9 @@ using UnityEditor;
 [CustomEditor (typeof(StickTo))]
 public class StickToEditor : Editor {
 	private StickTo stickTo;
-	private Vector3 roomCenter;
 
 	void OnEnable(){
 		stickTo = target as StickTo;
-		roomCenter = (stickTo.AbstractBounds == null) ? Vector3.zero : stickTo.AbstractBounds.Center;
 	}
 
 	public override void OnInspectorGUI(){
@@ -36,8 +34,8 @@ public class StickToEditor : Editor {
 
 	public void OnSceneGUI(){
 		if (SceneUpdater.IsActive) {
-			float sizeFactor = HandleUtility.GetHandleSize (roomCenter);
-			stickTo.stickDirection = EditorGUIExtension.DirectionHandleVec (roomCenter, sizeFactor, stickTo.stickDirection, Vector3.one);
+			float sizeFactor = HandleUtility.GetHandleSize (stickTo.transform.position) * .7f;
+			stickTo.stickDirection = EditorGUIExtension.DirectionHandleVec (stickTo.transform.position, sizeFactor, stickTo.stickDirection, Vector3.one);
 		}
 	}
 

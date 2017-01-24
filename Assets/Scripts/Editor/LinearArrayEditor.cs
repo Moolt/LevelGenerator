@@ -32,15 +32,14 @@ public class LinearArrayEditor : Editor {
 
 	public void OnSceneGUI(){
 		Vector3 pos = lArray.transform.position;
-		float sizeFactor = HandleUtility.GetHandleSize (pos);
-		float length = 0.6f;
+		float sizeFactor = HandleUtility.GetHandleSize (pos) * 0.7f;
 
-		if (EditorGUIExtension.DirectionHandle (pos, Vector3.right * length, sizeFactor, Color.red)) {
-			lArray.arrayOrientation = Direction.XAXIS;
-		} else if (EditorGUIExtension.DirectionHandle (pos, Vector3.up * length, sizeFactor, Color.green)) {
-			lArray.arrayOrientation = Direction.YAXIS;
-		} else if (EditorGUIExtension.DirectionHandle (pos, Vector3.forward * length, sizeFactor, Color.blue)) {
-			lArray.arrayOrientation = Direction.ZAXIS;
+		if (EditorGUIExtension.DirectionHandle (pos, Vector3.right, sizeFactor, Color.red)) {
+			lArray.orientation = Vector3.right;
+		} else if (EditorGUIExtension.DirectionHandle (pos, Vector3.up, sizeFactor, Color.green)) {
+			lArray.orientation = Vector3.up;
+		} else if (EditorGUIExtension.DirectionHandle (pos, Vector3.forward, sizeFactor, Color.blue)) {
+			lArray.orientation = Vector3.forward;
 		}
 	}
 }

@@ -90,23 +90,23 @@ Material:
       second: 72.72728
     - first:
         name: _Shininess
-      second: 349.13794
+      second: 500
     m_Colors:
     - first:
         name: _AnimationDirection
-      second: {r: 2, g: 1, b: -1, a: 1}
+      second: {r: 5.46, g: 1, b: -1, a: 1}
     - first:
         name: _AnimationTiling
-      second: {r: 0.4, g: 0.39099997, b: 0.56, a: 0.7}
+      second: {r: 0.14, g: 0.08, b: 0.2, a: 0.33}
     - first:
         name: _BaseColor
       second: {r: 0.45253026, g: 0.67425275, b: 0.6838235, a: 0.741}
     - first:
         name: _BumpDirection
-      second: {r: 1, g: 30, b: 20, a: -20}
+      second: {r: -0.08, g: 30.38, b: 20, a: -20}
     - first:
         name: _BumpTiling
-      second: {r: 0.04, g: 0.04, b: 0.04, a: 0.08}
+      second: {r: 0.27, g: 0.31, b: 0.2, a: 0.2}
     - first:
         name: _Color
       second: {r: 1, g: 1, b: 1, a: 1}
@@ -115,13 +115,13 @@ Material:
       second: {r: 0.29811764, g: 0.36611718, b: 0.39552242, a: 0.34509805}
     - first:
         name: _DistortParams
-      second: {r: 1.0285715, g: 0.20187221, b: 2.766625, a: -0.41714284}
+      second: {r: 2.89, g: 1.11, b: 3.07, a: 0.08}
     - first:
         name: _Foam
       second: {r: 0.3275862, g: 0.7471264, b: 0, a: 0}
     - first:
         name: _GAmplitude
-      second: {r: 0.3, g: 0.2, b: 0.25, a: 0.25}
+      second: {r: 0.12, g: 0.2, b: 0.25, a: 0.25}
     - first:
         name: _GDirectionAB
       second: {r: 0.85, g: 0.3, b: 0.25, a: 0.25}
@@ -133,22 +133,22 @@ Material:
       second: {r: 0.5, g: 0.25, b: 0.6, a: 0.245}
     - first:
         name: _GSpeed
-      second: {r: 4, g: 2, b: 1, a: 1}
+      second: {r: 1.28, g: 2, b: 1, a: 1}
     - first:
         name: _GSteepness
-      second: {r: 3.0301306, g: 1, b: 1, a: 1}
+      second: {r: 1.48, g: 0.78, b: 0.79, a: 0.79}
     - first:
         name: _InvFadeParemeter
-      second: {r: 0.27508128, g: 0.08562102, b: 0.09414239, a: 0.48031002}
+      second: {r: 0.27508128, g: 0.08562102, b: 0.35, a: 0.21}
     - first:
         name: _ReflectionColor
-      second: {r: 0.462085, g: 0.6985294, b: 0.055400617, a: 1}
+      second: {r: 0.23724401, g: 0.9037823, b: 0.916, a: 0.891}
     - first:
         name: _RefractionFog
       second: {r: 0.8681778, g: 0.8797176, b: 0.8880597, a: 1}
     - first:
         name: _SpecularColor
-      second: {r: 0.29748684, g: 0.49264705, b: 0.018686607, a: 1}
+      second: {r: 0.6310345, g: 1, b: 1, a: 1}
     - first:
         name: _WorldLightDir
       second: {r: 0.013992369, g: -0.17359081, b: -0.9847186, a: 0}

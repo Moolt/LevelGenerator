@@ -3,15 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-public enum AreaType{ SPHERICAL, RECT, ABSTRACTBOUNDS }
-
 public class ScatteredArray : MultiplyingProperty {
 
 	public int editorSeed = 100; //Only used within editor
-
 	public int duplicateCount = 3;
 	public bool randomizeCount = false;
-
 	public float radius = 1f; //Radius of Area of type SPHERICAL
 	public Vector2 rectArea = new Vector2(5f, 5f);
 	public bool preventOverlapping = true; //Slow

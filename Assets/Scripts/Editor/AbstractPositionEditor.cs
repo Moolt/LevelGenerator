@@ -30,12 +30,13 @@ public class AbstractPositionEditor : Editor {
 	}
 
 	public void OnSceneGUI(){
-		float sizeFactor = HandleUtility.GetHandleSize (Vector3.zero);
-		if (EditorGUIExtension.DirectionHandle (Vector3.zero, Vector3.right, sizeFactor, Color.red)) {
+		Vector3 pos = aPosition.transform.position;
+		float sizeFactor = HandleUtility.GetHandleSize (pos) * 0.7f;
+		if (EditorGUIExtension.DirectionHandle (pos, Vector3.right, sizeFactor, Color.red)) {
 			aPosition.direction = Vector3.right;
-		} else if (EditorGUIExtension.DirectionHandle (Vector3.zero, Vector3.up, sizeFactor, Color.green)) {
+		} else if (EditorGUIExtension.DirectionHandle (pos, Vector3.up, sizeFactor, Color.green)) {
 			aPosition.direction = Vector3.up;
-		} else if (EditorGUIExtension.DirectionHandle (Vector3.zero, Vector3.forward, sizeFactor, Color.blue)) {
+		} else if (EditorGUIExtension.DirectionHandle (pos, Vector3.forward, sizeFactor, Color.blue)) {
 			aPosition.direction = Vector3.forward;
 		}
 	}

@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-enum Interval { MIN, MAX };
-
 [DisallowMultipleComponent]
 public class AbstractScaling : TransformingProperty {
 

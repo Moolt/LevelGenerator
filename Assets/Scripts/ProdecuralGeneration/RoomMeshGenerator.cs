@@ -68,6 +68,16 @@ public class RoomMeshData{
 		}
 	}
 
+	public List<DoorDefinition> Doors {
+		get {
+			return this.doors;
+		}
+		set {				
+			doors = value;
+			isDirty = true;
+		}
+	}
+
 	public void ConstructRoom(){
         if (isDirty) {
 		    Vertices = new List<Vector3> ();
@@ -268,19 +278,10 @@ public class RoomMeshData{
 		output += Vector3.Scale (Vector3.one * input.x, normal);
 		return output;
 	}
-
-	public List<DoorDefinition> Doors {
-		get {
-			return this.doors;
-		}
-		set {
-			doors = value;
-		}
-	}
 }
 
 [RequireComponent (typeof(MeshFilter), typeof(MeshRenderer))]
-[RequireComponent (typeof(AbstractBounds), typeof(DoorDefinitions))]
+[RequireComponent (typeof(AbstractBounds), typeof(DoorManager))]
 public class RoomMeshGenerator : MeshProperty {
 	public Material floorMaterial;
 	public Material wallMaterial;
@@ -370,11 +371,13 @@ public class RoomMeshGenerator : MeshProperty {
 	}
 	
 	private void ObtainDoors(){
-		DoorDefinitions doorDefinitions = GetComponent<DoorDefinitions> () as DoorDefinitions;
+		DoorManager doorDefinitions = GetComponent<DoorManager> () as DoorManager;
 		if (doorDefinitions != null) {
-			doors.Clear ();
-			doors.AddRange (doorDefinitions.RandomDoors);
-			meshData.Doors = doors;
+			if (doorDefinitions.AreDoorsDirty || meshData.Doors == null) {
+				doors.Clear ();
+				doors.AddRange (doorDefinitions.RandomDoors);
+				meshData.Doors = doors;
+			}
 		}
 	}
 }

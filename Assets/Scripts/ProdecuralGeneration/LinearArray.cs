@@ -2,15 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public enum Direction { XAXIS, YAXIS, ZAXIS }
-
 public class LinearArray : MultiplyingProperty {
 
+	public Vector3 orientation = Vector3.right;
 	public int duplicateCount = 1;
-	public bool autoCount; //If set to true, as many objects as fit are created
-	public float spacing = 0f; //Space between objects
-	public Direction arrayOrientation; //The axis the objects are duplicated upon
 	public bool closeGap = true;
+	public float spacing = 0f; //Space between objects
+	public bool autoCount; //If set to true, as many objects as fit are created
 
 	//Used for both GizmoPreview and position calculation, as the size of the mesh is considered
 	private MeshFilter meshFilter;
@@ -29,8 +27,6 @@ public class LinearArray : MultiplyingProperty {
 			for (int i = 1; i < positions.Length; i++) {
 				Gizmos.color = Color.black;
 				Gizmos.DrawWireMesh (meshFilter.sharedMesh, positions [i], transform.rotation, transform.localScale);
-				//Gizmos.color = new Color32 (149, 255, 69, 255);
-				//Gizmos.DrawWireMesh (meshFilter.sharedMesh, positions [i], transform.rotation, transform.localScale);
 			}
 		} else {
 			for (int i = 0; i < positions.Length; i++) {
@@ -55,14 +51,14 @@ public class LinearArray : MultiplyingProperty {
 		//The positions the original object will stick to the variableBounds (room). Factors in the models size.
 		Vector3 boundsOrigin = new Vector3 (bounds.x * -0.5f + meshSize.x / 2f, meshSize.y / 2f, bounds.z * -0.5f + meshSize.z / 2f) + ParentsAbstractBounds.transform.position;
 		//The right, forward and up vectors, depending on the direction the array should be applied to
-		Vector3 orientationVector = OrientationToVec (arrayOrientation);
+		//Vector3 orientationVector = OrientationToVec (arrayOrientation);
 		//The space that is available to both the original and the copies.
-		float availableSpace = (Vector3.Scale(bounds, orientationVector)).magnitude;
+		float availableSpace = (Vector3.Scale(bounds, orientation)).magnitude;
 		//The models width, height or depth, depending on the orientation
-		float modelWidth = Vector3.Scale (meshSize, orientationVector).magnitude;
+		float modelWidth = Vector3.Scale (meshSize, orientation).magnitude;
 		availableSpace -= modelWidth;
 		//Position of the original, will be fixed on one axis and will therefore stick to a wall
-		startPosition = Vector3.Scale(startPosition, (Vector3.one - orientationVector)) + Vector3.Scale(boundsOrigin, orientationVector);
+		startPosition = Vector3.Scale(startPosition, (Vector3.one - orientation)) + Vector3.Scale(boundsOrigin, orientation);
 		//offset = Vector3.Scale (offset, orientationVector);
 
 		if (autoCount) {
@@ -77,24 +73,12 @@ public class LinearArray : MultiplyingProperty {
 		positions [0] = startPosition; //position of the original
 		for (int i = 1; i < positions.Length; i++) { //positions of the duplicates w/ offset
 			if (closeGap) {
-				positions [i] = (startPosition + (i * modelWidth) * orientationVector);
+				positions [i] = (startPosition + (i * modelWidth) * orientation);
 			} else {
-				positions [i] = (startPosition + ((i * calculatedSpace) * orientationVector));
+				positions [i] = (startPosition + ((i * calculatedSpace) * orientation));
 			}
 		}
 
 		return positions;
-	}
-
-	public Vector3 OrientationToVec(Direction dir){
-		switch (dir) {
-		case Direction.XAXIS:
-			return Vector3.right;
-		case Direction.YAXIS:
-			return Vector3.up;
-		case Direction.ZAXIS:
-			return Vector3.forward;
-		}
-		return Vector3.forward;
 	}
 }

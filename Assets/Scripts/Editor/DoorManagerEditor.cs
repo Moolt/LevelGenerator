@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-[CustomEditor (typeof(DoorDefinitions))]
-public class DoorDefinitionsEditor : Editor {
-	private DoorDefinitions doorDefinitions;
+[CustomEditor (typeof(DoorManager))]
+public class DoorManagerEditor : Editor {
+	private DoorManager doorDefinitions;
 	private SerializedObject serDoorDefinitions;
 	private SerializedProperty serDoorList;
 	private DoorDefinition selectedDoor;
 	private bool newDoorCreated = false;
 
 	void OnEnable(){
-		doorDefinitions = target as DoorDefinitions;
+		doorDefinitions = target as DoorManager;
 	}
 
 	void OnDisable(){
@@ -31,7 +31,9 @@ public class DoorDefinitionsEditor : Editor {
 			EditorGUILayout.Space ();
 			string onOff = serPreviewDoors.boolValue ? "On" : "Off";
 			if (GUILayout.Button ("Mesh preview: " + onOff)) {
+				bool prevPreviewVal = serPreviewDoors.boolValue;
 				serPreviewDoors.boolValue = !serPreviewDoors.boolValue;
+				doorDefinitions.AreDoorsDirty |= prevPreviewVal != serPreviewDoors.boolValue;
 			}
 
 			if (!SceneUpdater.HideGizmos) {
@@ -46,7 +48,9 @@ public class DoorDefinitionsEditor : Editor {
 			if (SceneUpdater.HideGizmos) {
 				EditorGUILayout.Space ();
 				SerializedProperty serDoorDefSize = serDoorDefinitions.FindProperty ("doorSize");
+				float prevSize = serDoorDefSize.floatValue;
 				serDoorDefSize.floatValue = EditorGUILayout.FloatField ("Door size", serDoorDefSize.floatValue);
+				doorDefinitions.AreDoorsDirty |= prevSize != serDoorDefSize.floatValue;
 				//The doorsize should never be larger thant the actual room
 				serDoorDefSize.floatValue = Mathf.Clamp (serDoorDefSize.floatValue, 1f, doorDefinitions.AbstractBounds.minSize.y);
 
@@ -140,6 +144,7 @@ public class DoorDefinitionsEditor : Editor {
 				selectedDoor = doorDefinitions.doors [doorDefinitions.doors.Count - 1];
 				newDoorCreated = false;
 			}
+
 			//Display doors as rectangle, color them red if selected
 			//It seems like Handles have the limitation of having only floats as size input
 			//Therefore I only support doors with same height / width, sadly
@@ -152,10 +157,23 @@ public class DoorDefinitionsEditor : Editor {
 
 			//Handle logic for selected door
 			if (selectedDoor != null) {
+
+				Vector3 prevOffset = selectedDoor.Offset;
+				Vector3 prevPosition = selectedDoor.Position;
+				int prevCornerIndex = selectedDoor.CornerIndex;
+
 				Vector3 horHandleDir = Vector3.Cross (Vector3.up, selectedDoor.Direction);
-				float sliderSize = HandleUtility.GetHandleSize (selectedDoor.Position);
+
+				if (horHandleDir.magnitude == 0f) {
+					selectedDoor = null;
+					return;
+				}
+
+				float sliderSize = HandleUtility.GetHandleSize (selectedDoor.Position) * .85f;
 				//Draw Move Arrows, use Normal in order to point it at the right direction
+				Handles.color = horHandleDir.normalized == Vector3.right || horHandleDir.normalized == Vector3.left ? Color.red : Color.blue;
 				selectedDoor.Position = Handles.Slider (selectedDoor.Position, horHandleDir, selectedDoor.Extends.x * sliderSize, Handles.ArrowCap, 1f);
+				Handles.color = Color.green;
 				selectedDoor.Position = Handles.Slider (selectedDoor.Position, Vector3.up, selectedDoor.Extends.y * sliderSize, Handles.ArrowCap, 1f);
 				//Eventhough the position is already being clamped in the preview function of doorsPositions,
 				//This clamp is important since several frames may pass before the next call of preview
@@ -163,11 +181,10 @@ public class DoorDefinitionsEditor : Editor {
 				//Calculate Offset to the selected corner. Essential for docking
 				//DoorDefinitions later calculates the position from the corner pos and offset
 				selectedDoor.Offset = selectedDoor.Position - doorDefinitions.AbstractBounds.Corners[selectedDoor.CornerIndex];
-				Vector3 roomCenter = doorDefinitions.AbstractBounds.Center;
 				//Uniform handle size factor
-				float directionHandleSize = HandleUtility.GetHandleSize (roomCenter) * 0.8f;
+				float directionHandleSize = HandleUtility.GetHandleSize (selectedDoor.Position) * 0.8f;
 				//Get one of four directions. The direction represent the wall the door is locked to.
-				Vector3 newDirection = EditorGUIExtension.DirectionHandleVec (roomCenter, directionHandleSize, selectedDoor.Direction, new Vector3(1f, 0f, 1f));
+				Vector3 newDirection = EditorGUIExtension.DirectionHandleVec (selectedDoor.Position, directionHandleSize, selectedDoor.Direction, new Vector3(1f, 0f, 1f));
 				if (newDirection != selectedDoor.Direction) {
 					selectedDoor.Direction = newDirection;
 					//Default docking corner is at index one, bottom middle. See AbstractBounds for corner indices.
@@ -185,6 +202,8 @@ public class DoorDefinitionsEditor : Editor {
 						selectedDoor.CornerIndex = i;
 					}
 				}
+
+				doorDefinitions.AreDoorsDirty |= selectedDoor.Position != prevPosition || selectedDoor.Offset != prevOffset || selectedDoor.CornerIndex != prevCornerIndex;
 			}
 		}
 	}

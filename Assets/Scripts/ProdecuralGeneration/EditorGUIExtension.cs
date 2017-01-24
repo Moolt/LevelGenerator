@@ -36,7 +36,7 @@ public static class EditorGUIExtension {
 	public static bool DirectionHandle(Vector3 position, Vector3 direction, float sizeFactor, Color color){
 		Handles.color = color;
 		Handles.DrawDottedLine (position, position + direction * sizeFactor, 3.5f);
-		return Handles.Button (position + direction * sizeFactor, Quaternion.identity, sizeFactor / 5f, sizeFactor / 5f, Handles.SphereCap);
+		return Handles.Button (position + direction * sizeFactor, Quaternion.identity, sizeFactor / 4f, sizeFactor / 4f, Handles.SphereCap);
 	}
 
 	public static Vector3 DirectionHandleVec(Vector3 position, float sizeFactor, Vector3 initialDir, Vector3 axis){

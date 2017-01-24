@@ -2,24 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 
-[System.Serializable]
-public class StretchInfo{
-
-	public StretchInfo(bool active, Vector3 direction, bool center, float percent, string label){
-		this.Active = active;
-		this.Direction = direction;
-		this.IsCenter = center;
-		this.Percent = percent;
-		this.Label = label;
-	}
-
-	public bool Active;
-	public Vector3 Direction;
-	public bool IsCenter;
-	public float Percent;
-	public string Label;
-}
-
 [DisallowMultipleComponent]
 public class AbstractBounds : TransformingProperty {
 	public Vector3 minSize = Vector3.one;
@@ -72,30 +54,6 @@ public class AbstractBounds : TransformingProperty {
 		//RandomizeSize (null); //null because the children dont have to be updated
 		lerp = Random.value;
 		UpdateScaling (true);
-	}
-
-	//Can be either used within the editor or within the generation process
-	//The editor requires child components to be updated, the generation process doesn't
-	public void RandomizeSize(ITransformable[] variableObjects){
-		Vector3 randomBounds;
-		if (keepAspectRatio) {
-			randomBounds = Vector3.Lerp (minSize, maxSize, Random.Range (0f, 1f));
-		} else {
-			float randomX = Mathf.Lerp(minSize.x, maxSize.x, Random.Range(0f, 1f));
-			float randomY = Mathf.Lerp(minSize.y, maxSize.y, Random.Range(0f, 1f));
-			float randomZ = Mathf.Lerp(minSize.z, maxSize.z, Random.Range(0f, 1f));
-			randomBounds = new Vector3 (randomX, randomY, randomZ);
-		}
-		size = randomBounds;
-		/*if (variableObjects != null) {			
-			UpdateVariableBoundsDependencies (variableObjects);
-		}*/
-	}
-
-	public void UpdateVariableBoundsDependencies(ITransformable[] variableObjects){
-		foreach (ITransformable ivb in variableObjects) {
-			ivb.NotifyBoundsChanged (this);
-		}
 	}
 
 	public Vector3 Size{ 

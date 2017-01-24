@@ -63,12 +63,6 @@ public class AbstractBoundsEditor : Editor {
 			SceneUpdater.UpdateScene ();
 		}
 	}
-		
-	/*private void ApplySize(ITransformable[] variableObjects, AbstractBounds variableBounds){
-		Vector3 lerpedSize = Vector3.Lerp (variableBounds.minSize, variableBounds.maxSize, variableBounds.lerp);
-		variableBounds.Size = lerpedSize;
-		variableBounds.UpdateVariableBoundsDependencies (variableObjects);
-	}*/
 
 	private void ConditionalVectorField(string label, ref Vector3 value){
 		float prevLabelWidth = EditorGUIUtility.labelWidth;
