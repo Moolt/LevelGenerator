@@ -86,7 +86,8 @@ public class LevelGenerationWindow : EditorWindow {
 		MostRecentCopy = (GameObject)GameObject.Instantiate (OriginalChunk, OriginalChunk.transform.position , Quaternion.identity);
 		OriginalChunk.SetActive (false);
 
-		ChunkInstantiator generator = ScriptableObject.CreateInstance<ChunkInstantiator> ();
+		ChunkInstantiator generator = ChunkInstantiator.Instance;
+		generator.ProcessType = ProcessType.GENERATE;
 		generator.InstiantiateChunk (MostRecentCopy);
 		MostRecentCopy.tag = "ChunkCopy";
 		durationMillis = DateTime.Now.Millisecond - startMillis;
@@ -103,7 +104,8 @@ public class LevelGenerationWindow : EditorWindow {
 	//If there is an instantiated copy of the chunk in the scene, remove it
 	private void DestroyOldCopy(){
 		if (MostRecentCopy != null) {
-			DestroyImmediate (MostRecentCopy);
+			DestroyImmediate (MostRecentCopy, true);
+			MostRecentCopy = null;
 		}
 	}
 
@@ -122,8 +124,13 @@ public class LevelGenerationWindow : EditorWindow {
 		Restore ();
 		ShowSaveFirstDialog ();
 		DestroyImmediate (OriginalChunk, true);
-		OriginalChunk = (GameObject)GameObject.Instantiate(Resources.Load("EmptyChunk"));
-		SceneUpdater.UpdateScene ();
+		UnityEngine.Object newChunkPrefab = Resources.Load ("NewChunk");
+		if (newChunkPrefab != null) {
+			OriginalChunk = (GameObject)GameObject.Instantiate (newChunkPrefab);
+			SceneUpdater.UpdateScene ();
+		} else {
+			Debug.LogError ("Default Chunk could not be loaded. Your Resources folder must contain a default Chunk named \"NewChunk\"");
+		}
 	}
 
 	private void SaveChunk(){

@@ -64,9 +64,9 @@ public class AbstractMesh : MeshProperty {
 		Collider _col = GetComponent<Collider> () as Collider;
 		if (_col != null && meshFilter.sharedMesh != null) {
 			if (_col is MeshCollider) {
-				//(_col as MeshCollider).sharedMesh = meshFilter.sharedMesh;
+				(_col as MeshCollider).sharedMesh = meshFilter.sharedMesh;
 				//(_col as MeshCollider).convex = true;
-				(_col as MeshCollider).inflateMesh = true;
+				//(_col as MeshCollider).inflateMesh = true;
 			} else if (_col is BoxCollider) {
 				(_col as BoxCollider).size = extends * 2f;
 			}

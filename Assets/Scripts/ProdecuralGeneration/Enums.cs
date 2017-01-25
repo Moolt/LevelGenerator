@@ -11,3 +11,5 @@ public enum Direction { XAXIS, YAXIS, ZAXIS }
 public enum OffsetType { ABSOLUTE, RELATIVE, RELATIVEUNIFORM }
 //Used by ScatteredArray
 public enum AreaType{ SPHERICAL, RECT, ABSTRACTBOUNDS }
+//Used by ChunkInstantiator
+public enum ProcessType{ GENERATE, PREVIEW }

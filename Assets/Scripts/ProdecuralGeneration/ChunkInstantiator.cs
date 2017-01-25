@@ -8,10 +8,12 @@ public class ChunkInstantiator : ScriptableObject{
 	//There may  still be dependencies to transforming objects. Therefore they are destroyed last.
 	private ICollection<AbstractProperty> delayedRemovalCollection;
 	private Stack<GameObject> workStack;
+	//Differentiate between in editor preview and actual generation
+	private ProcessType processType;
+	private static ChunkInstantiator instance;
 
-	public ChunkInstantiator(){
-		this.delayedRemovalCollection = new List<AbstractProperty> ();
-		this.workStack = new Stack<GameObject> ();
+	private ChunkInstantiator(){
+
 	}
 
 	//1. Depth first search, traversing through the Object tree
@@ -20,6 +22,7 @@ public class ChunkInstantiator : ScriptableObject{
 	//4. Execute the components
 
 	public void InstiantiateChunk(GameObject chunk){
+		Init ();
 		workStack.Push (chunk);
 		//chunk.tag = "Untagged";
 
@@ -30,7 +33,14 @@ public class ChunkInstantiator : ScriptableObject{
 			PushChildrenToStack (currentObj);
 		};
 
-		CleanUp ();
+		if (processType == ProcessType.GENERATE) {
+			CleanUp (); //Don't remove properties on preview
+		}
+	}
+
+	private void Init(){
+		this.delayedRemovalCollection = new List<AbstractProperty> ();
+		this.workStack = new Stack<GameObject> ();
 	}
 
 	private void PushChildrenToStack(GameObject parent){		
@@ -57,9 +67,14 @@ public class ChunkInstantiator : ScriptableObject{
 
 		foreach (AbstractProperty property in properties) {
 			if(!property.IsDirty){
-				property.Generate ();
-				HandleGeneratedObjects (property); //Add generated objs to work stack, if there are any
-				HandlePropertyRemoval (property); //Remove component after execution
+				if (processType == ProcessType.GENERATE) {
+					property.Generate ();
+					HandleGeneratedObjects (property); //Add generated objs to work stack, if there are any
+					HandlePropertyRemoval (property); //Remove component after execution
+				} else {
+					//No deletion or generated objects to handle in preview mode
+					property.Preview ();
+				}
 			}
 		}
 	}
@@ -94,6 +109,24 @@ public class ChunkInstantiator : ScriptableObject{
 	private void CleanUp(){
 		foreach (AbstractProperty property in delayedRemovalCollection) {
 			DestroyImmediate (property);
+		}
+	}
+
+	public ProcessType ProcessType {
+		get {
+			return this.processType;
+		}
+		set {
+			processType = value;
+		}
+	}
+
+	public static ChunkInstantiator Instance{
+		get{
+			if(instance == null){
+				instance = ScriptableObject.CreateInstance<ChunkInstantiator> ();
+			}
+			return instance;
 		}
 	}
 }

@@ -12,15 +12,11 @@ public static class SceneUpdater {
 	public static void UpdateScene(){
 		if (isActive) {
 			GameObject chunk = GameObject.FindGameObjectWithTag ("Chunk");
-			if (chunk != null) {
-				List<AbstractProperty> iaa = new List<AbstractProperty> ();
-				iaa.AddRange (chunk.GetComponents<AbstractProperty> ());
-				iaa.AddRange (chunk.GetComponentsInChildren<AbstractProperty> ());
+			ChunkInstantiator generator = ChunkInstantiator.Instance;
+			generator.ProcessType = ProcessType.PREVIEW;
 
-				foreach (AbstractProperty iaa_ in iaa) {
-					iaa_.Preview ();
-				}
-			}
+			generator.InstiantiateChunk (chunk);
+
 			HandleGizmoVisibility ();
 		}
 	}

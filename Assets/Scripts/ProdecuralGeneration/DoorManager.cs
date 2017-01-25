@@ -4,6 +4,7 @@ using UnityEngine;
 
 [RequireComponent (typeof(MeshFilter), typeof(MeshRenderer))]
 public class DoorManager : DoorProperty {
+	public static int doorIndex = 0; //Used for door IDs
 	public List<DoorDefinition> doors = new List<DoorDefinition>(0);
 	public OffsetType offsetType = OffsetType.ABSOLUTE;
 	public float doorSize;

@@ -2,7 +2,6 @@
 using System.Collections;
 
 public class StickTo : TransformingProperty {
-	public bool updateInEditor = false;
 	public Vector3 objectPosition;
 	public Vector3 stickDirection;
 	public float tolerance = 1f;
@@ -10,6 +9,7 @@ public class StickTo : TransformingProperty {
 	public RaycastHit hit;
 
 	private Vector3 objectPositionWithoutDistance;
+	private bool applyTriggered = false;
 	private Collider attachedCollider;
 	private Vector3 origin;
 
@@ -32,8 +32,9 @@ public class StickTo : TransformingProperty {
 			Gizmos.DrawWireMesh (PreviewMesh.sharedMesh, objectPosition, transform.rotation, transform.localScale);
 		}
 
-		if (updateInEditor) {
-			Apply ();
+		if (applyTriggered) {
+			transform.position = objectPosition;
+			applyTriggered = false;
 		}
 	}
 
@@ -43,11 +44,11 @@ public class StickTo : TransformingProperty {
 
 	public override void Generate(){
 		CalculateParameters ();
-		Apply ();
+		transform.position = objectPosition;
 	}
 
-	private void Apply(){
-		transform.position = objectPosition;
+	public void Apply(){
+		applyTriggered = true;
 	}
 
 	private Vector3 CalculateParameters(){

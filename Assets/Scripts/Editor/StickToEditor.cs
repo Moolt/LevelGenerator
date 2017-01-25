@@ -23,11 +23,16 @@ public class StickToEditor : Editor {
 			EditorGUILayout.LabelField ("Direction", stickTo.stickDirection.ToString ());
 			EditorGUILayout.LabelField ("Sticks to", SticksTo());
 			EditorGUILayout.Space ();
-			stickTo.updateInEditor = EditorGUILayout.Toggle ("Update in Editor", stickTo.updateInEditor);
 			stickTo.distance = Mathf.Min (stickTo.MaxDistance, stickTo.distance);
 			stickTo.distance = EditorGUILayout.Slider ("Distance", stickTo.distance, 0f, stickTo.MaxDistance);
 			stickTo.tolerance = EditorGUILayout.Slider ("Tolerance", stickTo.tolerance, 0.05f, 0.95f);
 			stickTo.distance = Mathf.Max (0f, stickTo.distance);
+			EditorGUILayout.Space ();
+			EditorGUILayout.BeginHorizontal ();
+			if (GUILayout.Button ("Apply Position")) {
+				stickTo.Apply ();
+			}
+			EditorGUILayout.EndHorizontal ();
 			SceneUpdater.UpdateScene ();
 		}
 	}

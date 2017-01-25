@@ -312,6 +312,7 @@ public class RoomMeshGenerator : MeshProperty {
 			meshFilter.sharedMesh = new Mesh ();
 		}
 		mesh = meshFilter.sharedMesh;
+		mesh.name = "RoomMesh";
 
 		roomExtends = abstractBounds.Extends;
 
