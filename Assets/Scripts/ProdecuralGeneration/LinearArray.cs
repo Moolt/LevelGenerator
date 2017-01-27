@@ -47,9 +47,9 @@ public class LinearArray : MultiplyingProperty {
 		Vector3 startPosition = transform.position;
 		int calculatedCount = duplicateCount;
 		float calculatedSpace;
-		Vector3 bounds = ParentsAbstractBounds.Size;
+		Vector3 bounds = AbstractBounds.Size;
 		//The positions the original object will stick to the variableBounds (room). Factors in the models size.
-		Vector3 boundsOrigin = new Vector3 (bounds.x * -0.5f + meshSize.x / 2f, meshSize.y / 2f, bounds.z * -0.5f + meshSize.z / 2f) + ParentsAbstractBounds.transform.position;
+		Vector3 boundsOrigin = new Vector3 (bounds.x * -0.5f + meshSize.x / 2f, meshSize.y / 2f, bounds.z * -0.5f + meshSize.z / 2f) + AbstractBounds.transform.position;
 		//The right, forward and up vectors, depending on the direction the array should be applied to
 		//Vector3 orientationVector = OrientationToVec (arrayOrientation);
 		//The space that is available to both the original and the copies.
@@ -70,12 +70,14 @@ public class LinearArray : MultiplyingProperty {
 
 		Vector3[] positions = new Vector3[calculatedCount + 1];
 
-		positions [0] = startPosition; //position of the original
-		for (int i = 1; i < positions.Length; i++) { //positions of the duplicates w/ offset
-			if (closeGap) {
-				positions [i] = (startPosition + (i * modelWidth) * orientation);
-			} else {
-				positions [i] = (startPosition + ((i * calculatedSpace) * orientation));
+		if (positions.Length > 0) {
+			positions [0] = startPosition; //position of the original
+			for (int i = 1; i < positions.Length; i++) { //positions of the duplicates w/ offset
+				if (closeGap) {
+					positions [i] = (startPosition + (i * modelWidth) * orientation);
+				} else {
+					positions [i] = (startPosition + ((i * calculatedSpace) * orientation));
+				}
 			}
 		}
 

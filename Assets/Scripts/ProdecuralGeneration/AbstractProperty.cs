@@ -139,15 +139,17 @@ abstract public class MultiplyingProperty : InstantiatingProperty{
 	public override void Generate(){
 		Vector3[] copyPositions = CalculatePositions ();
 
-		transform.position = copyPositions [0];
+		if (copyPositions.Length > 0) {
+			transform.position = copyPositions [0];
 
-		for (int i = 1; i < copyPositions.Length; i++) {
-			GameObject copy = GameObject.Instantiate (gameObject);
-			//Array needs to be removed, since the copies are not under control of the Generator yet to handle removal
-			DestroyImmediate(copy.GetComponent<MultiplyingProperty> ());
-			copy.transform.position = copyPositions [i];
-			copy.transform.SetParent (gameObject.transform.parent);
-			GeneratedObjects.Add (copy);
+			for (int i = 1; i < copyPositions.Length; i++) {
+				GameObject copy = GameObject.Instantiate (gameObject);
+				//Array needs to be removed, since the copies are not under control of the Generator yet to handle removal
+				DestroyImmediate (copy.GetComponent<MultiplyingProperty> ());
+				copy.transform.position = copyPositions [i];
+				copy.transform.SetParent (gameObject.transform.parent);
+				GeneratedObjects.Add (copy);
+			}
 		}
 	}
 }

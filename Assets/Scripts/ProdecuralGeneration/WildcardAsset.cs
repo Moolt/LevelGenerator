@@ -23,16 +23,6 @@ public class WildcardAsset : InstantiatingProperty {
 	[HideInInspector]
 	public int selectedIndex = 0;
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-
 	public override void Preview(){
 		//Nothing to be done in preview
 	}
@@ -111,7 +101,7 @@ public class WildcardAsset : InstantiatingProperty {
 	}
 
 	public override void DrawEditorGizmos(){
-		if (chancesList.Count > 0) {
+		if (chancesList.Count > 0 && chancesList[selectedIndex].Asset != null) {
 			
 			WildcardPreviewData previewData = new WildcardPreviewData ();
 			previewData.Asset = chancesList [selectedIndex].Asset;

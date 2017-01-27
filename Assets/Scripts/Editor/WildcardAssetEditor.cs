@@ -32,7 +32,7 @@ public class WildcardAssetEditor : Editor {
 
 				//Show a warning, if there are null refs in the asset list
 				if (NullRefsInList ()) {
-					EditorGUILayout.HelpBox ("Please remove all null references from the asset list", MessageType.Warning);
+					EditorGUILayout.HelpBox ("Null references will result in an empty object.", MessageType.Warning);
 				}
 
 				//Show a warning if the chances don't sum up to 100
@@ -80,8 +80,9 @@ public class WildcardAssetEditor : Editor {
 			EditorGUILayout.EndHorizontal ();
 
 			//Selected Asset as preview
-			EditorGUILayout.LabelField ("Asset: " + wildcard.chancesList [wildcard.selectedIndex].Asset.name);
-
+			GameObject asset = wildcard.chancesList[wildcard.selectedIndex].Asset;
+			string previewName = asset != null ? asset.name : "null";
+			EditorGUILayout.LabelField ("Asset: " + previewName);
 			SceneUpdater.UpdateScene ();
 		}
 	}
