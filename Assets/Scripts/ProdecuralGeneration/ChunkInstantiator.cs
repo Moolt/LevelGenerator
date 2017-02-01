@@ -21,7 +21,7 @@ public class ChunkInstantiator : ScriptableObject{
 	//3. Sort the list depending on their priorities (Instantiating, Transforming, MeshGen)
 	//4. Execute the components
 
-	public void InstiantiateChunk(GameObject chunk){
+	public void InstantiateChunk(GameObject chunk){
 		Init ();
 		workStack.Push (chunk);
 		//chunk.tag = "Untagged";
@@ -36,6 +36,17 @@ public class ChunkInstantiator : ScriptableObject{
 		if (processType == ProcessType.GENERATE) {
 			CleanUp (); //Don't remove properties on preview
 		}
+	}
+
+	//Used by the Level Generator in order to dictate the amount of doors for a chunk
+	public void InstantiateChunk(GameObject chunk, int doorAmount){
+		DoorManager doorManager = chunk.GetComponent<DoorManager> ();
+
+		if (doorManager != null) {
+			doorManager.FixedAmount = doorAmount;
+		}
+
+		InstantiateChunk (chunk);
 	}
 
 	private void Init(){
@@ -92,12 +103,12 @@ public class ChunkInstantiator : ScriptableObject{
 	//For purposes of cleaning up all abstract properties need to be removed during or after the creation process
 	//As there may be dependencies, the removal of several properties can be delayed until the end of the generation process
 	private void HandlePropertyRemoval(AbstractProperty property){
-		if (property.DelayRemoval) {
+		if (property.RemovalTime == RemovalTime.DELAYED) {
 			property.IsDirty = true; //Set dirty to avoid another execution
 			delayedRemovalCollection.Add (property);			
-		} else {
+		} else if(property.RemovalTime == RemovalTime.INSTANTLY) {
 			DestroyImmediate (property);
-		}
+		} //else RemovalTime.NEVER
 	}
 
 	//Sorts the Properties regarding to priority

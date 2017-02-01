@@ -13,7 +13,8 @@ abstract public class AbstractProperty : MonoBehaviour {
 	public abstract float ExecutionOrder { get; }
 	//If true, the component only gets removed at the end of the generator process
 	//After execution the dirty flag will be set to true
-	public abstract bool DelayRemoval { get; }
+	//public abstract bool DelayRemoval { get; }
+	public abstract RemovalTime RemovalTime { get; }
 	//Auto Property storing any Objects generated during generation process
 	//Null if it is unused by the inherited component
 	public ICollection<GameObject> GeneratedObjects { get{ return generatedObjects; } }
@@ -82,8 +83,8 @@ abstract public class ValueProperty : AbstractProperty{
 		get { return 1; }
 	}
 
-	public override bool DelayRemoval{
-		get { return false; }
+	public override RemovalTime RemovalTime{
+		get { return RemovalTime.INSTANTLY; }
 	}
 }
 
@@ -92,8 +93,8 @@ abstract public class InstantiatingProperty : AbstractProperty{
 		get { return 3; }
 	}
 
-	public override bool DelayRemoval{
-		get { return false; }
+	public override RemovalTime RemovalTime{
+		get { return RemovalTime.INSTANTLY; }
 	}
 }
 
@@ -104,8 +105,8 @@ abstract public class TransformingProperty : AbstractProperty{
 		get { return 2; }
 	}
 
-	public override bool DelayRemoval{
-		get { return false; }
+	public override RemovalTime RemovalTime{
+		get { return RemovalTime.INSTANTLY; }
 	}
 }
 
@@ -115,8 +116,8 @@ abstract public class DoorProperty : AbstractProperty{
 		get { return 3.9f; }
 	}
 
-	public override bool DelayRemoval{
-		get { return true; }
+	public override RemovalTime RemovalTime{
+		get { return RemovalTime.NEVER; }
 	}
 }
 
@@ -126,8 +127,8 @@ abstract public class MeshProperty : AbstractProperty{
 		get { return 4; }
 	}
 
-	public override bool DelayRemoval{
-		get { return false; }
+	public override RemovalTime RemovalTime{
+		get { return RemovalTime.INSTANTLY; }
 	}
 }
 

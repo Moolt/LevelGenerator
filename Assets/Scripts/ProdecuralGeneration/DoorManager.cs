@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 [RequireComponent (typeof(MeshFilter), typeof(MeshRenderer))]
 public class DoorManager : DoorProperty {
@@ -14,6 +15,8 @@ public class DoorManager : DoorProperty {
 
 	private bool areDoorsDirty = true;
 	private List<DoorDefinition> randomDoors = new List<DoorDefinition> (0);
+	//Used by ChunkInstantiatior to define how many doors are needed
+	private int fixedAmount = -1;
 
 	public override void Preview(){
 		UpdateDoors ();
@@ -21,7 +24,12 @@ public class DoorManager : DoorProperty {
 
 	public override void Generate(){
 		UpdateDoors ();
-		ChooseRandomDoors ();
+		if (fixedAmount == -1) {
+			ChooseRandomDoors ();
+		} else {
+			ChooseRandomDoors ();
+		}
+		fixedAmount = -1;
 	}
 
 	private void ChooseRandomDoors(){
@@ -36,6 +44,12 @@ public class DoorManager : DoorProperty {
 			randomDoors.Add (allDoors [index]);
 			allDoors.RemoveAt (index);
 		}
+	}
+
+	private void ChooseRandomFixed(){
+		randomDoors.Clear ();
+		List<DoorDefinition> fixedLengthDoors = doors.OrderBy (d => Random.value).ToList();
+		randomDoors.AddRange(fixedLengthDoors.GetRange (0, fixedAmount));
 	}
 
 	//Updates positions with offset, clamps values
@@ -95,5 +109,14 @@ public class DoorManager : DoorProperty {
 	public bool AreDoorsDirty{
 		get{ return areDoorsDirty; }
 		set{ areDoorsDirty = value; }
+	}
+
+	public int FixedAmount {
+		get {
+			return this.fixedAmount;
+		}
+		set {
+			fixedAmount = value;
+		}
 	}
 }

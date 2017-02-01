@@ -2088,18 +2088,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   doors:
-  - Size: {x: 4.88, y: 4.88, z: 4.88}
+  - ID: 0
+    Size: {x: 4.88, y: 4.88, z: 4.88}
     Position: {x: -6.826665, y: 2.44, z: -10.88281}
     RelPosition: {x: -6.826665, y: 2.44, z: -10.88281}
     Direction: {x: 0, y: 0, z: -1}
     CornerIndex: 0
     Offset: {x: 7.9824543, y: 2.44, z: 0}
-  - Size: {x: 4.88, y: 4.88, z: 4.88}
+    Name: 
+  - ID: 0
+    Size: {x: 4.88, y: 4.88, z: 4.88}
     Position: {x: -14.809119, y: 2.44, z: -3.9501896}
     RelPosition: {x: -14.809119, y: 2.44, z: -3.9501896}
     Direction: {x: -1, y: 0, z: 0}
     CornerIndex: 3
     Offset: {x: 0, y: 2.44, z: -3.9501896}
+    Name: 
   offsetType: 0
   doorSize: 4.88
   previewDoors: 1

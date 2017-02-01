@@ -64,7 +64,7 @@ public class LevelGraph{
 	}
 
 	public void GenerateGraph (int roomsCount, int critPathLength, int maxDoors, float distribution){
-		rootnodes.Clear ();	
+		rootnodes.Clear ();
 		nodesCreated = 0;
 
 		this.roomsCount = roomsCount;
@@ -95,7 +95,7 @@ public class LevelGraph{
 	}
 
 	private void ShuffleRootnodes(){
-		rootnodes = rootnodes.OrderBy (n => Random.value).Select (n => n).ToList ();
+		rootnodes = rootnodes.OrderBy (n => Random.value).ToList ();
 	}
 
 	private void CreateSideRooms(){
@@ -165,14 +165,147 @@ public class LevelGraph{
 			return this.rootnodes;
 		}
 	}
+
+	public LevelGraphNode Rootnode {
+		get {
+			return this.rootnode;
+		}
+	}
+}
+
+public struct ChunkMetadata{
+	public GameObject chunk;
+	public int doors;
+}
+
+public class ChunkHelper{
+
+	private List<ChunkMetadata> chunkMetaData;
+
+	public ChunkHelper(string path){
+		chunkMetaData = new List<ChunkMetadata> ();
+		BuildMetadata (Resources.LoadAll<GameObject> (path));
+	}
+
+	private void BuildMetadata(GameObject[] chunks){
+		foreach (GameObject chunk in chunks) {
+			DoorManager doorManager = chunk.GetComponent<DoorManager> ();
+			if (doorManager != null) {
+				ChunkMetadata meta = new ChunkMetadata ();
+				meta.chunk = chunk;
+				meta.doors = doorManager.doors.Count;
+				chunkMetaData.Add (meta);
+			}
+		}
+	}
+
+	public List<GameObject> FindChunks(int doorAmount){
+		return (from meta in chunkMetaData
+		        where meta.doors == doorAmount
+		        select meta.chunk).ToList ();
+	}
+
+	public int MaxDoors(){
+		return 0;
+	}
+}
+
+public struct HallwayMeta{
+	public Vector3 Start;
+	public Vector3 End;
+	public float Size;
+	public GameObject StartChunk;
+	public GameObject EndChunk;
+}
+
+public class ProceduralLevel{
+	private LevelGraphNode rootnode;
+	private ChunkHelper helper;
+	private ChunkInstantiator chunkInstantiator;
+
+	public ProceduralLevel(string path, LevelGraphNode rootnode){
+		this.rootnode = rootnode;
+		this.helper = new ChunkHelper (path);
+		chunkInstantiator = ChunkInstantiator.Instance;
+		GenerateLevel (rootnode);
+	}
+
+	private void GenerateLevel(LevelGraphNode node){
+		GenerateLevel (rootnode, null, null);
+	}
+
+	private void GenerateLevel(LevelGraphNode node, GameObject parentChunk, DoorDefinition door){
+		bool isFirstCall = parentChunk == null;
+		GameObject newChunk;
+
+		if (isFirstCall) {
+			newChunk = InstantiateChunk (node, Vector3.zero);
+		} else {
+			Vector3 chunkPosition = parentChunk.transform.position;
+			Vector3 doorNormal = Vector3.Cross (Vector3.up, door.Direction);
+			Vector3 horizontalOffset = Vector3.Scale (door.RelPosition, doorNormal);
+			chunkPosition += door.Direction * 40f + horizontalOffset * 5f;
+			newChunk = InstantiateChunk (node, chunkPosition);
+		}
+
+		//Choose the door of the NEW chunk that will be connected with the PARENTs door
+		//Then create a Metadata Object that represents the connection and is later used to create the hallway
+		DoorManager doorManager = newChunk.GetComponent<DoorManager> ();
+		List<DoorDefinition> doorDefinitions = doorManager.RandomDoors;
+		//The rootnode will have no parent rooms, so theres nothing to compare or to connect
+		if (!isFirstCall) {
+			DoorDefinition closestDoor = FindClosestDoor (doorDefinitions, door);
+			doorDefinitions.Remove (closestDoor);
+		}
+
+		for (int i = 0; i < doorDefinitions.Count; i++) {			
+			GenerateLevel (node.Connections[i], newChunk, doorDefinitions[i]);
+		}
+		//Not needed anymore so it can be destroyed
+		GameObject.DestroyImmediate (doorManager);
+	}
+
+	private GameObject InstantiateChunk(LevelGraphNode node, Vector3 position){
+		GameObject randomChunk = PickRandomChunk (helper.FindChunks (node.DoorCount));
+		randomChunk.transform.position = position;
+		randomChunk = GameObject.Instantiate (randomChunk); //Instantiate Unity Object
+		chunkInstantiator.ProcessType = ProcessType.GENERATE;
+		chunkInstantiator.InstantiateChunk (randomChunk, node.DoorCount); //Instantiate Abstract Object
+		randomChunk.tag = "ChunkInstance";
+		return randomChunk;
+	}
+
+	private GameObject PickRandomChunk(List<GameObject> candidates){
+		return candidates [Random.Range (0, candidates.Count)];
+	}
+
+	private DoorDefinition FindClosestDoor(List<DoorDefinition> doors, DoorDefinition compare){
+		float distance = float.MaxValue;
+		DoorDefinition closestDoor = null;
+
+		foreach (DoorDefinition newDoor in doors) {
+			if (Vector3.Distance (newDoor.RelPosition + compare.Direction * 1000f + compare.Position, compare.Position) < distance) {
+				closestDoor = newDoor;
+			}
+		}
+
+		return closestDoor;
+	}
 }
 
 public class LevelGeneratorWindow : EditorWindow {
-
+	//Level Graph Properties
 	private int roomCount;
 	private int critPathLength;
 	private int maxDoors;
 	private float distribution;
+	private LevelGraph levelGraph;
+	//Procedural Level Properties
+	private float size;
+	//GUI Properties
+	private bool showLevelGraph = true;
+	private bool showProceduralLevel = true;
+	private string path = "Chunks";
 
 	[MenuItem("Window/Level Generator")]
 	public static void ShowWindow(){
@@ -182,20 +315,35 @@ public class LevelGeneratorWindow : EditorWindow {
 	void OnGUI(){
 
 		EditorGUILayout.Space ();
-
-		roomCount = EditorGUILayout.IntField ("Room Count", roomCount);
-		roomCount = Mathf.Max (0, roomCount);
-		critPathLength = EditorGUILayout.IntField ("Critical Path", critPathLength);
-		critPathLength = Mathf.Clamp (critPathLength, 2, roomCount);
-		maxDoors = EditorGUILayout.IntField("Max. Doors", maxDoors);
-		maxDoors = Mathf.Clamp (maxDoors, 3, 10);
-		distribution = EditorGUILayout.Slider ("Distribution", distribution, 0.05f, 1f);
+		showLevelGraph = EditorGUILayout.Foldout (showLevelGraph, "Level Graph Properties");
+		if (showLevelGraph) {
+			roomCount = EditorGUILayout.IntField ("Room Count", roomCount);
+			roomCount = Mathf.Max (1, roomCount);
+			critPathLength = EditorGUILayout.IntField ("Critical Path", critPathLength);
+			critPathLength = Mathf.Clamp (critPathLength, Mathf.Min (2, roomCount), Mathf.Max (2, roomCount));
+			maxDoors = EditorGUILayout.IntField ("Max. Doors", maxDoors);
+			maxDoors = Mathf.Clamp (maxDoors, 3, 10);
+			distribution = EditorGUILayout.Slider ("Distribution", distribution, 0.05f, 1f);
+		}
 
 		EditorGUILayout.Space ();
 
+		showProceduralLevel = EditorGUILayout.Foldout (showProceduralLevel, "Level Properties");
+		if (showProceduralLevel) {
+			EditorGUILayout.LabelField (path);
+			size = EditorGUILayout.FloatField ("Size", size);
+		}
+
+		EditorGUILayout.Space ();
+
+		EditorGUILayout.BeginHorizontal ();
 		if (GUILayout.Button ("Generate Level")) {
-			LevelGraph levelGraph = new LevelGraph ();
+			levelGraph = new LevelGraph ();
 			levelGraph.GenerateGraph (roomCount, critPathLength, maxDoors, distribution);
 		}
+		if (GUILayout.Button ("Restore")) {
+			ProceduralLevel level = new ProceduralLevel (path, levelGraph.Rootnode);
+		}
+		EditorGUILayout.EndHorizontal ();
 	}
 }

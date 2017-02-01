@@ -20,18 +20,19 @@ public class LinearArray : MultiplyingProperty {
 
 	public override void DrawEditorGizmos(){		
 		Vector3[] positions = CalculatePositions ();
+		if (positions.Length > 0) {
+			transform.position = positions [0];
 
-		transform.position = positions [0];
-
-		if (MeshFound ()) {
-			for (int i = 1; i < positions.Length; i++) {
-				Gizmos.color = Color.black;
-				Gizmos.DrawWireMesh (meshFilter.sharedMesh, positions [i], transform.rotation, transform.localScale);
-			}
-		} else {
-			for (int i = 0; i < positions.Length; i++) {
-				Gizmos.color = Color.black;
-				Gizmos.DrawWireCube (positions [i], new Vector3 (1f, 1f, 1f));
+			if (MeshFound ()) {
+				for (int i = 1; i < positions.Length; i++) {
+					Gizmos.color = Color.black;
+					Gizmos.DrawWireMesh (meshFilter.sharedMesh, positions [i], transform.rotation, transform.localScale);
+				}
+			} else {
+				for (int i = 0; i < positions.Length; i++) {
+					Gizmos.color = Color.black;
+					Gizmos.DrawWireCube (positions [i], new Vector3 (1f, 1f, 1f));
+				}
 			}
 		}
 	}

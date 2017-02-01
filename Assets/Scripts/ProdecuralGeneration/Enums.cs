@@ -13,3 +13,5 @@ public enum OffsetType { ABSOLUTE, RELATIVE, RELATIVEUNIFORM }
 public enum AreaType{ SPHERICAL, RECT, ABSTRACTBOUNDS }
 //Used by ChunkInstantiator
 public enum ProcessType{ GENERATE, PREVIEW }
+//Used by AbstractProperty
+public enum RemovalTime{ INSTANTLY, DELAYED, NEVER }
