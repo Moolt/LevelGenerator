@@ -43,7 +43,9 @@ public static class SceneUpdater {
 		GameObject chunk = GameObject.FindGameObjectWithTag ("Chunk");
 		if (!hideGizmos) {
 			foreach (GameObject go in gizmoObjects) {
-				go.SetActive (true);
+				if (go != null) {
+					go.SetActive (true);
+				}
 			}
 		} else {
 			if (hideGizmosChanged) {

@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEditor;
 using System;
 
-public class LevelGenerationWindow : EditorWindow {
+public class ChunkManagerWindow : EditorWindow {
 
 	private GameObject originalChunk;
 	private GameObject mostRecentCopy;
@@ -19,9 +19,9 @@ public class LevelGenerationWindow : EditorWindow {
 		path = @"Assets/Resources/" + chunkFolderName;
 	}
 
-	[MenuItem("Window/Level Generation")]
+	[MenuItem("Window/Chunk Manager")]
 	public static void ShowWindow(){
-		EditorWindow.GetWindow (typeof(LevelGenerationWindow));
+		EditorWindow.GetWindow (typeof(ChunkManagerWindow));
 	}
 	// Use this for initialization
 	void OnGUI(){
