@@ -103,12 +103,13 @@ public class ChunkInstantiator : ScriptableObject{
 	//For purposes of cleaning up all abstract properties need to be removed during or after the creation process
 	//As there may be dependencies, the removal of several properties can be delayed until the end of the generation process
 	private void HandlePropertyRemoval(AbstractProperty property){
-		if (property.RemovalTime == RemovalTime.DELAYED) {
+		if (property.RemovalTime == RemovalTime.DELAYED ||
+			property.RemovalTime == RemovalTime.NEVER && processType == ProcessType.PREVIEW) {
 			property.IsDirty = true; //Set dirty to avoid another execution
-			delayedRemovalCollection.Add (property);			
-		} else if(property.RemovalTime == RemovalTime.INSTANTLY) {
+			delayedRemovalCollection.Add (property);
+		} else if (property.RemovalTime == RemovalTime.INSTANTLY) {
 			DestroyImmediate (property);
-		} //else RemovalTime.NEVER
+		}
 	}
 
 	//Sorts the Properties regarding to priority

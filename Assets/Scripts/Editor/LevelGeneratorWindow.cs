@@ -76,7 +76,7 @@ public class LevelGraph{
 		ShuffleRootnodes ();
 		CreateSideRooms ();
 		PrintGraph (rootnode);
-		Debug.Log ("Created: " + nodesCreated.ToString ());
+		//Debug.Log ("Created: " + nodesCreated.ToString ());
 	}
 
 	private void CreateCriticalPath(){
@@ -153,7 +153,7 @@ public class LevelGraph{
 		foreach (LevelGraphNode nextNode in node.Connections) {
 			string nodeID = node.IsCriticalPath ? node.ID.ToString() + "*" : node.ID.ToString();
 			string nextNodeID = nextNode.IsCriticalPath ? nextNode.ID.ToString() + "*" : nextNode.ID.ToString();
-			Debug.Log (nodeID + " -> " + nextNodeID);
+			//Debug.Log (nodeID + " -> " + nextNodeID);
 		}
 		foreach (LevelGraphNode nextNode in node.Connections) {
 			PrintGraph (nextNode);
@@ -176,6 +176,35 @@ public class LevelGraph{
 public struct ChunkMetadata{
 	public GameObject chunk;
 	public int doors;
+}
+
+public class PositionMetadata{
+	private GameObject chunk;
+	private Rect rect;
+
+	public PositionMetadata (GameObject chunk, Rect rect)
+	{
+		this.chunk = chunk;
+		this.rect = rect;
+	}
+
+	public GameObject Chunk {
+		get {
+			return this.chunk;
+		}
+		set {
+			chunk = value;
+		}
+	}
+
+	public Rect Rect {
+		get {
+			return this.rect;
+		}
+		set {
+			rect = value;
+		}
+	}
 }
 
 public class ChunkHelper{
@@ -210,24 +239,26 @@ public class ChunkHelper{
 	}
 }
 
-public struct HallwayMeta{
-	public Vector3 Start;
-	public Vector3 End;
-	public float Size;
-	public GameObject StartChunk;
-	public GameObject EndChunk;
-}
-
 public class ProceduralLevel{
 	private LevelGraphNode rootnode;
 	private ChunkHelper helper;
 	private ChunkInstantiator chunkInstantiator;
 
-	public ProceduralLevel(string path, LevelGraphNode rootnode){
+	private int tmpChunkPos = -10000;
+	private List<PositionMetadata> positionMeta;
+	private bool separateRooms;
+	//private Dictionary<GameObject, Rect> chunkPositions;
+
+	public ProceduralLevel(string path, LevelGraphNode rootnode, bool separateRooms){
 		this.rootnode = rootnode;
 		this.helper = new ChunkHelper (path);
+		this.separateRooms = separateRooms;
+		//this.chunkPositions = new Dictionary<GameObject, Rect> ();
+		this.positionMeta = new List<PositionMetadata>();
 		chunkInstantiator = ChunkInstantiator.Instance;
 		GenerateLevel (rootnode);
+		if(separateRooms) SeparateRooms();
+		ApplyPositions();
 	}
 
 	private void GenerateLevel(LevelGraphNode node){
@@ -240,13 +271,29 @@ public class ProceduralLevel{
 
 		if (isFirstCall) {
 			newChunk = InstantiateChunk (node, Vector3.zero);
+			Bounds roomBounds = newChunk.GetComponent<MeshCollider> ().bounds;
+			Rect roomRect = new Rect (new Vector2(0f, 0f), new Vector2(roomBounds.size.x, roomBounds.size.z));
+			positionMeta.Add (new PositionMetadata(newChunk, roomRect));
 		} else {
-			Vector3 chunkPosition = parentChunk.transform.position;
-			Vector3 doorNormal = Vector3.Cross (Vector3.up, door.Direction);
-			Vector3 horizontalOffset = Vector3.Scale (door.RelPosition, doorNormal);
-			chunkPosition += door.Direction * 40f + horizontalOffset * 5f;
-			newChunk = InstantiateChunk (node, chunkPosition);
+			Rect parentRect = positionMeta.Where(c => c.Chunk == parentChunk).First().Rect;
+			Vector3 chunkPosition = new Vector3 (parentRect.position.x, 0, parentRect.position.y);
+			Vector3 doorNormal = Vector3.Cross (door.Direction, Vector3.up);
+			Vector3 horizontalOffset = Vector3.Scale (door.RelPosition, doorNormal) * Random.value;
+
+			//First line up the chunks at predefined positions to ensure that they will not overlap
+			//They are later placed at their actual position after overlapping has been handled
+			//Therefore a class containing the chunk and rectangle is created. Rect is used for separation algorithm.
+			newChunk = InstantiateChunk (node, new Vector3(tmpChunkPos, 0, -1000));
+			Bounds roomBounds = newChunk.GetComponent<MeshCollider> ().bounds;
+			Vector2 roomSize = new Vector2 (roomBounds.size.x, roomBounds.size.z) * 1f;
+			//chunkPosition += door.Direction * roomSize.magnitude + horizontalOffset * 5f;
+			Rect roomRect = new Rect (new Vector2(chunkPosition.x, chunkPosition.z), roomSize);
+			tmpChunkPos += (int)roomRect.size.magnitude + 100;
+			positionMeta.Add (new PositionMetadata(newChunk, roomRect));
 		}
+
+		DebugRoomID roomid = newChunk.AddComponent<DebugRoomID> () as DebugRoomID;
+		roomid.ID = node.ID;
 
 		//Choose the door of the NEW chunk that will be connected with the PARENTs door
 		//Then create a Metadata Object that represents the connection and is later used to create the hallway
@@ -256,9 +303,12 @@ public class ProceduralLevel{
 		if (!isFirstCall) {
 			DoorDefinition closestDoor = FindClosestDoor (doorDefinitions, door);
 			doorDefinitions.Remove (closestDoor);
+			roomid.hallwayMeta = new HallwayMeta (door.RelPosition + parentChunk.transform.position, 
+				closestDoor.RelPosition + newChunk.transform.position, 
+				parentChunk, newChunk, node.IsCriticalPath);
 		}
 
-		for (int i = 0; i < doorDefinitions.Count; i++) {			
+		for (int i = 0; i < doorDefinitions.Count; i++) {
 			GenerateLevel (node.Connections[i], newChunk, doorDefinitions[i]);
 		}
 		//Not needed anymore so it can be destroyed
@@ -291,6 +341,62 @@ public class ProceduralLevel{
 
 		return closestDoor;
 	}
+
+	private void SeparateRooms(){
+		bool separated = false;
+		int iterations = 0;
+		do {
+			iterations++;
+			separated = true;
+
+			foreach(PositionMetadata room in positionMeta){
+				Vector2 velocity = Vector2.zero;
+				Vector2 center = room.Rect.center;
+
+				foreach(PositionMetadata other in positionMeta){
+					//No comparison with itself
+					if(room == other) continue;
+					//Only search for overlapping rectangles
+					if(!room.Rect.Overlaps(other.Rect)) continue;
+
+					Vector2 otherCenter = other.Rect.center;
+					Vector2 diff = center - otherCenter;
+					float diffLen = diff.sqrMagnitude; ///BUGPOTENTIAL
+
+					if(diffLen > 0f){
+						float repelDecayCoefficient = 1f;
+						float scale = repelDecayCoefficient / diffLen;
+						diff.Normalize();
+						diff *= scale;
+						velocity += diff;
+					}
+				}
+
+				if(velocity.magnitude > 0f){
+					separated = false;
+
+					velocity.Normalize();
+					Rect newRect = new Rect(room.Rect.position + velocity, room.Rect.size);
+					room.Rect = newRect;
+				}
+			}
+
+		} while(!separated);
+		Debug.Log (iterations.ToString ());
+	}
+
+	private void ApplyPositions(){
+		foreach (PositionMetadata chunkPos in positionMeta) {
+			Vector3 position = new Vector3 (chunkPos.Rect.position.x, 0f, chunkPos.Rect.position.y);
+			chunkPos.Chunk.transform.position = position;
+		}
+	}
+
+	public List<GameObject> GeneratedRooms{
+		get{ return positionMeta.Select (c => c.Chunk).ToList (); }
+	}
+
+
 }
 
 public class LevelGeneratorWindow : EditorWindow {
@@ -306,6 +412,11 @@ public class LevelGeneratorWindow : EditorWindow {
 	private bool showLevelGraph = true;
 	private bool showProceduralLevel = true;
 	private string path = "Chunks";
+	private int seed = 0;
+	//Used to delete old object before generating new ones
+	private List<GameObject> generatedObjects = new List<GameObject>();
+	private bool isAutoUpdate = false;
+	private bool isSeparateRooms = true;
 
 	[MenuItem("Window/Level Generator")]
 	public static void ShowWindow(){
@@ -318,7 +429,7 @@ public class LevelGeneratorWindow : EditorWindow {
 		showLevelGraph = EditorGUILayout.Foldout (showLevelGraph, "Level Graph Properties");
 		if (showLevelGraph) {
 			roomCount = EditorGUILayout.IntField ("Room Count", roomCount);
-			roomCount = Mathf.Max (1, roomCount);
+			roomCount = Mathf.Clamp (roomCount, 1, 20);
 			critPathLength = EditorGUILayout.IntField ("Critical Path", critPathLength);
 			critPathLength = Mathf.Clamp (critPathLength, Mathf.Min (2, roomCount), Mathf.Max (2, roomCount));
 			maxDoors = EditorGUILayout.IntField ("Max. Doors", maxDoors);
@@ -336,14 +447,36 @@ public class LevelGeneratorWindow : EditorWindow {
 
 		EditorGUILayout.Space ();
 
+		seed = EditorGUILayout.IntField ("Seed", seed);
+		isAutoUpdate = EditorGUILayout.Toggle ("Auto Update", isAutoUpdate);
+		isSeparateRooms = EditorGUILayout.Toggle ("Separate Rooms", isSeparateRooms);
+
 		EditorGUILayout.BeginHorizontal ();
 		if (GUILayout.Button ("Generate Level")) {
-			levelGraph = new LevelGraph ();
-			levelGraph.GenerateGraph (roomCount, critPathLength, maxDoors, distribution);
+			Generate ();
 		}
 		if (GUILayout.Button ("Restore")) {
-			ProceduralLevel level = new ProceduralLevel (path, levelGraph.Rootnode);
 		}
+
+		if (isAutoUpdate) {
+			Generate ();
+		}
+
 		EditorGUILayout.EndHorizontal ();
+	}
+
+	private void Generate(){
+		ClearLevel ();
+		Random.InitState (seed);
+		levelGraph = new LevelGraph ();
+		levelGraph.GenerateGraph (roomCount, critPathLength, maxDoors, distribution);
+		ProceduralLevel level = new ProceduralLevel (path, levelGraph.Rootnode, isSeparateRooms);
+		generatedObjects = level.GeneratedRooms;
+	}
+
+	private void ClearLevel(){
+		foreach (GameObject room in generatedObjects) {
+			DestroyImmediate (room);
+		}
 	}
 }

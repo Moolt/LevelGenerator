@@ -216,6 +216,6 @@ public class AbstractBounds : TransformingProperty {
 	}
 
 	public override RemovalTime RemovalTime{
-		get { return RemovalTime.DELAYED; }
+		get { return RemovalTime.NEVER; }
 	}
 }
