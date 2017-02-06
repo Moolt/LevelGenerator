@@ -9,7 +9,7 @@ public struct WildcardChance{
 	public GameObject Asset;
 	public int Chance;
 }
-
+[System.Serializable]
 public class WildcardPreviewData{
 	public GameObject Asset{ get; set; }
 	public Mesh Mesh { get; set; }

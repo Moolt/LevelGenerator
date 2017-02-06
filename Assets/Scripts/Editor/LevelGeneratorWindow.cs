@@ -382,7 +382,6 @@ public class ProceduralLevel{
 			}
 
 		} while(!separated);
-		Debug.Log (iterations.ToString ());
 	}
 
 	private void ApplyPositions(){
@@ -455,7 +454,8 @@ public class LevelGeneratorWindow : EditorWindow {
 		if (GUILayout.Button ("Generate Level")) {
 			Generate ();
 		}
-		if (GUILayout.Button ("Restore")) {
+		if (GUILayout.Button ("Clear")) {
+			ClearLevel ();
 		}
 
 		if (isAutoUpdate) {

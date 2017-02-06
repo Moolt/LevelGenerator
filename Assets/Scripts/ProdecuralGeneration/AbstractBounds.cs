@@ -90,7 +90,7 @@ public class AbstractBounds : TransformingProperty {
 
 	public bool IsChunk{
 		get{
-			return gameObject.tag == "Chunk";
+			return gameObject.tag.StartsWith ("Chunk");
 		}
 	}
 
@@ -216,6 +216,6 @@ public class AbstractBounds : TransformingProperty {
 	}
 
 	public override RemovalTime RemovalTime{
-		get { return RemovalTime.NEVER; }
+		get { return RemovalTime.MANUAL; }
 	}
 }

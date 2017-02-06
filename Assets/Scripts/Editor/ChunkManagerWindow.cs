@@ -38,9 +38,11 @@ public class ChunkManagerWindow : EditorWindow {
 			CreateNewChunk ();
 		}
 
+		GUI.enabled = OriginalChunk != null;
 		if (GUILayout.Button ("Save")) {
 			SaveChunk ();
 		}
+		GUI.enabled = true;
 
 		if (GUILayout.Button ("Load")) {
 			LoadChunk ();
@@ -48,7 +50,9 @@ public class ChunkManagerWindow : EditorWindow {
 
 		EditorGUILayout.EndHorizontal ();
 
-		EditorGUILayout.LabelField ("Chunk name", originalChunk.name);
+		string chunkName = OriginalChunk == null ? "" : OriginalChunk.name;
+
+		EditorGUILayout.LabelField ("Chunk name", chunkName);
 		EditorGUILayout.LabelField ("Path", path);
 
 		GUILayout.Space (20);
@@ -56,6 +60,7 @@ public class ChunkManagerWindow : EditorWindow {
 		EditorGUILayout.Space ();
 
 		EditorGUILayout.BeginHorizontal ();
+		GUI.enabled = OriginalChunk != null;
 		if (GUILayout.Button ("Preview Chunk")) {
 			InstantiateChunk (DateTime.Now.Millisecond);
 		}
@@ -72,7 +77,7 @@ public class ChunkManagerWindow : EditorWindow {
 		if (seed != prevSeed) {
 			InstantiateChunk (seed);
 		}
-
+		GUI.enabled = true;
 		prevSeed = seed;
 	}
 
@@ -82,21 +87,21 @@ public class ChunkManagerWindow : EditorWindow {
 
 		SceneUpdater.SetActive (false);
 		DestroyOldCopy (); //Remove old generated chunk
-		OriginalChunk.SetActive (true); //Has to be active or else the copy could be inactive, too
+		SetChunkActive (true); //Has to be active or else the copy could be inactive, too
 		MostRecentCopy = (GameObject)GameObject.Instantiate (OriginalChunk, OriginalChunk.transform.position , Quaternion.identity);
-		OriginalChunk.SetActive (false);
+		MostRecentCopy.tag = "ChunkCopy";
+		SetChunkActive (false);
 
 		ChunkInstantiator generator = ChunkInstantiator.Instance;
 		generator.ProcessType = ProcessType.GENERATE;
 		generator.InstantiateChunk (MostRecentCopy);
-		MostRecentCopy.tag = "ChunkCopy";
 		durationMillis = DateTime.Now.Millisecond - startMillis;
 	}
 
 	//Remvoes any old copy of the chunk and sets the original, abstract chunk active
 	private void Restore(){
 		DestroyOldCopy (); //Destroy the generated chunk
-		OriginalChunk.SetActive(true);
+		SetChunkActive(true);
 		SceneUpdater.SetActive (true);
 		SceneUpdater.UpdateScene ();
 	}
@@ -135,13 +140,13 @@ public class ChunkManagerWindow : EditorWindow {
 
 	private void SaveChunk(){
 		Restore ();
-		GameObject chunk = GameObject.FindGameObjectWithTag ("Chunk");
-		if (chunk != null) {
+		if (OriginalChunk != null) {
 			System.IO.Directory.CreateDirectory (path); //Create folders if they don't yet exist
-			string dialogPath = EditorUtility.SaveFilePanelInProject ("Save Chunk", chunk.name, "prefab", "", path);
+			string dialogPath = EditorUtility.SaveFilePanelInProject ("Save Chunk", OriginalChunk.name, "prefab", "", path);
 
 			if (dialogPath.Length > 0) {
-				PrefabUtility.CreatePrefab (dialogPath, chunk, ReplacePrefabOptions.ReplaceNameBased);
+				Debug.Log (dialogPath);
+				PrefabUtility.CreatePrefab (dialogPath, OriginalChunk, ReplacePrefabOptions.ConnectToPrefab);
 			}
 
 		} else {
@@ -159,9 +164,14 @@ public class ChunkManagerWindow : EditorWindow {
 			//Resources.Load only works with files inside the Resources folder. The path therefore only has to contain the folder the chunks
 			//Are stored in
 			string filePath = chunkFolderName + "/" + System.IO.Path.GetFileNameWithoutExtension (dialogPath);
-
+			//OriginalChunk.tag = "ChunkRemove";
 			DestroyImmediate (OriginalChunk, true);
+			OriginalChunk = null;
+			MostRecentCopy = null;
 			OriginalChunk = (GameObject)GameObject.Instantiate (Resources.Load (filePath));
+			//OriginalChunk = (GameObject) PrefabUtility.InstantiatePrefab (Resources.Load (filePath));
+			OriginalChunk.transform.position = Vector3.zero;
+			//PrefabUtility.DisconnectPrefabInstance(OriginalChunk);
 			SceneUpdater.UpdateScene ();
 		}
 	}
@@ -187,12 +197,18 @@ public class ChunkManagerWindow : EditorWindow {
 		set { originalChunk = value; }
 	}
 
+	private void SetChunkActive(bool state){
+		if (OriginalChunk != null) {
+			OriginalChunk.SetActive (state);
+		}
+	}
+
 	//Since FindByTag only works for active objects, this function iterates through all
 	//Objects in the scene and compares the tags
 	private GameObject FindInactiveWithTag(string tag){
 		Transform[] sceneObjects = Resources.FindObjectsOfTypeAll<Transform> ();
 		foreach (Transform t in sceneObjects) {
-			if (t.tag == tag) {
+			if (t.tag == tag && t.gameObject.scene.name != "Null") {
 				return t.gameObject;
 			}
 		}

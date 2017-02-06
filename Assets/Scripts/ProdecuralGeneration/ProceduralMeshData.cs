@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class ProceduralMeshData{
 	private MeshShape meshShape = MeshShape.RAMP;
 	private Vector3 extends;

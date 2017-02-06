@@ -104,7 +104,7 @@ public class ChunkInstantiator : ScriptableObject{
 	//As there may be dependencies, the removal of several properties can be delayed until the end of the generation process
 	private void HandlePropertyRemoval(AbstractProperty property){
 		if (property.RemovalTime == RemovalTime.DELAYED ||
-			property.RemovalTime == RemovalTime.NEVER && processType == ProcessType.PREVIEW) {
+			property.RemovalTime == RemovalTime.MANUAL && processType == ProcessType.PREVIEW) {
 			property.IsDirty = true; //Set dirty to avoid another execution
 			delayedRemovalCollection.Add (property);
 		} else if (property.RemovalTime == RemovalTime.INSTANTLY) {

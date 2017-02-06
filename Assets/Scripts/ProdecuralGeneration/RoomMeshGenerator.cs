@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class DoorGridElement{
 	public Rect Rect { get; set; }
 	public bool IsInsideDoor { get; set; }
 }
 
+[System.Serializable]
 public class RoomMeshData{
 	private AbstractBounds abstractBounds;
 	private List<DoorDefinition> doors;
@@ -72,14 +74,14 @@ public class RoomMeshData{
 		get {
 			return this.doors;
 		}
-		set {				
+		set {
 			doors = value;
 			isDirty = true;
 		}
 	}
 
 	public void ConstructRoom(){
-        if (isDirty) {
+		if (isDirty) {
 		    Vertices = new List<Vector3> ();
 		    Triangles = new List<int>[6];
 		    UVs = new List<Vector2> ();
@@ -278,6 +280,15 @@ public class RoomMeshData{
 		output += Vector3.Scale (Vector3.one * input.x, normal);
 		return output;
 	}
+
+	public bool IsDirty {
+		get {
+			return this.isDirty;
+		}
+		set {
+			isDirty = value;
+		}
+	}
 }
 
 [RequireComponent (typeof(MeshFilter), typeof(MeshRenderer))]
@@ -299,7 +310,7 @@ public class RoomMeshGenerator : MeshProperty {
 	private MeshFilter meshFilter;
 	private Mesh mesh;
 
-    void Init() {
+	void Init(bool isGenerate) {
         abstractBounds = GetComponent<AbstractBounds>();
         meshFilter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
@@ -308,7 +319,7 @@ public class RoomMeshGenerator : MeshProperty {
             meshData = new RoomMeshData(abstractBounds);
         }
 
-		if(meshFilter.sharedMesh == null){
+		if(meshFilter.sharedMesh == null || isGenerate){
 			meshFilter.sharedMesh = new Mesh ();
 		}
 		mesh = meshFilter.sharedMesh;
@@ -322,7 +333,7 @@ public class RoomMeshGenerator : MeshProperty {
 	}
 
 	public override void Preview(){
-		Init ();
+		Init (false);
 		ObtainDoors ();
 		UpdateMesh ();
 		UpdateMeshCollider ();
@@ -357,7 +368,7 @@ public class RoomMeshGenerator : MeshProperty {
 	}
 
 	public override void Generate(){
-		Init ();
+		Init (true);
 		ObtainDoors ();
 		UpdateMesh ();
 		UpdateMeshCollider ();

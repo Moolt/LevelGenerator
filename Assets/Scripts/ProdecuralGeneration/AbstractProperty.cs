@@ -117,7 +117,7 @@ abstract public class DoorProperty : AbstractProperty{
 	}
 
 	public override RemovalTime RemovalTime{
-		get { return RemovalTime.NEVER; }
+		get { return RemovalTime.MANUAL; }
 	}
 }
 

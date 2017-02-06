@@ -4,6 +4,7 @@ using System.Reflection;
 using UnityEngine;
 using System;
 
+[System.Serializable]
 public static class CopyComponentExtension{
 
 	private static Dictionary<string, string> exceptions = new Dictionary<string, string>

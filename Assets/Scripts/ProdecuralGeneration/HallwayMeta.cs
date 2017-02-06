@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class HallwayMeta{
 	public Vector3 Start;
 	public Vector3 End;

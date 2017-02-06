@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 
+[System.Serializable]
 public static class EditorGUIExtension {
 
 	public static void RadiusDisc(Vector3 pos, float radius, Color color){
