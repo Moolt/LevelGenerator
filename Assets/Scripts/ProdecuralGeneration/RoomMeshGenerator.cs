@@ -293,6 +293,7 @@ public class RoomMeshData{
 
 [RequireComponent (typeof(MeshFilter), typeof(MeshRenderer))]
 [RequireComponent (typeof(AbstractBounds), typeof(DoorManager))]
+[ExecuteInEditMode()]
 public class RoomMeshGenerator : MeshProperty {
 	public Material floorMaterial;
 	public Material wallMaterial;
@@ -390,6 +391,21 @@ public class RoomMeshGenerator : MeshProperty {
 				doors.AddRange (doorDefinitions.RandomDoors);
 				meshData.Doors = doors;
 			}
+		}
+	}
+
+	//This helps to prevent a bug occuring in the ChunkGenerator Window since
+	//Eventhough when the object is deleted, in most cases (all?) it remains for an uncertain
+	//Amount of time before being actually removed from the scene. 
+	//Removing the tag at least gives a hint about the Chunks status of removal.
+	public void OnDestroy(){
+		transform.gameObject.tag = "Untagged";
+	}
+
+	//Force recreation of the mesh. Needed after (de)activation of the object, since the mesh seems to get corrupted
+	public void OnEnable(){
+		if (meshData != null) {
+			meshData.IsDirty = true;
 		}
 	}
 }

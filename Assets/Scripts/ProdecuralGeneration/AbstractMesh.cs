@@ -50,14 +50,14 @@ public class AbstractMesh : MeshProperty {
 		Init ();
 		AbstractBoundsBinding ();
 		AssignMesh ();
-		//UpdateCollider ();
+		UpdateCollider ();
 	}
 
 	public override void Generate(){
 		Init ();
 		AbstractBoundsBinding ();
 		AssignMesh ();
-		//UpdateCollider ();
+		UpdateCollider ();
 	}
 
 	private void UpdateCollider(){

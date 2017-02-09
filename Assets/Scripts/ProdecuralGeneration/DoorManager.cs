@@ -119,4 +119,11 @@ public class DoorManager : DoorProperty {
 			fixedAmount = value;
 		}
 	}
+
+	public Vector3 RequiredSpace{
+		get{
+			float highestDoorPos = (doors.Count > 0) ? doors.OrderByDescending (d => d.Position.y).FirstOrDefault ().Position.y + doorSize / 2f : doorSize;
+			return new Vector3 (doorSize, highestDoorPos, doorSize);
+		}
+	}
 }

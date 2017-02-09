@@ -42,10 +42,6 @@ public class AbstractBounds : TransformingProperty {
 	}
 
 	public override void Preview(){
-		/*if (adaptToParent != null) {
-			size = adaptToParent.size;
-			this.minSize = this.maxSize = adaptToParent.size;
-		}*/
 		UpdateScaling (false);
 		ClampValues ();
 	}
@@ -184,13 +180,16 @@ public class AbstractBounds : TransformingProperty {
 	}
 
 	private void ClampValues(){
+		Vector3 requiredSpace = Vector3.zero;
+
+		if (IsConstrainedByDoors) {
+			DoorManager doorManager = GetComponent<DoorManager> ();
+			requiredSpace = doorManager.RequiredSpace;
+		}
+
 		this.transform.localScale = Vector3.one;
-		maxSize.x = Mathf.Max (maxSize.x, MinSize.x);
-		maxSize.y = Mathf.Max (maxSize.y, MinSize.y);
-		maxSize.z = Mathf.Max (maxSize.z, MinSize.z);
-		minSize.x = Mathf.Clamp (minSize.x, 0f, MaxSize.x);
-		minSize.y = Mathf.Clamp (minSize.y, 0f, MaxSize.y);
-		minSize.z = Mathf.Clamp (minSize.z, 0f, MaxSize.z);
+		maxSize = Clamp (maxSize, MinSize, maxSize);
+		minSize = Clamp (minSize, requiredSpace, MaxSize);
 	}
 
 	public Vector3 LockedAxes {
@@ -217,5 +216,13 @@ public class AbstractBounds : TransformingProperty {
 
 	public override RemovalTime RemovalTime{
 		get { return RemovalTime.MANUAL; }
+	}
+
+	public bool IsConstrainedByDoors{
+		get{ return gameObject.GetComponent<DoorManager> () != null; }
+	}
+
+	private Vector3 Clamp(Vector3 value, Vector3 min, Vector3 max){
+		return new Vector3 (Mathf.Clamp (value.x, min.x, max.x), Mathf.Clamp (value.y, min.y, max.y), Mathf.Clamp (value.z, min.z, max.z));
 	}
 }

@@ -18,6 +18,12 @@ public class AbstractBoundsEditor : Editor {
 			abstractBounds.GizmoPreviewState = (GizmoPreviewState)EditorGUILayout.EnumPopup ("Gizmo visibility", abstractBounds.GizmoPreviewState);
 			EditorGUILayout.Space ();
 
+			if (abstractBounds.IsConstrainedByDoors) {
+				EditorGUILayout.HelpBox ("Please note, that the size is constrained by the doors defined by the DoorManager component", MessageType.Info);
+			}
+
+			EditorGUILayout.Space ();
+
 			//ITransformable[] children = abstractBounds.gameObject.GetComponents<ITransformable> ();
 			abstractBounds.hasFixedSize = EditorGUILayout.Toggle("Fixed size", abstractBounds.hasFixedSize);
 

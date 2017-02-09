@@ -26,10 +26,6 @@ public class ChunkManagerWindow : EditorWindow {
 	// Use this for initialization
 	void OnGUI(){
 
-		if (OriginalChunk == null) {
-			OriginalChunk = GameObject.FindWithTag ("Chunk");
-		}
-
 		EditorGUILayout.Space();
 
 		EditorGUILayout.BeginHorizontal ();
@@ -47,8 +43,13 @@ public class ChunkManagerWindow : EditorWindow {
 		if (GUILayout.Button ("Load")) {
 			LoadChunk ();
 		}
+			
 
 		EditorGUILayout.EndHorizontal ();
+
+		if (OriginalChunk == null) {	
+			EditorGUILayout.HelpBox ("No Chunk found in the scene. Chunks have to be tagged with \"Chunk\" and there should only be one instance at a time", MessageType.Warning);
+		}
 
 		string chunkName = OriginalChunk == null ? "" : OriginalChunk.name;
 
@@ -208,7 +209,7 @@ public class ChunkManagerWindow : EditorWindow {
 	private GameObject FindInactiveWithTag(string tag){
 		Transform[] sceneObjects = Resources.FindObjectsOfTypeAll<Transform> ();
 		foreach (Transform t in sceneObjects) {
-			if (t.tag == tag && t.gameObject.scene.name != "Null") {
+			if (t.tag == tag && t.gameObject.scene.name != null) {
 				return t.gameObject;
 			}
 		}
