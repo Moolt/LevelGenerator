@@ -108,9 +108,10 @@ public class LevelGraph{
 		//Each rootnode has a certain supply of doors to be created
 		//These doors don't have to be used by the rootnode or it's child all at once
 		//Since CreateSideRooms will be later called recursively, the supply will be used up until it's zero		
-		int supplyPerNode = (int)Mathf.Ceil ((sideRoomCount / (float)critPathLength) / distribution);
+		//int supplyPerNode = (int)Mathf.Ceil ((sideRoomCount / (float)critPathLength) / distribution);
 
 		for (int i = 0; i < critPathLength; i++) {
+			int supplyPerNode = (int)(Mathf.Ceil(sideRoomCount / (float)critPathLength)) + (int)(sideRoomCount * Mathf.Clamp (Random.value, 0f, 1 - distribution)); //(int)Mathf.Ceil ((sideRoomCount / (float)critPathLength) / distribution);
 			//How many rooms can be created until roomsCount is reached
 			int availableRooms = roomsCount - nodesCreated;
 			//Has been previously computed. Since ceil was used for rounding, there's the
@@ -173,7 +174,7 @@ public class LevelGraph{
 	}
 }
 
-public struct ChunkMetadata{
+public class ChunkMetadata{
 	public GameObject chunk;
 	public int doors;
 }
@@ -181,11 +182,16 @@ public struct ChunkMetadata{
 public class PositionMetadata{
 	private GameObject chunk;
 	private Rect rect;
-
+	private List<DoorDefinition> doors;
 	public PositionMetadata (GameObject chunk, Rect rect)
 	{
 		this.chunk = chunk;
 		this.rect = rect;
+
+		DoorManager doorManager = chunk.GetComponent<DoorManager> ();
+		if (doorManager != null) {
+			this.doors = doorManager.RandomDoors;
+		}
 	}
 
 	public GameObject Chunk {
@@ -203,6 +209,12 @@ public class PositionMetadata{
 		}
 		set {
 			rect = value;
+		}
+	}
+
+	public void UpdateDoorPositions(){
+		foreach (DoorDefinition door in doors) {
+			door.Position = new Vector3 (rect.center.x, 0f, rect.center.y) + door.RelPosition;
 		}
 	}
 }
@@ -247,17 +259,20 @@ public class ProceduralLevel{
 	private int tmpChunkPos = -10000;
 	private List<PositionMetadata> positionMeta;
 	private bool separateRooms;
+	private float spacing;
 	//private Dictionary<GameObject, Rect> chunkPositions;
 
-	public ProceduralLevel(string path, LevelGraphNode rootnode, bool separateRooms){
+	public ProceduralLevel(string path, LevelGraphNode rootnode, bool separateRooms, float spacing){
 		this.rootnode = rootnode;
 		this.helper = new ChunkHelper (path);
 		this.separateRooms = separateRooms;
+		this.spacing = spacing;
 		//this.chunkPositions = new Dictionary<GameObject, Rect> ();
 		this.positionMeta = new List<PositionMetadata>();
 		chunkInstantiator = ChunkInstantiator.Instance;
 		GenerateLevel (rootnode);
 		if(separateRooms) SeparateRooms();
+		CreateHallways ();
 		ApplyPositions();
 	}
 
@@ -268,14 +283,16 @@ public class ProceduralLevel{
 	private void GenerateLevel(LevelGraphNode node, GameObject parentChunk, DoorDefinition door){
 		bool isFirstCall = parentChunk == null;
 		GameObject newChunk;
+		Rect roomRect;
+		Rect parentRect = new Rect ();
 
 		if (isFirstCall) {
 			newChunk = InstantiateChunk (node, Vector3.zero);
 			Bounds roomBounds = newChunk.GetComponent<MeshCollider> ().bounds;
-			Rect roomRect = new Rect (new Vector2(0f, 0f), new Vector2(roomBounds.size.x, roomBounds.size.z));
+			roomRect = new Rect (new Vector2(0f, 0f), new Vector2(roomBounds.size.x, roomBounds.size.z));
 			positionMeta.Add (new PositionMetadata(newChunk, roomRect));
 		} else {
-			Rect parentRect = positionMeta.Where(c => c.Chunk == parentChunk).First().Rect;
+			parentRect = positionMeta.Where(c => c.Chunk == parentChunk).First().Rect;
 			Vector3 chunkPosition = new Vector3 (parentRect.position.x, 0, parentRect.position.y);
 			Vector3 doorNormal = Vector3.Cross (door.Direction, Vector3.up);
 			Vector3 horizontalOffset = Vector3.Scale (door.RelPosition, doorNormal) * Random.value;
@@ -285,27 +302,28 @@ public class ProceduralLevel{
 			//Therefore a class containing the chunk and rectangle is created. Rect is used for separation algorithm.
 			newChunk = InstantiateChunk (node, new Vector3(tmpChunkPos, 0, -1000));
 			Bounds roomBounds = newChunk.GetComponent<MeshCollider> ().bounds;
-			Vector2 roomSize = new Vector2 (roomBounds.size.x, roomBounds.size.z) * 1f;
-			//chunkPosition += door.Direction * roomSize.magnitude + horizontalOffset * 5f;
-			Rect roomRect = new Rect (new Vector2(chunkPosition.x, chunkPosition.z), roomSize);
+			Vector2 roomSize = new Vector2 (roomBounds.size.x, roomBounds.size.z) * spacing;
+			float roomDistance = node.IsCriticalPath ? 1f : 0.5f; //Smaller distance if sideroom
+			chunkPosition += door.Direction * roomSize.magnitude * roomDistance + horizontalOffset * 5f;
+			roomRect = new Rect (new Vector2(chunkPosition.x, chunkPosition.z), roomSize);
 			tmpChunkPos += (int)roomRect.size.magnitude + 100;
 			positionMeta.Add (new PositionMetadata(newChunk, roomRect));
 		}
 
 		DebugRoomID roomid = newChunk.AddComponent<DebugRoomID> () as DebugRoomID;
 		roomid.ID = node.ID;
+		roomid.isCritical = node.IsCriticalPath;
 
 		//Choose the door of the NEW chunk that will be connected with the PARENTs door
 		//Then create a Metadata Object that represents the connection and is later used to create the hallway
 		DoorManager doorManager = newChunk.GetComponent<DoorManager> ();
-		List<DoorDefinition> doorDefinitions = doorManager.RandomDoors;
+		List<DoorDefinition> doorDefinitions = new List<DoorDefinition> (doorManager.RandomDoors);
+
 		//The rootnode will have no parent rooms, so theres nothing to compare or to connect
 		if (!isFirstCall) {
 			DoorDefinition closestDoor = FindClosestDoor (doorDefinitions, door);
 			doorDefinitions.Remove (closestDoor);
-			roomid.hallwayMeta = new HallwayMeta (door.RelPosition + parentChunk.transform.position, 
-				closestDoor.RelPosition + newChunk.transform.position, 
-				parentChunk, newChunk, node.IsCriticalPath);
+			roomid.hallwayMeta = new HallwayMeta (door, closestDoor);
 		}
 
 		for (int i = 0; i < doorDefinitions.Count; i++) {
@@ -386,8 +404,18 @@ public class ProceduralLevel{
 
 	private void ApplyPositions(){
 		foreach (PositionMetadata chunkPos in positionMeta) {
-			Vector3 position = new Vector3 (chunkPos.Rect.position.x, 0f, chunkPos.Rect.position.y);
+			Vector3 position = new Vector3 (chunkPos.Rect.center.x, 0f, chunkPos.Rect.center.y);
 			chunkPos.Chunk.transform.position = position;
+		}
+	}
+
+	private void CreateHallways(){
+		UpdateDoorPositions ();
+	}
+
+	private void UpdateDoorPositions(){
+		foreach (PositionMetadata meta in positionMeta) {
+			meta.UpdateDoorPositions ();
 		}
 	}
 
@@ -442,6 +470,7 @@ public class LevelGeneratorWindow : EditorWindow {
 		if (showProceduralLevel) {
 			EditorGUILayout.LabelField (path);
 			size = EditorGUILayout.FloatField ("Size", size);
+			size = Mathf.Max (0f, size);
 		}
 
 		EditorGUILayout.Space ();
@@ -470,7 +499,7 @@ public class LevelGeneratorWindow : EditorWindow {
 		Random.InitState (seed);
 		levelGraph = new LevelGraph ();
 		levelGraph.GenerateGraph (roomCount, critPathLength, maxDoors, distribution);
-		ProceduralLevel level = new ProceduralLevel (path, levelGraph.Rootnode, isSeparateRooms);
+		ProceduralLevel level = new ProceduralLevel (path, levelGraph.Rootnode, isSeparateRooms, size);
 		generatedObjects = level.GeneratedRooms;
 	}
 

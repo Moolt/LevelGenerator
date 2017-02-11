@@ -4,18 +4,23 @@ using UnityEngine;
 
 [System.Serializable]
 public class HallwayMeta{
-	public Vector3 Start;
-	public Vector3 End;
-	public float Size;
-	public GameObject StartChunk;
-	public GameObject EndChunk;
-	public bool IsCriticalPath;
+	private DoorDefinition startDoor;
+	private DoorDefinition endDoor;
 
-	public HallwayMeta (Vector3 start, Vector3 end, GameObject startChunk, GameObject endChunk, bool isCriticalPath){
-		this.Start = start;
-		this.End = end;
-		this.StartChunk = startChunk;
-		this.EndChunk = endChunk;
-		this.IsCriticalPath = isCriticalPath;
+	public HallwayMeta (DoorDefinition startDoor, DoorDefinition endDoor){
+		this.startDoor = startDoor;
+		this.endDoor = endDoor;
+	}
+
+	public DoorDefinition StartDoor {
+		get {			
+			return this.startDoor;
+		}
+	}
+
+	public DoorDefinition EndDoor {
+		get {			
+			return this.endDoor;
+		}
 	}
 }

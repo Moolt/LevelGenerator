@@ -13,7 +13,6 @@ public class DebugRoomIDEditor : Editor {
 		Handles.Label(room.transform.position, room.ID.ToString(), style);
 		if (room.hallwayMeta == null)
 			return;
-		Handles.color = room.hallwayMeta.IsCriticalPath ? Color.red : Color.cyan;
-		Handles.DrawLine (room.hallwayMeta.Start, room.hallwayMeta.End);
+		//Handles.DrawLine (room.hallwayMeta.StartDoor.Position, room.hallwayMeta.EndDoor.Position);
 	}
 }

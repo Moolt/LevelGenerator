@@ -215,7 +215,7 @@ public class AbstractBounds : TransformingProperty {
 	}
 
 	public override RemovalTime RemovalTime{
-		get { return RemovalTime.MANUAL; }
+		get { return RemovalTime.DELAYED; }
 	}
 
 	public bool IsConstrainedByDoors{
