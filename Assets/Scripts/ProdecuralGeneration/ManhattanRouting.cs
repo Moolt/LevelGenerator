@@ -4,155 +4,260 @@ using System.Collections.Generic;
 using UnityEditor;
 using System.Linq;
 
-public class PathSegment{
-	private Vector2 fromPos;
-	private Vector2 toPos;
+public class Square{
+	protected Rect rect;
+	private float estimatedMovementCost;
+	private float currentMovementCost;
+	private Square parent;
+	private static float size;
 
-	public PathSegment (Vector2 fromPos, Vector2 toPos)
+	public Square(Vector2 pos){
+		this.rect = new Rect (pos - Vector2.one * (size * .5f), Vector2.one * size);
+		estimatedMovementCost = 0f;
+		currentMovementCost = 0f;
+		parent = null;
+	}
+
+	public float Score{
+		get{ return estimatedMovementCost + currentMovementCost; }
+	}
+
+	public override bool Equals (object obj)
 	{
-		this.fromPos = fromPos;
-		this.toPos = toPos;
-	}	
+		if (obj == null)
+			return false;
+		if (ReferenceEquals (this, obj))
+			return true;
+		if (obj.GetType () != typeof(Square))
+			return false;
+		Square other = (Square)obj;
+		return Position == other.Position;
+	}
+	
 
-	public Vector2 FromPos {
-		get {
-			return this.fromPos;
+	public override int GetHashCode ()
+	{
+		unchecked {
+			return Position.GetHashCode ();
 		}
-		set {
-			fromPos = value;
+	}
+	
+
+	public override string ToString ()
+	{
+		return string.Format ("[Square: Score={0}, Position={1}, CurrentMovementCost={2}, EstimatedMovementCost={3}]", Score, Position, CurrentMovementCost, EstimatedMovementCost);
+	}
+
+	public Vector2 Position{
+		get{ return rect.center; }
+	}
+
+	public static float Size{
+		set{ size = value; }
+	}
+
+	public Rect Rect {
+		get {
+			return this.rect;
 		}
 	}
 
-	public Vector2 ToPos {
+	public Square Parent {
 		get {
-			return this.toPos;
+			return this.parent;
 		}
 		set {
-			toPos = value;
-		}
-	}
-}
-
-public class HallwayPath{
-	private List<PathSegment> segments;
-	private PathSegment startAnchor;
-	private PathSegment endAnchor;
-
-	public void AddSegment(PathSegment segment){
-		segments.Add (segment);
-	}
-
-	public PathSegment StartAnchor {
-		get {
-			return this.startAnchor;
-		}
-		set {
-			startAnchor = value;
+			parent = value;
 		}
 	}
 
-	public PathSegment EndAnchor {
+	public float CurrentMovementCost {
 		get {
-			return this.endAnchor;
+			return this.currentMovementCost;
 		}
 		set {
-			endAnchor = value;
+			currentMovementCost = value;
+		}
+	}
+
+	public float EstimatedMovementCost {
+		get {
+			return this.estimatedMovementCost;
+		}
+		set {
+			estimatedMovementCost = value;
 		}
 	}
 }
 
 public class ManhattanRouting{
 
-	private Rect[] rooms;
+	private List<Rect> rooms;
 	private DoorDefinition startDoor;
 	private DoorDefinition endDoor;
-	private float padding = 1f;
-	private HallwayPath path;
+	private float padding = 4.88f;
 
-	public ManhattanRouting (Rect[] rooms, DoorDefinition start, DoorDefinition end)
-	{
+	private List<Square> openList;
+	private List<Square> closedList;
+	private Rect availableSpace;
+
+	private Square tmpStart;
+	private Square tmpEnd;
+
+	public ManhattanRouting (List<Rect> rooms, DoorDefinition start, DoorDefinition end){
 		this.rooms = rooms;
 		this.startDoor = start;
 		this.endDoor = end;
-		this.path = new HallwayPath ();
-		BuildPath ();
+		this.openList = new List<Square> ();
+		this.closedList = new List<Square> ();
+		Square.Size = padding;
 	}
 
-	private HallwayPath BuildPath(){
-		bool finished = false;
-		PreparePath ();
-		Vector2 currentPosition = path.StartAnchor.ToPos;
-		Vector2 endPos = path.EndAnchor.ToPos; //The destination of the path
-		bool isHorizontal = IsHorizontal(ClipY(startDoor.Direction)); //Used for alternating the direction
+	public Square BuildPath(){
+		ComputeAvailableSpace ();
+		Square originalSquare = ComputeStartSquare ();
+		Square endSquare = ComputeEndSquare (originalSquare);
+		tmpEnd = endSquare;
+		tmpStart = originalSquare;
+		InsertInOpenSteps (originalSquare);
+		Square current = null;
 
-		while (!finished) {
-			Vector2 nextPosition = GetNextPoint (currentPosition, endPos, isHorizontal);
-			nextPosition = Raycast (currentPosition, nextPosition);
-			path.AddSegment(new PathSegment(currentPosition, nextPosition));
+		do {
+			current = openList[0]; //Square with lowest fscore
+			closedList.Add(current);
+			openList.RemoveAt(0);
 
-			isHorizontal = !isHorizontal; //Alternate the path direction
-			currentPosition = nextPosition;
-			finished = currentPosition == endPos; //Finished when destination is reached
-		}
+			if(SquarePositionEquals(current, endSquare)){
+				openList.Clear();
+				return current;
+			}
 
-		path.AddSegment (path.EndAnchor);
-		return path;
+			List<Square> adjacentSquares = AdjacentSquares(current);
+			foreach(Square adjSquare in adjacentSquares){
+
+				if(closedList.Contains(adjSquare)) continue;
+
+				if(!openList.Contains(adjSquare)){
+					adjSquare.Parent = current;
+					adjSquare.CurrentMovementCost = current.CurrentMovementCost + 1;
+					adjSquare.EstimatedMovementCost = ComputeHScore(adjSquare, endSquare);
+					InsertInOpenSteps(adjSquare);
+				} else {
+					Square existingSquare = openList[openList.IndexOf(adjSquare)];
+
+					if(current.CurrentMovementCost + 1 < existingSquare.CurrentMovementCost){
+						existingSquare.CurrentMovementCost = current.CurrentMovementCost + 1;
+						openList = openList.OrderBy(s => s.Score).ToList(); //Score changed, resort list
+					}
+				}
+			}
+
+		} while(openList.Count > 0);
+		return null;
 	}
 
-	private Vector2 GetNextPoint(Vector2 currentPos, Vector2 endPos, bool isHorizontal){
-		return isHorizontal ? new Vector2 (endPos.x, currentPos.y) : new Vector2 (currentPos.x, endPos.y);
+	private void InsertInOpenSteps(Square step){
+		openList.Add (step);
+		openList = openList.OrderBy (s => s.Score).ToList ();
 	}
 
-	private void PreparePath(){
-		path.StartAnchor = new PathSegment (ClipY (startDoor.Position), ClipY (startDoor.Position) + ClipY(startDoor.Direction) * padding);
-		path.EndAnchor = new PathSegment (ClipY (endDoor.Position), ClipY (endDoor.Position) + ClipY(endDoor.Direction) * padding);
-		path.AddSegment (path.StartAnchor);
+	private float ComputeHScore(Square start, Square end){
+		float width = Mathf.Abs(Mathf.Max (end.Position.x, start.Position.x) - Mathf.Min (end.Position.x, start.Position.x));
+		float height = Mathf.Abs(Mathf.Max (end.Position.y, start.Position.y) - Mathf.Min (end.Position.y, start.Position.y));
+		return width + height;
 	}
 
-	private Vector2 Raycast(Vector2 fromPos, Vector2 toPos){
-		Vector2 direction = MakeDirection(fromPos, toPos);
-		Vector2 size = IsHorizontal (direction) ? new Vector2 (toPos.x - fromPos.x, 1f) : new Vector2 (1f, toPos.y - fromPos.y);
-		Rect desiredSpace = new Rect (fromPos, size);
-		Vector2 result = toPos;
+	private List<Square> AdjacentSquares(Square square){
+		List<Square> squares = new List<Square> ();
+		squares.Add(new Square (square.Position + Vector2.up * padding));
+		squares.Add(new Square (square.Position + Vector2.left * padding));
+		squares.Add(new Square (square.Position + Vector2.down * padding));
+		squares.Add(new Square (square.Position + Vector2.right * padding));
+		return squares.Where (s => IsWalkable (s)).ToList();
+	}
 
+	private bool IsWalkable(Square square){
 		foreach (Rect room in rooms) {
-			if (room.Overlaps (desiredSpace, true)) {
+			if (square.Rect.Overlaps (room, true)) {
+				return false;
+			}
+		}
+		return availableSpace.Contains(square.Rect.center);
+	}
 
-				Vector2 collisionPoint = GetCollisionAt (fromPos, room, direction);
-
-				if (collisionPoint.magnitude < result.magnitude) {
-					result = collisionPoint;
+	public List<Vector2> WalkableTest(){
+		ComputeAvailableSpace ();
+		List<Vector2> walkable = new List<Vector2> ();
+		float margin = 200f;
+		float x = availableSpace.xMin - margin;
+		float y = availableSpace.yMin - margin;
+		while (x < availableSpace.xMax + margin) {
+			y = availableSpace.yMin - margin;
+			x += padding;
+			while (y < availableSpace.yMax + margin) {
+				y += padding;
+				Square newSquare = new Square (new Vector2 (x, y));
+				if (IsWalkable (newSquare)) {
+					walkable.Add (newSquare.Position);
 				}
 			}
 		}
-		return result;
-	}
-
-	private Vector2 GetCollisionAt(Vector2 fromPos, Rect room, Vector2 direction){
-		Vector2 collisionPoint = Vector3.zero;
-
-		if (direction == Vector2.up) {
-			collisionPoint = new Vector2 (fromPos.x, room.yMin);
-		} else if (direction == Vector2.down) {
-			collisionPoint = new Vector2 (fromPos.x, room.yMax);
-		} else if (direction == Vector2.left) {
-			collisionPoint = new Vector2 (room.xMax, fromPos.y);
-		} else if (direction == Vector2.right) {
-			collisionPoint = new Vector2 (room.xMin, fromPos.y);
-		}
-
-		return collisionPoint;
-	}
-
-	private bool IsHorizontal(Vector2 direction){
-		return direction == Vector2.left || direction == Vector2.right;
+		return walkable;
 	}
 
 	private Vector2 ClipY(Vector3 vec){
 		return new Vector2 (vec.x, vec.z);
 	}
 
-	private Vector2 MakeDirection(Vector2 fromPos, Vector2 toPos){
-		return (toPos - fromPos).normalized;
+	private Square ComputeStartSquare(){
+		Vector2 startSquarePosition = ClipY (startDoor.Position) + ClipY (startDoor.Direction) * padding / 2f;
+		return new Square (startSquarePosition);
+	}
+
+	//Since the algorithm works on a grid, the end square has to be aligned accordingly
+	private Square ComputeEndSquare(Square startSquare){
+		Vector2 endSquarePosition = ClipY (endDoor.Position);
+		//endSquarePosition.x = endSquarePosition.x - mod(endSquarePosition.x, padding) + mod(startSquare.Position.x, padding);
+		//endSquarePosition.y = endSquarePosition.y - mod(endSquarePosition.y, padding) + mod(startSquare.Position.y, padding);
+		endSquarePosition += padding * ClipY (endDoor.Direction);
+
+		return new Square (endSquarePosition);
+	}
+
+	private float mod(float x, float m){
+		return x < 0 ? -(Mathf.Abs(x) % m) : x % m;
+	}
+
+	//CHANGE LATER
+	private bool SquarePositionEquals(Square a, Square b){
+		return Vector2.Distance (a.Position, b.Position) < padding; //a.Equals(b);
+	}
+
+	private void ComputeAvailableSpace(){
+		float x = Mathf.Min (startDoor.Position.x, endDoor.Position.x);
+		float y = Mathf.Min (startDoor.Position.z, endDoor.Position.z);
+		float width = Mathf.Max (startDoor.Position.x, endDoor.Position.x) - x;
+		float height = Mathf.Max (startDoor.Position.z, endDoor.Position.z) - y;
+		availableSpace = new Rect (x, y, width, height);
+		availableSpace.yMin -= padding * 2;
+		availableSpace.yMax += padding * 2;
+		availableSpace.xMin -= padding * 2;
+		availableSpace.xMax += padding * 2;
+	}
+
+	public Rect AvailableSpace{
+		get { return availableSpace; }
+	}
+
+	public Square TmpStart {
+		get {
+			return this.tmpStart;
+		}
+	}
+
+	public Square TmpEnd {
+		get {
+			return this.tmpEnd;
+		}
 	}
 }

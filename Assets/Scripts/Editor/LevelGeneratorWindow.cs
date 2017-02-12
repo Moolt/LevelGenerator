@@ -258,6 +258,7 @@ public class ProceduralLevel{
 
 	private int tmpChunkPos = -10000;
 	private List<PositionMetadata> positionMeta;
+	private List<HallwayMeta> hallwayMeta;
 	private bool separateRooms;
 	private float spacing;
 	//private Dictionary<GameObject, Rect> chunkPositions;
@@ -269,11 +270,12 @@ public class ProceduralLevel{
 		this.spacing = spacing;
 		//this.chunkPositions = new Dictionary<GameObject, Rect> ();
 		this.positionMeta = new List<PositionMetadata>();
+		this.hallwayMeta = new List<HallwayMeta> ();
 		chunkInstantiator = ChunkInstantiator.Instance;
 		GenerateLevel (rootnode);
 		if(separateRooms) SeparateRooms();
-		CreateHallways ();
 		ApplyPositions();
+		CreateHallways ();
 	}
 
 	private void GenerateLevel(LevelGraphNode node){
@@ -289,7 +291,7 @@ public class ProceduralLevel{
 		if (isFirstCall) {
 			newChunk = InstantiateChunk (node, Vector3.zero);
 			Bounds roomBounds = newChunk.GetComponent<MeshCollider> ().bounds;
-			roomRect = new Rect (new Vector2(0f, 0f), new Vector2(roomBounds.size.x, roomBounds.size.z));
+			roomRect = new Rect (new Vector2(0f, 0f), new Vector2(roomBounds.size.x, roomBounds.size.z) * spacing);
 			positionMeta.Add (new PositionMetadata(newChunk, roomRect));
 		} else {
 			parentRect = positionMeta.Where(c => c.Chunk == parentChunk).First().Rect;
@@ -323,7 +325,9 @@ public class ProceduralLevel{
 		if (!isFirstCall) {
 			DoorDefinition closestDoor = FindClosestDoor (doorDefinitions, door);
 			doorDefinitions.Remove (closestDoor);
-			roomid.hallwayMeta = new HallwayMeta (door, closestDoor);
+			HallwayMeta newHallway = new HallwayMeta (door, closestDoor);
+			roomid.hallwayMeta = newHallway;
+			hallwayMeta.Add (newHallway);
 		}
 
 		for (int i = 0; i < doorDefinitions.Count; i++) {
@@ -411,6 +415,22 @@ public class ProceduralLevel{
 
 	private void CreateHallways(){
 		UpdateDoorPositions ();
+		HallwayGizmo gizmo = GameObject.FindGameObjectWithTag ("Respawn").GetComponent<HallwayGizmo> ();
+		List<Rect> originalRects = (from r in positionMeta
+			select r.Rect).ToList();
+
+		List<Rect> resizedRects = new List<Rect> ();
+		originalRects.ForEach (r => resizedRects.Add (new Rect (r.center -  (r.size / spacing) * .5f, r.size / spacing)));
+		gizmo.rooms = resizedRects.ToArray();
+
+		foreach (HallwayMeta hallwayMeta in hallwayMeta) {
+			ManhattanRouting routing = new ManhattanRouting (resizedRects, hallwayMeta.StartDoor, hallwayMeta.EndDoor);
+			gizmo.square = routing.BuildPath ();
+			//gizmo.walkable = routing.WalkableTest();
+			gizmo.availableSpace = routing.AvailableSpace;
+			gizmo.start = routing.TmpStart;
+			gizmo.end = routing.TmpEnd;
+		}
 	}
 
 	private void UpdateDoorPositions(){

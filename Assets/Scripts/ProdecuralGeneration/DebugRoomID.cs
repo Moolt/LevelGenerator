@@ -12,7 +12,7 @@ public class DebugRoomID : MonoBehaviour {
 		Gizmos.color = isCritical ? Color.red : Color.green;
 		Gizmos.DrawSphere (transform.position, 2f);
 		if (hallwayMeta != null) {
-			Gizmos.DrawLine (hallwayMeta.StartDoor.Position, hallwayMeta.EndDoor.Position);
+			//Gizmos.DrawLine (hallwayMeta.StartDoor.Position, hallwayMeta.EndDoor.Position);
 		}
 	}
 }
