@@ -15,7 +15,7 @@ public class NodeEditor : EditorWindow {
 
 	[MenuItem("Window/Node Editor")]
 	static void ShowNodeEditor(){
-		NodeEditor editor = EditorWindow.GetWindow<NodeEditor> ();
+		//NodeEditor editor = EditorWindow.GetWindow<NodeEditor> ();
 	}
 
 	void OnGUI(){

@@ -10,12 +10,18 @@ public class Square{
 	private float currentMovementCost;
 	private Square parent;
 	private static float size;
+	private bool isDiagonal;
 
-	public Square(Vector2 pos){
-		this.rect = new Rect (pos - Vector2.one * (size * .5f), Vector2.one * size);
+	public Square(Vector2 pos, bool isDiagonal){
+		this.rect = InitRectByCenter (pos);
+		this.isDiagonal = isDiagonal;
 		estimatedMovementCost = 0f;
 		currentMovementCost = 0f;
 		parent = null;
+	}
+
+	private Rect InitRectByCenter(Vector2 center){
+		return new Rect (center - Vector2.one * (size * .5f), Vector2.one * size);
 	}
 
 	public float Score{
@@ -40,8 +46,7 @@ public class Square{
 		unchecked {
 			return Position.GetHashCode ();
 		}
-	}
-	
+	}	
 
 	public override string ToString ()
 	{
@@ -50,6 +55,7 @@ public class Square{
 
 	public Vector2 Position{
 		get{ return rect.center; }
+		set{ this.rect = InitRectByCenter (value); }
 	}
 
 	public static float Size{
@@ -88,9 +94,13 @@ public class Square{
 			estimatedMovementCost = value;
 		}
 	}
+
+	public int MovementCost{
+		get{ return isDiagonal ? 14 : 10; }
+	}
 }
 
-public class ManhattanRouting{
+public class HallwayAStar{
 
 	private List<Rect> rooms;
 	private DoorDefinition startDoor;
@@ -99,26 +109,23 @@ public class ManhattanRouting{
 
 	private List<Square> openList;
 	private List<Square> closedList;
+	private List<Square> finalPath;
 	private Rect availableSpace;
 
-	private Square tmpStart;
-	private Square tmpEnd;
-
-	public ManhattanRouting (List<Rect> rooms, DoorDefinition start, DoorDefinition end){
+	public HallwayAStar (List<Rect> rooms, DoorDefinition start, DoorDefinition end){
 		this.rooms = rooms;
 		this.startDoor = start;
 		this.endDoor = end;
 		this.openList = new List<Square> ();
 		this.closedList = new List<Square> ();
+		this.finalPath = new List<Square> ();
 		Square.Size = padding;
 	}
 
-	public Square BuildPath(){
+	public List<Square> BuildPath(){
 		ComputeAvailableSpace ();
 		Square originalSquare = ComputeStartSquare ();
 		Square endSquare = ComputeEndSquare (originalSquare);
-		tmpEnd = endSquare;
-		tmpStart = originalSquare;
 		InsertInOpenSteps (originalSquare);
 		Square current = null;
 
@@ -127,9 +134,19 @@ public class ManhattanRouting{
 			closedList.Add(current);
 			openList.RemoveAt(0);
 
+			//Path found
 			if(SquarePositionEquals(current, endSquare)){
+				Square tmp = current;
 				openList.Clear();
-				return current;
+				//Build a list that contains the final path
+				//Has to be interverd later on, since we start with the last element
+				while(tmp != null){
+					finalPath.Add(tmp);
+					tmp = tmp.Parent;
+				}
+				finalPath.Reverse();
+				//FixStartEndPositions();
+				return finalPath;
 			}
 
 			List<Square> adjacentSquares = AdjacentSquares(current);
@@ -139,14 +156,14 @@ public class ManhattanRouting{
 
 				if(!openList.Contains(adjSquare)){
 					adjSquare.Parent = current;
-					adjSquare.CurrentMovementCost = current.CurrentMovementCost + 1;
+					adjSquare.CurrentMovementCost = current.CurrentMovementCost + current.MovementCost;
 					adjSquare.EstimatedMovementCost = ComputeHScore(adjSquare, endSquare);
 					InsertInOpenSteps(adjSquare);
 				} else {
 					Square existingSquare = openList[openList.IndexOf(adjSquare)];
 
-					if(current.CurrentMovementCost + 1 < existingSquare.CurrentMovementCost){
-						existingSquare.CurrentMovementCost = current.CurrentMovementCost + 1;
+					if(current.CurrentMovementCost + existingSquare.MovementCost < existingSquare.CurrentMovementCost){
+						existingSquare.CurrentMovementCost = current.CurrentMovementCost + existingSquare.MovementCost;
 						openList = openList.OrderBy(s => s.Score).ToList(); //Score changed, resort list
 					}
 				}
@@ -169,10 +186,16 @@ public class ManhattanRouting{
 
 	private List<Square> AdjacentSquares(Square square){
 		List<Square> squares = new List<Square> ();
-		squares.Add(new Square (square.Position + Vector2.up * padding));
-		squares.Add(new Square (square.Position + Vector2.left * padding));
-		squares.Add(new Square (square.Position + Vector2.down * padding));
-		squares.Add(new Square (square.Position + Vector2.right * padding));
+		squares.Add(new Square (square.Position + Vector2.up * padding, false));
+		squares.Add(new Square (square.Position + Vector2.left * padding, false));
+		squares.Add(new Square (square.Position + Vector2.down * padding, false));
+		squares.Add(new Square (square.Position + Vector2.right * padding, false));
+
+		squares.Add(new Square (square.Position + (Vector2.up + Vector2.left) * padding, true));
+		squares.Add(new Square (square.Position + (Vector2.up + Vector2.right) * padding, true));
+		squares.Add(new Square (square.Position + (Vector2.down + Vector2.left) * padding, true));
+		squares.Add(new Square (square.Position + (Vector2.down + Vector2.right) * padding, true));
+
 		return squares.Where (s => IsWalkable (s)).ToList();
 	}
 
@@ -185,54 +208,34 @@ public class ManhattanRouting{
 		return availableSpace.Contains(square.Rect.center);
 	}
 
-	public List<Vector2> WalkableTest(){
-		ComputeAvailableSpace ();
-		List<Vector2> walkable = new List<Vector2> ();
-		float margin = 200f;
-		float x = availableSpace.xMin - margin;
-		float y = availableSpace.yMin - margin;
-		while (x < availableSpace.xMax + margin) {
-			y = availableSpace.yMin - margin;
-			x += padding;
-			while (y < availableSpace.yMax + margin) {
-				y += padding;
-				Square newSquare = new Square (new Vector2 (x, y));
-				if (IsWalkable (newSquare)) {
-					walkable.Add (newSquare.Position);
-				}
-			}
-		}
-		return walkable;
-	}
-
 	private Vector2 ClipY(Vector3 vec){
 		return new Vector2 (vec.x, vec.z);
 	}
 
+	//The square at the position of the first room's door. It is not placed directly at the doors position but one unit (padding)
+	//In front of it. In case the path is perpendicular to the door's direction, this will ensure that a hallway will always begin facing the
+	//Direction of the door.
 	private Square ComputeStartSquare(){
-		Vector2 startSquarePosition = ClipY (startDoor.Position) + ClipY (startDoor.Direction) * padding / 2f;
-		return new Square (startSquarePosition);
+		Vector2 startSquarePosition = ClipY (startDoor.Position) + ClipY (startDoor.Direction) * padding * 1f;
+		return new Square (startSquarePosition, false);
 	}
 
 	//Since the algorithm works on a grid, the end square has to be aligned accordingly
 	private Square ComputeEndSquare(Square startSquare){
 		Vector2 endSquarePosition = ClipY (endDoor.Position);
-		//endSquarePosition.x = endSquarePosition.x - mod(endSquarePosition.x, padding) + mod(startSquare.Position.x, padding);
-		//endSquarePosition.y = endSquarePosition.y - mod(endSquarePosition.y, padding) + mod(startSquare.Position.y, padding);
 		endSquarePosition += padding * ClipY (endDoor.Direction);
 
-		return new Square (endSquarePosition);
+		return new Square (endSquarePosition, false);
 	}
-
-	private float mod(float x, float m){
-		return x < 0 ? -(Mathf.Abs(x) % m) : x % m;
-	}
-
-	//CHANGE LATER
+		
+	//Good enough solution. a and b can't be tested for equality, since in most cases they will never be equal
+	//This A* works on a grid defined by the startPosition and padding. Since the room's positions don't align to this grid,
+	//The position of the end door will always be a bit off.
 	private bool SquarePositionEquals(Square a, Square b){
 		return Vector2.Distance (a.Position, b.Position) < padding; //a.Equals(b);
 	}
 
+	//An area that spans from start to end door (with a margin) in order to constraint the algorithms space
 	private void ComputeAvailableSpace(){
 		float x = Mathf.Min (startDoor.Position.x, endDoor.Position.x);
 		float y = Mathf.Min (startDoor.Position.z, endDoor.Position.z);
@@ -245,19 +248,43 @@ public class ManhattanRouting{
 		availableSpace.xMax += padding * 2;
 	}
 
+	//Fix the positions, since they may no be aligned to the grid
+	private void FixStartEndPositions(){
+		Square startSquare = new Square (ClipY(startDoor.Position), false);
+		finalPath.Insert (0, startSquare);
+		int index = finalPath.Count - 1;
+
+		while (index > 0) {
+			Square last = finalPath [index];
+			Square secondToLast = finalPath [index - 1];
+			Vector2 pathDirection = (last.Position - secondToLast.Position).normalized;
+
+			//Dot Product is 0 when the two vectors are perpendicular to each other
+			//If they are, the last point has to be aligned to the x or y position of the door
+			if (Vector2.Dot (pathDirection, ClipY (endDoor.Direction)) == 0) {
+				//Vector2 lastPosCoordinate = Vector2.Scale (last.Position, pathDirection);
+				//Vector2 endDoorCoordinate = Vector2.Scale (ClipY (endDoor.Position), pathDirection);
+				Vector2 delta = last.Position - ClipY (endDoor.Position);
+				delta = pathDirection == Vector2.right || pathDirection == Vector2.up ? -delta : delta;
+				if (delta.magnitude > padding) {
+					last.Position += Vector2.Scale (delta, pathDirection);
+				}
+				break;
+			} else { //Not perpendicular, so it's a straigth hallway. Align the hallway.				
+				Vector2 sameHeightAsDoor = last.Position + Vector2.Scale(ClipY (endDoor.Position) - last.Position, pathDirection);
+				Vector2 perpendicularVec = ClipY (endDoor.Position) - sameHeightAsDoor;
+				float delta = perpendicularVec.magnitude;
+				perpendicularVec.Normalize ();
+				last.Position += Vector2.Scale (Vector2.one * delta, perpendicularVec);
+			}
+			index--;
+		}
+
+		Square endSquare = new Square (ClipY(endDoor.Position), false);
+		finalPath.Add (endSquare);
+	}
+
 	public Rect AvailableSpace{
 		get { return availableSpace; }
-	}
-
-	public Square TmpStart {
-		get {
-			return this.tmpStart;
-		}
-	}
-
-	public Square TmpEnd {
-		get {
-			return this.tmpEnd;
-		}
 	}
 }

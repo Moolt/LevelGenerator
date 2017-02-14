@@ -4,27 +4,23 @@ using UnityEngine;
 
 public class HallwayGizmo : MonoBehaviour {
 
-	public Square square;
+	public List<Square> path;
 	public Rect availableSpace;
 	public Rect[] rooms;
 	public List<Vector2> walkable;
 	public Square start, end;
 
 	void OnDrawGizmos(){
-		if (square != null) {
-			Square current = square;
+		if (path != null) {
 			bool stripe = true;
-			while (current != null && current.Parent != null) {
+			for (int i = 0; i < path.Count - 1; i++) {
 				Gizmos.color = stripe ? Color.black : Color.white;
 				stripe = !stripe;
-				Gizmos.DrawLine (AddY (current.Position, 1f), AddY (current.Parent.Position, 1f));
-				current = current.Parent;
+				Gizmos.DrawLine (AddY (path [i].Position, 1f), AddY (path [i + 1].Position, 1f));
 			}
 		}
-
-		if (availableSpace != null) {
-			//Gizmos.DrawCube (AddY(availableSpace.center, -2f), AddY(availableSpace.size, -2f));
-		}
+			
+		//Gizmos.DrawCube (AddY(availableSpace.center, -2f), AddY(availableSpace.size, -2f));
 
 		foreach(Rect r in rooms){
 			//Gizmos.DrawCube (AddY(r.center, -2f), AddY(r.size, -2f));
@@ -38,12 +34,12 @@ public class HallwayGizmo : MonoBehaviour {
 
 		if (start != null) {
 			Gizmos.color = Color.green;
-			Gizmos.DrawSphere (AddY(start.Position, 0f), 1f);
+			//Gizmos.DrawSphere (AddY(start.Position, 0f), 1f);
 		}
 
 		if (end != null) {
 			Gizmos.color = Color.red;
-			Gizmos.DrawSphere (AddY(end.Position, 0f), 1f);
+			//Gizmos.DrawSphere (AddY(end.Position, 0f), 1f);
 		}
 	}
 
