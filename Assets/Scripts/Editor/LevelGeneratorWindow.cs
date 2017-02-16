@@ -4,16 +4,115 @@ using UnityEngine;
 using UnityEditor;
 using System.Linq;
 
-public class LevelGraphNode{
-	private List<LevelGraphNode> connections;
+public class FreeTreeVisualization{
+	private float d = 5f;
+	private RoomNode rootnode;
+	private int nodeAmount;
+
+	public FreeTreeVisualization (float d, int nodeAmount, RoomNode rootnode){
+		this.d = d;
+		this.nodeAmount = nodeAmount;
+		this.rootnode = rootnode;
+	}
+
+	public float r(float p){
+		return 2f * Mathf.Acos (p / (p + d));
+	}
+
+	public void FreeTree(){
+		RoomNode[] centre = TreeCentre ();
+		if (centre.Length == 1) {
+			DrawSubTree (centre [0], 0f, 0f, 2f * Mathf.PI);
+		} else {
+			DrawSubTree (centre [0], d / 2f, (3 * Mathf.PI) / 2f, Mathf.PI / 2f);
+			DrawSubTree (centre [1], d / 2f, Mathf.PI / 2f, Mathf.PI / 2f);
+		}
+	}
+
+	public void DrawSubTree(RoomNode v, float p, float a1, float a2){
+		float s, a;
+		v.Position = new Vector3 (p, 0f, (a1 + a2) / 2f);
+
+		if (r (p) < (a2 - a1)) {
+			s = r (p) / w (v);
+			a = (a1 + a2 - r (p)) / 2f;
+		} else {
+			s = (a2 - a1) / w (v);
+			a = a1;
+		}
+
+		foreach (RoomNode u in v.Connections) {
+			DrawSubTree (u, p + d, a, a + s * w (u));
+			a = a + s * w (u);
+		}
+	}
+
+	//Subtree width
+	public int w(RoomNode v){
+		return v.Connections.Count;
+	}
+
+	public RoomNode[] TreeCentre(){
+		Queue<RoomNode> leaves = new Queue<RoomNode> ();
+		int depth = 0;
+		FindLeaves (rootnode, leaves, depth++);
+
+		for(int i = 0; i < nodeAmount; i++) {
+			if (leaves.Count == 0) {
+				FindLeaves (rootnode, leaves, depth++);
+			}
+
+			RoomNode leaf = leaves.Dequeue ();
+			leaf.Marked = true;
+
+			//The index at which only two nodes remain
+			//If their depth is the same, they were added at the same step and
+			//Are therefore both the middle
+			if (i == nodeAmount - 2) {
+				if (leaves.Count == 0) {
+					FindLeaves (rootnode, leaves, depth++);
+				} else {
+					leaves.Enqueue (leaf);
+				}
+				break;
+			}
+
+			if (leaf.Parent != null) {
+				leaf.Parent.ChildrenCount -= 1;
+			}
+		}
+		return leaves.ToArray ();
+	}
+
+	private void FindLeaves(RoomNode node, Queue<RoomNode> queue, int depth){
+		if (node.ChildrenCount < 2 && !node.Marked) {
+			node.Depth = depth;
+			queue.Enqueue (node);
+		} else {
+			foreach (RoomNode subNode in node.Connections) {
+				FindLeaves (subNode, queue, depth);
+			}
+		}
+	}
+}
+
+public class RoomNode{
+	private List<RoomNode> connections;
 	private bool isCriticalPath;
 	private int doorCount = 0;
+	private RoomNode parent;
+	//Used by the free tree algorithm to find the centre of the graph
+	//Don't use it to acutally get the amount of children
+	private int childrenCount = -1;
+	private int depth = -1;
+	private bool marked = false;
+	private Vector3 position;
 
 	private static int id_ = 0;
 	private int id;
 
-	public LevelGraphNode(bool isCriticalPath){
-		connections = new List<LevelGraphNode> ();
+	public RoomNode(bool isCriticalPath){
+		connections = new List<RoomNode> ();
 		this.isCriticalPath = isCriticalPath;
 		id = id_++;
 	}
@@ -24,14 +123,15 @@ public class LevelGraphNode{
 		}
 	}
 
-	public List<LevelGraphNode> Connections {
+	public List<RoomNode> Connections {
 		get {
 			return this.connections;
 		}
 	}
 
-	public void AddConnection(LevelGraphNode otherNode){
+	public void AddConnection(RoomNode otherNode){
 		connections.Add (otherNode);
+		otherNode.parent = this;
 		otherNode.IncreaseDoorCount();
 	}
 
@@ -48,11 +148,62 @@ public class LevelGraphNode{
 			return this.doorCount + connections.Count;
 		}
 	}
+
+	public RoomNode Parent {
+		get {
+			return this.parent;
+		}
+	}
+
+	public int ChildrenCount {
+		get {
+			//Init first
+			if (childrenCount == -1) {
+				childrenCount = connections.Count;
+				childrenCount += parent != null ? 1 : 0;
+			}
+			return this.childrenCount;
+		}
+		set {
+			if (childrenCount == -1) {
+				childrenCount = connections.Count;
+				childrenCount += parent != null ? 1 : 0;
+			}
+			childrenCount = value;
+		}
+	}
+
+	public int Depth {
+		get {
+			return this.depth;
+		}
+		set {
+			depth = value;
+		}
+	}
+
+	public bool Marked {
+		get {
+			return this.marked;
+		}
+		set {
+			marked = value;
+		}
+	}
+
+	public Vector3 Position {
+		get {
+			return this.position;
+		}
+		set {
+			position = value;
+		}
+	}
 }
 
 public class LevelGraph{
-	private List<LevelGraphNode> rootnodes;
-	private LevelGraphNode rootnode;
+	private List<RoomNode> rootnodes;
+	private RoomNode rootnode;
 	private int roomsCount;
 	private int nodesCreated;
 	private int critPathLength;
@@ -60,7 +211,7 @@ public class LevelGraph{
 	private float distribution;
 
 	public LevelGraph(){
-		rootnodes = new List<LevelGraphNode> ();
+		rootnodes = new List<RoomNode> ();
 	}
 
 	public void GenerateGraph (int roomsCount, int critPathLength, int maxDoors, float distribution){
@@ -78,13 +229,13 @@ public class LevelGraph{
 	}
 
 	private void CreateCriticalPath(){
-		LevelGraphNode prevNode = new LevelGraphNode (true);
+		RoomNode prevNode = new RoomNode (true);
 		rootnode = prevNode;
 		rootnodes.Add (rootnode);
 		nodesCreated++;
 
 		for (int i = 1; i < critPathLength; i++) {
-			LevelGraphNode newNode = new LevelGraphNode (true);
+			RoomNode newNode = new RoomNode (true);
 			prevNode.AddConnection (newNode);
 			rootnodes.Add (newNode);
 			prevNode = newNode;
@@ -120,7 +271,7 @@ public class LevelGraph{
 		}
 	}
 
-	private void CreateSideRooms(LevelGraphNode node, int roomSupply){
+	private void CreateSideRooms(RoomNode node, int roomSupply){
 		int availableDoors = Mathf.Max (0, maxDoors - node.DoorCount);
 		//There's nothing to do if no doors can be created
 		//This will prevent endless loops since the roomSupply eventually drains
@@ -140,7 +291,7 @@ public class LevelGraph{
 		int supplyPerNode = (remainingSupply > 0) ? (int)Mathf.Ceil (remainingSupply / (float)roomsCreated) : 0;
 		//Create new graph nodes, recursively call this function again with the remainingSupply
 		for (int i = 0; i < roomsCreated; i++) {
-			LevelGraphNode newNode = new LevelGraphNode (false);
+			RoomNode newNode = new RoomNode (false);
 			node.AddConnection (newNode);
 			int newNodeSupply = (supplyPerNode > remainingSupply) ? Mathf.Max(0, remainingSupply) : supplyPerNode;
 			CreateSideRooms (newNode, newNodeSupply);
@@ -148,15 +299,24 @@ public class LevelGraph{
 		}
 	}
 
-	public List<LevelGraphNode> Nodes {
+	public List<RoomNode> Nodes {
 		get {
 			return this.rootnodes;
 		}
 	}
 
-	public LevelGraphNode Rootnode {
+	public RoomNode Rootnode {
 		get {
 			return this.rootnode;
+		}
+	}
+
+	public int NodesCreated {
+		get {
+			return this.nodesCreated;
+		}
+		set {
+			nodesCreated = value;
 		}
 	}
 }
@@ -238,8 +398,21 @@ public class ChunkHelper{
 	}
 }
 
+public struct LevelGenerationDTO{
+	public RoomNode Node;
+	public RoomNode PrevNode;
+	public Vector3 Direction;
+	public Vector3 Position;
+	public Vector3 PrevPosition;
+	public Vector3 CritPathMeanDir;
+	public GameObject PrevChunk;
+	public bool AlternatingSideroomDir;
+	public int SideRoomIndex;
+	public int SideRoomCount;
+}
+
 public class ProceduralLevel{
-	private LevelGraphNode rootnode;
+	private RoomNode rootnode;
 	private ChunkHelper helper;
 	private ChunkInstantiator chunkInstantiator;
 
@@ -249,8 +422,8 @@ public class ProceduralLevel{
 	private float spacing;
 	private bool showSideRooms;
 
-	public ProceduralLevel(string path, LevelGraphNode rootnode, bool separateRooms, float spacing, bool showSideRooms){
-		this.rootnode = rootnode;
+	public ProceduralLevel(string path, LevelGraph graph, bool separateRooms, float spacing, bool showSideRooms){
+		this.rootnode = graph.Rootnode;
 		this.helper = new ChunkHelper (path);
 		this.spacing = spacing;
 		//this.chunkPositions = new Dictionary<GameObject, Rect> ();
@@ -260,32 +433,91 @@ public class ProceduralLevel{
 		chunkInstantiator = ChunkInstantiator.Instance;
 		//GenerateLevel (rootnode);
 		//if(separateRooms) SeparateRooms();
-		_GenerateLevel(rootnode, Vector3.zero, Vector3.zero, Vector3.zero, null);
+		FreeTreeVisualization freeTree = new FreeTreeVisualization(10f, graph.NodesCreated, graph.Rootnode);
+		RoomNode[] center = freeTree.TreeCentre ();
+		//freeTree.FreeTree ();
+		//__GenerateLevel(rootnode, null);
 		//ApplyPositions();
-		UpdateDoorPositions ();
+		//UpdateDoorPositions ();
 		//CreateHallways ();
 	}
 
-	private void _GenerateLevel(LevelGraphNode node, Vector3 direction, Vector3 position, Vector3 prevPosition, GameObject prevChunk){
+	private void _GenerateLevel(){
+		LevelGenerationDTO defaultSettings = new LevelGenerationDTO ();
+		defaultSettings.Node = rootnode;
+		defaultSettings.PrevNode = null;
+		defaultSettings.Direction = Vector3.zero;
+		defaultSettings.Position = Vector3.zero;
+		defaultSettings.PrevPosition = Vector3.zero;
+		defaultSettings.CritPathMeanDir = Vector3.zero;
+		defaultSettings.PrevChunk = null;
+		defaultSettings.AlternatingSideroomDir = false;
+		defaultSettings.SideRoomCount = 0;
+		defaultSettings.SideRoomIndex = 0;
+		_GenerateLevel (defaultSettings);
+	}
+
+	private void __GenerateLevel(RoomNode node, GameObject prevChunk){
+		
+		GameObject chunk = InstantiateChunk (node, node.Position);
+		positionMeta.Add(new PositionMetadata(chunk, new Rect()));
+		DebugRoomID roomid = chunk.AddComponent<DebugRoomID> () as DebugRoomID;
+		roomid.first = prevChunk;
+		roomid.second = chunk;
+
+		foreach (RoomNode subNode in node.Connections) {
+			__GenerateLevel (subNode, chunk);
+		}
+	}
+
+	private void _GenerateLevel(LevelGenerationDTO p){
 		Vector3 randomDirection = new Vector3 (-1f + Random.value * 2f, 0f, -1f + Random.value * 2f).normalized * 0.8f;
 		Vector3 routeDirection;
 
-		if (node.IsCriticalPath) {
-			routeDirection = direction == Vector3.zero ? randomDirection : direction + randomDirection;
-		} else {						
-			routeDirection = (position - prevPosition).normalized + randomDirection * 0.2f;
+		if (p.Node.IsCriticalPath) {
+			randomDirection *= p.Node.IsCriticalPath ? 1f : 0.4f;
+			routeDirection = p.Direction == Vector3.zero ? randomDirection : p.Direction + randomDirection;
+		} else {
+			if (p.PrevNode != null && !p.PrevNode.IsCriticalPath) {
+				float degree = p.SideRoomCount * 10f;
+				float progress = p.SideRoomIndex / p.SideRoomCount;
+				Vector3 sideRoomDirection = p.SideRoomCount < 2 ? randomDirection : Quaternion.AngleAxis (-degree + degree * progress, Vector3.up) * p.Direction + randomDirection * 0.1f;
+				routeDirection = (randomDirection * 0.4f + p.Direction).normalized;
+			} else {
+				float degree = p.AlternatingSideroomDir ? 80f : -80f;
+				Vector3 perpendicularDir = Quaternion.AngleAxis (degree, Vector3.up) * (p.Position - p.PrevPosition);
+				Vector3 meanDir = Quaternion.AngleAxis (degree, Vector3.up) * p.CritPathMeanDir;
+				routeDirection = (perpendicularDir - meanDir).normalized;//+ randomDirection * 0.2f;
+				p.AlternatingSideroomDir = !p.AlternatingSideroomDir;
+			}
 		}
 		routeDirection.Normalize ();
 
-		Vector3 previousSize = Vector3.Scale(ChunkSize (prevChunk), routeDirection);
-		Vector3 computedPosition = position + routeDirection * spacing + previousSize * 2f;
+		Vector3 previousSize = Vector3.Scale(ChunkSize (p.PrevChunk), routeDirection);
+		Vector3 computedPosition = p.Position + routeDirection * (spacing + previousSize.magnitude);
 
-		GameObject chunk = InstantiateChunk (node, computedPosition);
+		GameObject chunk = InstantiateChunk (p.Node, computedPosition);
 		positionMeta.Add(new PositionMetadata(chunk, new Rect()));
+		DebugRoomID roomid = chunk.AddComponent<DebugRoomID> () as DebugRoomID;
+		roomid.first = p.PrevChunk;
+		roomid.second = chunk;
 
-		foreach(LevelGraphNode subNode in node.Connections){
-			if (subNode.IsCriticalPath || showSideRooms) {
-				_GenerateLevel (subNode, routeDirection, computedPosition, position, chunk);
+		//roomRect = new Rect (new Vector2(0f, 0f), new Vector2(roomBounds.size.x, roomBounds.size.z) * spacing);
+		//positionMeta.Add (new PositionMetadata(newChunk, roomRect));
+
+		for(int i = 0; i < p.Node.Connections.Count; i++){
+			if (p.Node.Connections[i].IsCriticalPath || showSideRooms) {
+				if (p.Node.IsCriticalPath) {
+					p.CritPathMeanDir = (p.CritPathMeanDir + routeDirection * 0.6f).normalized;
+				}
+				p.SideRoomCount = p.Node.Connections.Count;
+				p.PrevNode = p.Node;
+				p.Node = p.Node.Connections [i];
+				p.Direction = routeDirection;
+				p.Position = computedPosition;
+				p.PrevChunk = chunk;
+				p.SideRoomIndex = i;
+				_GenerateLevel (p);
 			}
 		}
 	}
@@ -295,15 +527,15 @@ public class ProceduralLevel{
 		return meshCollider != null ? meshCollider.bounds.size : Vector3.zero;
 	}
 
-	private void _GenerateSideRooms(LevelGraphNode sideRoomNode, Vector3 direction){
+	private void _GenerateSideRooms(RoomNode sideRoomNode, Vector3 direction){
 	}
 
-	private void GenerateLevel(LevelGraphNode node){
+	private void GenerateLevel(RoomNode node){
 		GenerateLevel (rootnode, null, null);
 	}
 
 
-	private void GenerateLevel(LevelGraphNode node, GameObject parentChunk, DoorDefinition door){
+	private void GenerateLevel(RoomNode node, GameObject parentChunk, DoorDefinition door){
 		bool isFirstCall = parentChunk == null;
 		GameObject newChunk;
 		Rect roomRect;
@@ -359,7 +591,7 @@ public class ProceduralLevel{
 	}
 
 	//Instantiates a Chunk at a certain Position. The node is used to determinde the amount of doors needed.
-	private GameObject InstantiateChunk(LevelGraphNode node, Vector3 position){
+	private GameObject InstantiateChunk(RoomNode node, Vector3 position){
 		GameObject randomChunk = PickRandomChunk (helper.FindChunks (node.DoorCount));
 		randomChunk.transform.position = position;
 		randomChunk = GameObject.Instantiate (randomChunk); //Instantiate Unity Object
@@ -544,7 +776,7 @@ public class LevelGeneratorWindow : EditorWindow {
 		Random.InitState (seed);
 		levelGraph = new LevelGraph ();
 		levelGraph.GenerateGraph (roomCount, critPathLength, maxDoors, distribution);
-		ProceduralLevel level = new ProceduralLevel (path, levelGraph.Rootnode, isSeparateRooms, size, showSideRooms);
+		ProceduralLevel level = new ProceduralLevel (path, levelGraph, isSeparateRooms, size, showSideRooms);
 		generatedObjects = level.GeneratedRooms;
 	}
 
