@@ -23,13 +23,12 @@ public class FreeTreeVisualization{
 
 	public void FreeTree(){
 		RoomNode[] centres = TreeCentre ();
-		RebuildTreeFromCentre (centres); //Root nodes may have changed
 
 		if (centres.Length == 1) {
 			DrawSubTree (centres [0], 0f, 0f, 2f * Mathf.PI);
 		} else {
-			DrawSubTree (centres [0], d / 2f, (3f * Mathf.PI) / 2f, Mathf.PI / 2f);
-			DrawSubTree (centres [1], d / 2f, Mathf.PI / 2f, (3f * Mathf.PI) / 2f);
+			DrawSubTree (centres [0], d / 2f, 0f, Mathf.PI);
+			DrawSubTree (centres [1], d / 2f, Mathf.PI, Mathf.PI * 2f);
 		}
 		RestoreTree ();
 	}
@@ -41,7 +40,6 @@ public class FreeTreeVisualization{
 		Vector2 polar = new Vector2 (p, (a1 + a2) / 2f);
 		cartesian.x = polar.x * Mathf.Cos (polar.y);
 		cartesian.z = polar.x * Mathf.Sin (polar.y);
-		Debug.Log (polar.y);
 		float angle = Mathf.Rad2Deg * polar.y;
 		int id = v.ID;
 		v.Position = cartesian;
@@ -105,6 +103,8 @@ public class FreeTreeVisualization{
 		//Reset all the Connection values changed during this algorithm
 		//This is necessary for the free tree algorithm
 		ResetLeaves(rootnode);
+		//Root nodes may have changed
+		RebuildTreeFromCentre (leaves.ToArray());
 		return leaves.ToArray ();
 	}
 
@@ -621,7 +621,7 @@ public class ProceduralLevel{
 			Debug.Log ("Center are: " + center[0].ID.ToString() + "  and  " + center[1].ID.ToString());
 		}*/
 		FreeTreeVisualization freeTree = new FreeTreeVisualization(20f, graph.NodesCreated, graph.Rootnode);
-		graph.PrintGraph (rootnode);
+		/*graph.PrintGraph (rootnode);
 
 		RoomNode[] center = freeTree.TreeCentre ();
 		freeTree.RebuildTreeFromCentre (center);
@@ -631,8 +631,12 @@ public class ProceduralLevel{
 			Debug.Log ("----");
 		}
 
-		//freeTree.FreeTree ();
-		//__GenerateLevel(rootnode, null);
+		freeTree.RestoreTree();
+		graph.PrintGraph (rootnode);*/
+
+		graph.PrintGraph (rootnode);
+		freeTree.FreeTree ();
+		__GenerateLevel(rootnode, null);
 
 		//ApplyPositions();
 		//UpdateDoorPositions ();
