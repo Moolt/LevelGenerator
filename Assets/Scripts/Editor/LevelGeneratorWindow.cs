@@ -5,28 +5,33 @@ using UnityEditor;
 using System.Linq;
 
 public class FreeTreeVisualization{
-	private float d = 20f;
+	private List<RoomNode> modifiedNodes;
 	private RoomNode rootnode;
+	private float d = 20f;
 	private int nodeAmount;
 
 	public FreeTreeVisualization (float d, int nodeAmount, RoomNode rootnode){
 		this.d = d;
 		this.nodeAmount = nodeAmount;
 		this.rootnode = rootnode;
+		this.modifiedNodes = new List<RoomNode> ();
 	}
 
 	public float r(float p){
-		return 2f * Mathf.Acos (p / (p + d));
+		return  2f * Mathf.Acos (p / (p + d));
 	}
 
 	public void FreeTree(){
-		RoomNode[] centre = TreeCentre ();
-		if (centre.Length == 1) {
-			DrawSubTree (centre [0], 0f, 0f, 2f * Mathf.PI);
+		RoomNode[] centres = TreeCentre ();
+		RebuildTreeFromCentre (centres); //Root nodes may have changed
+
+		if (centres.Length == 1) {
+			DrawSubTree (centres [0], 0f, 0f, 2f * Mathf.PI);
 		} else {
-			DrawSubTree (centre [0], d / 2f, (3f * Mathf.PI) / 2f, Mathf.PI / 2f);
-			DrawSubTree (centre [1], d / 2f, Mathf.PI / 2f, (3f * Mathf.PI) / 2f);
+			DrawSubTree (centres [0], d / 2f, (3f * Mathf.PI) / 2f, Mathf.PI / 2f);
+			DrawSubTree (centres [1], d / 2f, Mathf.PI / 2f, (3f * Mathf.PI) / 2f);
 		}
+		RestoreTree ();
 	}
 
 	public void DrawSubTree(RoomNode v, float p, float a1, float a2){
@@ -36,6 +41,9 @@ public class FreeTreeVisualization{
 		Vector2 polar = new Vector2 (p, (a1 + a2) / 2f);
 		cartesian.x = polar.x * Mathf.Cos (polar.y);
 		cartesian.z = polar.x * Mathf.Sin (polar.y);
+		Debug.Log (polar.y);
+		float angle = Mathf.Rad2Deg * polar.y;
+		int id = v.ID;
 		v.Position = cartesian;
 
 		if (r (p) < (a2 - a1)) {
@@ -52,12 +60,9 @@ public class FreeTreeVisualization{
 		}
 	}
 
-	//Subtree width
-	public int w(RoomNode v){
-		Queue<RoomNode> leaves = new Queue<RoomNode> ();
-		FindLeaves (v, leaves, 0);
+	public int w(RoomNode v){		
+		int leafCount = FindActualLeaves (v);
 		int leafID = v.ID;
-		int leafCount = leaves.Contains (v) ? 0 : leaves.Count;
 		return leafCount;
 	}
 
@@ -99,10 +104,11 @@ public class FreeTreeVisualization{
 		}
 		//Reset all the Connection values changed during this algorithm
 		//This is necessary for the free tree algorithm
-		ResetLeaves (rootnode);
+		ResetLeaves(rootnode);
 		return leaves.ToArray ();
 	}
 
+	//Finds leaves everywhere in the graph, assuming it is UNDIRECTIONAL
 	private void FindLeaves(RoomNode node, Queue<RoomNode> queue, int depth){
 		if (node.ChildrenCount < 2 && !node.Marked) {
 			node.Depth = depth;
@@ -114,26 +120,104 @@ public class FreeTreeVisualization{
 		}
 	}
 
+	//Assuming the graph is DIRECTIONAL, so only nodes with no children will be detected as leaves
+	private int FindActualLeaves(RoomNode node){
+		Queue<RoomNode> leaves = new Queue<RoomNode> ();
+		if (node.Connections.Count == 0) {
+			return 1;
+		} else {
+			FindActualLeaves (node, leaves);
+		}
+		return leaves.Count;
+	}
+
+	private void FindActualLeaves(RoomNode node, Queue<RoomNode> queue){
+		if (node.Connections.Count == 0) {
+			queue.Enqueue (node);
+		}
+
+		foreach (RoomNode subNode in node.Connections) {
+			FindActualLeaves (subNode, queue);
+		}
+	}
+
 	private void ResetLeaves(RoomNode node){
-		node.ChildrenCount = -1; //Force recalculate, see RoomNode class
 		node.Marked = false;
+		node.ChildrenCount = -1; //Force recalculate, see RoomNode class
+
 		foreach (RoomNode subNode in node.Connections) {
 			ResetLeaves (subNode);
+		}
+	}
+
+	public void ApplyNewCenter(RoomNode center){
+		Queue<RoomNode> nodeQueue = new Queue<RoomNode> ();
+
+		if (center.Parent != null) {
+			center.AddConnection (center.Parent, false);
+			center.Parent = null;
+			nodeQueue.Enqueue (center);
+		}
+
+		while (nodeQueue.Count > 0) {
+			RoomNode parent = nodeQueue.Dequeue ();
+			foreach (RoomNode child in parent.Connections) {
+				if (child.Parent != parent) {
+					if (child.Parent != null) {
+						child.AddConnection (child.Parent, false);
+						nodeQueue.Enqueue (child);						
+					}
+					child.RemoveConnection (parent, false);
+					child.Parent = parent;
+				}
+			}
+		}
+	}
+
+	public void RebuildTreeFromCentre(RoomNode[] centres){
+		SaveTree (rootnode);
+		if (centres.Length == 2) {
+			if (centres [0].Parent == centres [1]) {
+				centres [1].RemoveConnection (centres [0], false);
+				centres [0].Parent = null;
+			} else {
+				centres [0].RemoveConnection (centres [1], false);
+				centres [1].Parent = null;
+			}
+		}
+
+		foreach (RoomNode center in centres) {
+			ApplyNewCenter (center);
+		}
+	}
+
+	public void RestoreTree(){
+		foreach (RoomNode subNode in modifiedNodes) {
+			subNode.Restore ();
+		}
+	}
+
+	private void SaveTree(RoomNode node){
+		node.Save ();
+		modifiedNodes.Add (node);
+		foreach (RoomNode subNode in node.Connections) {
+			SaveTree (subNode);
 		}
 	}
 }
 
 public class RoomNode{
-	private List<RoomNode> connections;
-	private bool isCriticalPath;
-	private int doorCount = 0;
-	private RoomNode parent;
+	protected List<RoomNode> connections;
+	protected bool isCriticalPath;
+	protected int doorCount = 0;
+	protected RoomNode parent;
 	//Used by the free tree algorithm to find the centre of the graph
 	//Don't use it to acutally get the amount of children
-	private int childrenCount = -1;
-	private int depth = -1;
-	private bool marked = false;
-	private Vector3 position;
+	protected int childrenCount = -1;
+	protected int depth = -1;
+	protected bool marked = false;
+	protected Vector3 position;
+	private RoomNode safeState;
 
 	public static int id_ = 0;
 	private int id;
@@ -142,6 +226,29 @@ public class RoomNode{
 		connections = new List<RoomNode> ();
 		this.isCriticalPath = isCriticalPath;
 		id = id_++;
+	}
+
+	private void CopyValues(RoomNode source, RoomNode dest){
+		dest.connections = new List<RoomNode> (source.connections);
+		dest.isCriticalPath = source.isCriticalPath;
+		dest.doorCount = source.doorCount;
+		dest.parent = source.parent;
+		dest.childrenCount = source.childrenCount;
+		//dest.depth = source.depth;
+		//dest.marked = source.marked;
+		//Dont restore position
+	}
+
+	public void Save(){
+		safeState = new RoomNode (true);
+		CopyValues (this, safeState);
+	}
+
+	public void Restore(){
+		if (safeState != null) {			
+			CopyValues (safeState, this);
+			safeState = null;
+		}
 	}
 
 	public bool IsCriticalPath {
@@ -157,13 +264,35 @@ public class RoomNode{
 	}
 
 	public void AddConnection(RoomNode otherNode){
+		AddConnection (otherNode, true);
+	}
+
+	public void RemoveConnection(RoomNode otherNode){
+		RemoveConnection (otherNode, true);
+	}
+
+	public void AddConnection(RoomNode otherNode, bool changeParent){
 		connections.Add (otherNode);
-		otherNode.parent = this;
+		if (changeParent) {
+			otherNode.parent = this;
+		}
 		otherNode.IncreaseDoorCount();
+	}
+
+	public void RemoveConnection(RoomNode otherNode, bool changeParent){
+		connections.Remove (otherNode);
+		if (changeParent) {
+			otherNode.parent = null;
+		}
+		otherNode.DecreaseDoorCount();
 	}
 
 	public void IncreaseDoorCount(){
 		doorCount++;
+	}
+
+	public void DecreaseDoorCount(){
+		doorCount--;
 	}
 
 	public int ID{
@@ -180,6 +309,9 @@ public class RoomNode{
 		get {
 			return this.parent;
 		}
+		set {
+			parent = value;
+		}
 	}
 
 	public int ChildrenCount {
@@ -192,7 +324,7 @@ public class RoomNode{
 			return this.childrenCount;
 		}
 		set {
-			if (childrenCount == -1) {
+			if (value == -1) {
 				childrenCount = connections.Count;
 				childrenCount += parent != null ? 1 : 0;
 			}
@@ -242,6 +374,7 @@ public class LevelGraph{
 	}
 
 	public void GenerateGraph (int roomsCount, int critPathLength, int maxDoors, float distribution){
+		RoomNode.id_ = 0;
 		rootnodes.Clear ();
 		nodesCreated = 0;
 
@@ -470,7 +603,7 @@ public class ProceduralLevel{
 		this.showSideRooms = showSideRooms;
 		chunkInstantiator = ChunkInstantiator.Instance;
 		//graph.PrintGraph(graph.Rootnode);
-		RoomNode.id_ = 0;
+
 
 		//GenerateLevel (rootnode);
 		//if(separateRooms) SeparateRooms();
@@ -488,10 +621,19 @@ public class ProceduralLevel{
 			Debug.Log ("Center are: " + center[0].ID.ToString() + "  and  " + center[1].ID.ToString());
 		}*/
 		FreeTreeVisualization freeTree = new FreeTreeVisualization(20f, graph.NodesCreated, graph.Rootnode);
+		graph.PrintGraph (rootnode);
+
 		RoomNode[] center = freeTree.TreeCentre ();
-		Debug.Log (center.Length);
-		freeTree.FreeTree ();
-		__GenerateLevel(rootnode, null);
+		freeTree.RebuildTreeFromCentre (center);
+		Debug.Log ("---");
+		foreach (RoomNode rn in center) {
+			graph.PrintGraph (rn);
+			Debug.Log ("----");
+		}
+
+		//freeTree.FreeTree ();
+		//__GenerateLevel(rootnode, null);
+
 		//ApplyPositions();
 		//UpdateDoorPositions ();
 		//CreateHallways ();
@@ -519,6 +661,7 @@ public class ProceduralLevel{
 		DebugRoomID roomid = chunk.AddComponent<DebugRoomID> () as DebugRoomID;
 		roomid.first = prevChunk;
 		roomid.second = chunk;
+		roomid.ID = node.ID;
 
 		foreach (RoomNode subNode in node.Connections) {
 			__GenerateLevel (subNode, chunk);
