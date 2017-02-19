@@ -4,19 +4,27 @@ using UnityEngine;
 
 public class HallwayGizmo : MonoBehaviour {
 
-	public List<Square> path;
+	public List<List<Square>> paths;
 	public Rect availableSpace;
 	public Rect[] rooms;
 	public List<Vector2> walkable;
 	public Square start, end;
 
+	void OnEnable(){
+		paths = new List<List<Square>> ();
+	}
+
 	void OnDrawGizmos(){
-		if (path != null) {
-			bool stripe = true;
-			for (int i = 0; i < path.Count - 1; i++) {
-				Gizmos.color = stripe ? Color.black : Color.white;
-				stripe = !stripe;
-				Gizmos.DrawLine (AddY (path [i].Position, 1f), AddY (path [i + 1].Position, 1f));
+		if (paths != null) {
+			foreach (List<Square> subPath in paths) {
+				if (subPath == null)
+					continue;
+				bool stripe = true;
+				for (int i = 0; i < subPath.Count - 1; i++) {
+					Gizmos.color = stripe ? Color.black : Color.white;
+					stripe = !stripe;
+					Gizmos.DrawLine (AddY (subPath [i].Position, 1f), AddY (subPath [i + 1].Position, 1f));
+				}
 			}
 		}
 			
@@ -41,6 +49,14 @@ public class HallwayGizmo : MonoBehaviour {
 			Gizmos.color = Color.red;
 			//Gizmos.DrawSphere (AddY(end.Position, 0f), 1f);
 		}
+	}
+
+	public void ResetPaths(){
+		paths = new List<List<Square>> ();
+	}
+
+	public void AddNewPath (List<Square> newPath){
+		paths.Add (newPath);
 	}
 
 	private Vector3 AddY(Vector2 vec, float y){

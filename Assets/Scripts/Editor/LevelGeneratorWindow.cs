@@ -3,64 +3,90 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
+using System.Xml.Serialization;
+using System.IO;
 
 public class LevelGeneratorWindow : EditorWindow {
-	//Level Graph Properties
-	private int roomCount;
-	private int critPathLength;
-	private int maxDoors;
-	private float distribution;
 	private LevelGraph levelGraph;
-	//Procedural Level Properties
-	private float roomDistance;
-	private float spacing;
-	private int seed = 0;
+	//Preset Properties
+	private string presetPath = @"/Resources/Presets/";
+	private string currentPresetPath = "";
+	private string presetDefaultName = "New Preset";
+	private string presetName = "New Preset";
+	private bool isExternPreset = false;
 	//GUI Properties
-	private bool showLevelGraph = true;
 	private bool showProceduralLevel = true;
-	private string path = "Chunks";
-	//Used to delete old object before generating new ones
+	private XmlSerializer xmlSerializer;
+	private LevelGeneratorPreset preset;
+	private bool showLevelGraph = true;
 	private bool isAutoUpdate = false;
-	private bool isSeparateRooms = true;
+	private string chunkPath = "Chunks";
 
 	[MenuItem("Window/Level Generator")]
 	public static void ShowWindow(){
 		EditorWindow.GetWindow (typeof(LevelGeneratorWindow));
 	}
 
+	void OnEnable(){
+		if (preset == null) {
+			preset = new LevelGeneratorPreset ();
+			preset.Reset ();
+		}
+		xmlSerializer = new XmlSerializer (typeof(LevelGeneratorPreset));
+	}
+
 	void OnGUI(){
+
+		EditorGUILayout.Space ();
+
+		EditorGUILayout.BeginHorizontal ();
+		if(GUILayout.Button ("Save")){
+			SavePreset (false);
+		}
+		if(GUILayout.Button ("Load")){
+			LoadPreset ();
+		}
+		if(GUILayout.Button ("Save as...")){
+			SavePreset (true);
+		}
+		if(GUILayout.Button ("Reset")){
+			ResetValues ();
+		}
+		EditorGUILayout.EndHorizontal();
+		string presetLabelText = isExternPreset ? presetPath + presetName : "Unsaved";
+		EditorGUILayout.LabelField ("Preset: " + presetLabelText);
 
 		EditorGUILayout.Space ();
 		showLevelGraph = EditorGUILayout.Foldout (showLevelGraph, "Level Graph Properties");
 		if (showLevelGraph) {
-			roomCount = EditorGUILayout.IntField ("Room Count", roomCount);
-			roomCount = Mathf.Clamp (roomCount, 2, 100);
-			critPathLength = EditorGUILayout.IntField ("Critical Path", critPathLength);
-			critPathLength = Mathf.Clamp (critPathLength, Mathf.Min (2, roomCount), Mathf.Max (2, roomCount));
-			maxDoors = EditorGUILayout.IntField ("Max. Doors", maxDoors);
-			maxDoors = Mathf.Clamp (maxDoors, 3, 10);
-			distribution = EditorGUILayout.Slider ("Distribution", distribution, 0.05f, 1f);
+			preset.RoomCount = EditorGUILayout.IntField ("Room Count", preset.RoomCount);
+			preset.RoomCount = Mathf.Clamp (preset.RoomCount, 2, 100);
+			preset.CritPathLength = EditorGUILayout.IntField ("Critical Path", preset.CritPathLength);
+			preset.CritPathLength = Mathf.Clamp (preset.CritPathLength, Mathf.Min (2, preset.RoomCount), Mathf.Max (2, preset.RoomCount));
+			preset.MaxDoors = EditorGUILayout.IntField ("Max. Doors", preset.MaxDoors);
+			preset.MaxDoors = Mathf.Clamp (preset.MaxDoors, 3, 10);
+			preset.Distribution = EditorGUILayout.Slider ("Distribution", preset.Distribution, 0.05f, 1f);
 		}
 
 		EditorGUILayout.Space ();
 
 		showProceduralLevel = EditorGUILayout.Foldout (showProceduralLevel, "Level Properties");
 		if (showProceduralLevel) {
-			roomDistance = EditorGUILayout.FloatField ("Distance", roomDistance);
-			roomDistance = Mathf.Max (1.5f, roomDistance);
+			preset.RoomDistance = EditorGUILayout.FloatField ("Distance", preset.RoomDistance);
+			preset.RoomDistance = Mathf.Max (1.5f, preset.RoomDistance);
 
 			EditorGUILayout.Space ();
-			isSeparateRooms = EditorGUILayout.Toggle ("Separate Rooms", isSeparateRooms);
-			if (isSeparateRooms) {
-				spacing = EditorGUILayout.FloatField ("Spacing", spacing);
-				spacing = Mathf.Max (0f, spacing);
+			preset.IsSeparateRooms = EditorGUILayout.Toggle ("Separate Rooms", preset.IsSeparateRooms);
+			if (preset.IsSeparateRooms) {
+				preset.Spacing = EditorGUILayout.FloatField ("Spacing", preset.Spacing);
+				preset.Spacing = Mathf.Max (0f, preset.Spacing);
 			}
 			EditorGUILayout.Space ();
 		}
 
 		EditorGUILayout.Space ();
 
-		seed = EditorGUILayout.IntField ("Seed", seed);
+		preset.Seed = EditorGUILayout.IntField ("Seed", preset.Seed);
 		isAutoUpdate = EditorGUILayout.Toggle ("Auto Update", isAutoUpdate);
 
 		EditorGUILayout.Space ();
@@ -83,10 +109,10 @@ public class LevelGeneratorWindow : EditorWindow {
 
 	private void Generate(){
 		ClearLevel ();
-		Random.InitState (seed);
+		Random.InitState (preset.Seed);
 		levelGraph = new LevelGraph ();
-		levelGraph.GenerateGraph (roomCount, critPathLength, maxDoors, distribution);
-		ProceduralLevel level = new ProceduralLevel (path, levelGraph, isSeparateRooms, roomDistance, isSeparateRooms, spacing);
+		levelGraph.GenerateGraph (preset.RoomCount, preset.CritPathLength, preset.MaxDoors, preset.Distribution);
+		ProceduralLevel level = new ProceduralLevel (chunkPath, levelGraph, preset.IsSeparateRooms, preset.RoomDistance, preset.IsSeparateRooms, preset.Spacing);
 		//generatedObjects = level.GeneratedRooms;
 	}
 
@@ -94,6 +120,55 @@ public class LevelGeneratorWindow : EditorWindow {
 		GameObject[] instances = GameObject.FindGameObjectsWithTag ("ChunkInstance");
 		foreach (GameObject room in instances) {
 			DestroyImmediate (room);
+		}
+	}
+
+	private void ResetValues(){
+		isExternPreset = false;
+		presetName = presetDefaultName;
+		currentPresetPath = "";
+		
+		if (preset != null) {
+			preset.Reset ();
+		}
+	}
+
+	private void SavePreset(bool isShowDialog){
+		string absolutePath = Application.dataPath + presetPath;
+		Directory.CreateDirectory (absolutePath);
+		string path;
+
+		if (isShowDialog || !isExternPreset) {
+			path = EditorUtility.SaveFilePanelInProject ("Save Preset", presetName, "xml", "", absolutePath);
+			currentPresetPath = path;
+		} else {
+			path = currentPresetPath;
+		}
+
+		if (path.Length != 0) {
+			presetName = Path.GetFileName (path);
+			FileStream fileStream = new FileStream (path, FileMode.OpenOrCreate);
+			xmlSerializer.Serialize (fileStream, preset);
+			fileStream.Close ();
+			isExternPreset = true;
+		}
+	}
+
+	private void LoadPreset(){
+		string absolutePath = Application.dataPath + presetPath;
+		Directory.CreateDirectory (absolutePath);
+		string path = EditorUtility.OpenFilePanel ("Load Preset", absolutePath, "xml");
+		if (path.Length != 0) {
+			if (File.Exists (path)) {
+				isExternPreset = true;
+				presetName = Path.GetFileName (path);
+				FileStream fileStream = new FileStream (path, FileMode.Open);
+				LevelGeneratorPreset loadedPreset = xmlSerializer.Deserialize (fileStream) as LevelGeneratorPreset;
+				fileStream.Close ();
+				if (loadedPreset != null) {
+					preset = loadedPreset;
+				}
+			}
 		}
 	}
 }

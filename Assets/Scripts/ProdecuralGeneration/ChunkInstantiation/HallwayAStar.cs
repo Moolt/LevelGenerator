@@ -145,7 +145,7 @@ public class HallwayAStar{
 					tmp = tmp.Parent;
 				}
 				finalPath.Reverse();
-				//FixStartEndPositions();
+				FixStartEndPositions();
 				return finalPath;
 			}
 
@@ -191,10 +191,10 @@ public class HallwayAStar{
 		squares.Add(new Square (square.Position + Vector2.down * padding, false));
 		squares.Add(new Square (square.Position + Vector2.right * padding, false));
 
-		squares.Add(new Square (square.Position + (Vector2.up + Vector2.left) * padding, true));
-		squares.Add(new Square (square.Position + (Vector2.up + Vector2.right) * padding, true));
-		squares.Add(new Square (square.Position + (Vector2.down + Vector2.left) * padding, true));
-		squares.Add(new Square (square.Position + (Vector2.down + Vector2.right) * padding, true));
+		//squares.Add(new Square (square.Position + (Vector2.up + Vector2.left) * padding, true));
+		//squares.Add(new Square (square.Position + (Vector2.up + Vector2.right) * padding, true));
+		//squares.Add(new Square (square.Position + (Vector2.down + Vector2.left) * padding, true));
+		//squares.Add(new Square (square.Position + (Vector2.down + Vector2.right) * padding, true));
 
 		return squares.Where (s => IsWalkable (s)).ToList();
 	}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<LevelGeneratorPreset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <RoomCount>6</RoomCount>
+  <CritPathLength>3</CritPathLength>
+  <MaxDoors>3</MaxDoors>
+  <Distribution>0.05</Distribution>
+  <RoomDistance>1.5</RoomDistance>
+  <Spacing>8.16</Spacing>
+  <Seed>254</Seed>
+  <IsSeparateRooms>true</IsSeparateRooms>
+</LevelGeneratorPreset>

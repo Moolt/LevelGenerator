@@ -4,6 +4,8 @@ using UnityEngine;
 using System.Linq;
 
 public class RoomTransformation{
+	protected List<DoorDefinition> availableDoors;
+
 	private List<DoorDefinition> doors;
 	private float inflation = 0f;
 	private Vector3 chunkSize;
@@ -18,6 +20,7 @@ public class RoomTransformation{
 		this.rect = CalculateRect ();
 		InflateRectBy (inflation);
 		this.doors = ObtainDoors ();
+		this.availableDoors = ObtainDoors ();
 	}
 
 	private Rect CalculateRect(){
@@ -29,7 +32,7 @@ public class RoomTransformation{
 	private List<DoorDefinition> ObtainDoors(){
 		DoorManager doorManager = chunk.GetComponent<DoorManager> ();
 		if (doorManager != null) {
-			return doorManager.RandomDoors;
+			return new List<DoorDefinition>(doorManager.RandomDoors);
 		}
 		return new List<DoorDefinition> ();
 	}
@@ -49,11 +52,11 @@ public class RoomTransformation{
 	}
 
 	public void DeflateRect(){
-		inflation = 0f;
 		rect.xMin += inflation / 2f;
 		rect.yMin += inflation / 2f;
 		rect.xMax -= inflation / 2f;
 		rect.yMax -= inflation / 2f;
+		inflation = 0f;
 	}
 
 	public void UpdateRect(Vector2 position, Vector2 size){
@@ -72,6 +75,28 @@ public class RoomTransformation{
 			return this.rect;
 		}
 	}
+
+	public HallwayMeta FindMatchingDoors(RoomTransformation otherRoom){
+		float distance = float.MaxValue;
+		Vector3 thisPosition = new Vector3 (rect.x, 0f, rect.y);
+		Vector3 otherPosition = new Vector3 (otherRoom.Rect.x, 0f, otherRoom.Rect.y);
+		HallwayMeta hallwayMeta = new HallwayMeta (null, null);
+
+		foreach (DoorDefinition thisDoor in availableDoors) {
+			foreach (DoorDefinition otherDoor in otherRoom.availableDoors) {
+				float tmpDistance = Vector3.Distance (thisDoor.RelPosition + thisPosition, otherDoor.RelPosition + otherPosition);
+				if (tmpDistance < distance) {
+					hallwayMeta.StartDoor = thisDoor;
+					hallwayMeta.EndDoor = otherDoor;
+					distance = tmpDistance;
+				}
+			}
+		}
+			
+		availableDoors.Remove (hallwayMeta.StartDoor);
+		otherRoom.availableDoors.Remove (hallwayMeta.EndDoor);
+		return hallwayMeta;
+	}
 }
 
 public class ProceduralLevel{
@@ -84,7 +109,6 @@ public class ProceduralLevel{
 	private List<HallwayMeta> hallwayMeta;
 	private float spacing;
 	private float distance;
-	private bool showSideRooms;
 	private bool isSeparate;
 
 	public ProceduralLevel(string path, LevelGraph graph, bool separateRooms, float distance, bool isSeparate, float spacing){
@@ -95,12 +119,11 @@ public class ProceduralLevel{
 		this.isSeparate = isSeparate;
 		this.positionMeta = new List<RoomTransformation>();
 		this.hallwayMeta = new List<HallwayMeta> ();
-		this.showSideRooms = showSideRooms;
 		chunkInstantiator = ChunkInstantiator.Instance;
 
 		GenerateLevel (graph);
 		ApplyTransformation();
-		//CreateHallways ();
+		CreateHallways ();
 	}
 
 	//Creates a visual representation of the level graph using a free tree algorithm
@@ -115,21 +138,25 @@ public class ProceduralLevel{
 		}
 	}
 
-	private void GenerateLevel(RoomNode node, GameObject prevChunk){
+	private void GenerateLevel(RoomNode node, RoomTransformation prevChunk){
 		//Place the Chunk somewhere, where it won't collide with another chunk
 		GameObject chunk = InstantiateChunk (node, new Vector3(tmpChunkPos, -100f, -100f));
 		tmpChunkPos += 100;
 		//Obtain the actual position, the chunk will have later on
 		Vector3 chunkSize = ChunkSize (chunk);
-		positionMeta.Add(new RoomTransformation(chunk, node.Position, chunkSize, spacing));
+		RoomTransformation roomTransform = new RoomTransformation (chunk, node.Position, chunkSize, spacing);
+		positionMeta.Add(roomTransform);
 		//Debug stuff
 		DebugRoomID roomid = chunk.AddComponent<DebugRoomID> () as DebugRoomID;
-		roomid.first = prevChunk;
-		roomid.second = chunk;
 		roomid.ID = node.ID;
 
+		if (prevChunk != null) {
+			HallwayMeta hallway = prevChunk.FindMatchingDoors (roomTransform);
+			hallwayMeta.Add (hallway);
+		}
+
 		foreach (RoomNode subNode in node.Connections) {
-			GenerateLevel (subNode, chunk);
+			GenerateLevel (subNode, roomTransform);
 		}
 	}
 
@@ -154,19 +181,6 @@ public class ProceduralLevel{
 		return candidates [Random.Range (0, candidates.Count)];
 	}
 
-	private DoorDefinition FindClosestDoor(List<DoorDefinition> doors, DoorDefinition compare){
-		float distance = float.MaxValue;
-		DoorDefinition closestDoor = null;
-
-		foreach (DoorDefinition newDoor in doors) {
-			if (Vector3.Distance (newDoor.RelPosition + compare.Direction * 1000f + compare.Position, compare.Position) < distance) {
-				closestDoor = newDoor;
-			}
-		}
-
-		return closestDoor;
-	}
-
 	//Applies the Room positions to the instances.
 	private void ApplyTransformation(){
 		foreach (RoomTransformation transformation in positionMeta) {
@@ -181,18 +195,20 @@ public class ProceduralLevel{
 
 	private void CreateHallways(){
 		HallwayGizmo gizmo = GameObject.FindGameObjectWithTag ("Respawn").GetComponent<HallwayGizmo> ();
-		List<Rect> originalRects = (from r in positionMeta
-			select r.Rect).ToList();
+		List<Rect> roomRects = GetDeflatedRoomRects ();
+		gizmo.ResetPaths ();
 
-		List<Rect> resizedRects = new List<Rect> ();
-		originalRects.ForEach (r => resizedRects.Add (new Rect (r.center -  (r.size / spacing) * .5f, r.size / spacing)));
-		gizmo.rooms = resizedRects.ToArray();
-
-		foreach (HallwayMeta hallwayMeta in hallwayMeta) {
-			HallwayAStar routing = new HallwayAStar (resizedRects, hallwayMeta.StartDoor, hallwayMeta.EndDoor);
-			gizmo.path = routing.BuildPath ();
-			gizmo.availableSpace = routing.AvailableSpace;
+		foreach (HallwayMeta hw in hallwayMeta) {
+			HallwayAStar routing = new HallwayAStar (roomRects, hw.StartDoor, hw.EndDoor);
+			gizmo.AddNewPath (routing.BuildPath ());
+			//gizmo.availableSpace = routing.AvailableSpace;
 		}
+	}
+
+	private List<Rect> GetDeflatedRoomRects(){
+		positionMeta.ForEach (t => t.DeflateRect ());
+		List<Rect> rects = positionMeta.Select (t => t.Rect).ToList ();
+		return rects;
 	}
 
 	//Used by LevelGeneratorWindow to manage (clear) rooms in editor view

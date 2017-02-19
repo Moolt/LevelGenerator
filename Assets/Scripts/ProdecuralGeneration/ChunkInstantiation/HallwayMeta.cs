@@ -13,14 +13,20 @@ public class HallwayMeta{
 	}
 
 	public DoorDefinition StartDoor {
-		get {			
+		get {
 			return this.startDoor;
+		}
+		set {
+			startDoor = value;
 		}
 	}
 
 	public DoorDefinition EndDoor {
-		get {			
+		get {
 			return this.endDoor;
+		}
+		set {
+			endDoor = value;
 		}
 	}
 }
