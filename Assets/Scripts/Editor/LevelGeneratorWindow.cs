@@ -72,6 +72,8 @@ public class LevelGeneratorWindow : EditorWindow {
 
 		showProceduralLevel = EditorGUILayout.Foldout (showProceduralLevel, "Level Properties");
 		if (showProceduralLevel) {
+			preset.DoorSize = EditorGUILayout.IntField ("Global door size", preset.DoorSize);
+			preset.DoorSize = (int)Mathf.Max (2f, preset.DoorSize);
 			preset.RoomDistance = EditorGUILayout.FloatField ("Distance", preset.RoomDistance);
 			preset.RoomDistance = Mathf.Max (1.5f, preset.RoomDistance);
 
@@ -112,7 +114,7 @@ public class LevelGeneratorWindow : EditorWindow {
 		Random.InitState (preset.Seed);
 		levelGraph = new LevelGraph ();
 		levelGraph.GenerateGraph (preset.RoomCount, preset.CritPathLength, preset.MaxDoors, preset.Distribution);
-		ProceduralLevel level = new ProceduralLevel (chunkPath, levelGraph, preset.IsSeparateRooms, preset.RoomDistance, preset.IsSeparateRooms, preset.Spacing);
+		ProceduralLevel level = new ProceduralLevel (chunkPath, levelGraph, preset.IsSeparateRooms, preset.RoomDistance, preset.IsSeparateRooms, preset.Spacing, preset.DoorSize);
 		//generatedObjects = level.GeneratedRooms;
 	}
 

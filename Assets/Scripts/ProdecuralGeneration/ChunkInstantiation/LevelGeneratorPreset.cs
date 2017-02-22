@@ -17,6 +17,7 @@ public class LevelGeneratorPreset{
 	private float spacing;
 	private int seed = 0;
 	private bool isSeparateRooms = true;
+	private int doorSize;
 
 	public void Reset(){
 		roomCount = 2;
@@ -27,6 +28,7 @@ public class LevelGeneratorPreset{
 		spacing = 4f;
 		seed = 0;
 		isSeparateRooms = false;
+		doorSize = 1;
 	}
 
 	public int RoomCount {
@@ -98,6 +100,15 @@ public class LevelGeneratorPreset{
 		}
 		set {
 			isSeparateRooms = value;
+		}
+	}
+
+	public int DoorSize {
+		get {
+			return this.doorSize;
+		}
+		set {
+			doorSize = value;
 		}
 	}
 }

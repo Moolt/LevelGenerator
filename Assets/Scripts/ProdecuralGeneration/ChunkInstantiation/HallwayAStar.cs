@@ -105,20 +105,22 @@ public class HallwayAStar{
 	private List<Rect> rooms;
 	private DoorDefinition startDoor;
 	private DoorDefinition endDoor;
-	private float padding = 4.88f;
-
+	private int doorSize;
+	private float padding;
 	private List<Square> openList;
 	private List<Square> closedList;
 	private List<Square> finalPath;
 	private Rect availableSpace;
 
-	public HallwayAStar (List<Rect> rooms, DoorDefinition start, DoorDefinition end){
+	public HallwayAStar (List<Rect> rooms, DoorDefinition start, DoorDefinition end, int doorSize){
 		this.rooms = rooms;
 		this.startDoor = start;
 		this.endDoor = end;
 		this.openList = new List<Square> ();
 		this.closedList = new List<Square> ();
 		this.finalPath = new List<Square> ();
+		this.doorSize = doorSize;
+		this.padding = doorSize * .5f;
 		Square.Size = padding;
 	}
 
@@ -217,6 +219,7 @@ public class HallwayAStar{
 	//Direction of the door.
 	private Square ComputeStartSquare(){
 		Vector2 startSquarePosition = ClipY (startDoor.Position) + ClipY (startDoor.Direction) * padding * 1f;
+		//RoundByVal (ref startSquarePosition, padding);
 		return new Square (startSquarePosition, false);
 	}
 
@@ -224,7 +227,7 @@ public class HallwayAStar{
 	private Square ComputeEndSquare(Square startSquare){
 		Vector2 endSquarePosition = ClipY (endDoor.Position);
 		endSquarePosition += padding * ClipY (endDoor.Direction);
-
+		//RoundByVal (ref endSquarePosition, padding);
 		return new Square (endSquarePosition, false);
 	}
 		
@@ -286,5 +289,11 @@ public class HallwayAStar{
 
 	public Rect AvailableSpace{
 		get { return availableSpace; }
+	}
+
+	private void RoundByVal(ref Vector2 vec, float val){
+		vec.x = vec.x < 0 ? Mathf.Ceil (vec.x / val) : Mathf.Floor (vec.x / val);
+		vec.y = vec.y < 0 ? Mathf.Ceil (vec.y / val) : Mathf.Floor (vec.y / val);
+		vec *= val;
 	}
 }

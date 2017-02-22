@@ -97,6 +97,12 @@ public class RoomTransformation{
 		otherRoom.availableDoors.Remove (hallwayMeta.EndDoor);
 		return hallwayMeta;
 	}
+
+	public List<DoorDefinition> Doors {
+		get {
+			return this.doors;
+		}
+	}
 }
 
 public class ProceduralLevel{
@@ -110,8 +116,9 @@ public class ProceduralLevel{
 	private float spacing;
 	private float distance;
 	private bool isSeparate;
+	private int doorSize;
 
-	public ProceduralLevel(string path, LevelGraph graph, bool separateRooms, float distance, bool isSeparate, float spacing){
+	public ProceduralLevel(string path, LevelGraph graph, bool separateRooms, float distance, bool isSeparate, float spacing, int doorSize){
 		this.rootnode = graph.Rootnode;
 		this.helper = new ChunkHelper (path);
 		this.distance = distance;
@@ -119,6 +126,7 @@ public class ProceduralLevel{
 		this.isSeparate = isSeparate;
 		this.positionMeta = new List<RoomTransformation>();
 		this.hallwayMeta = new List<HallwayMeta> ();
+		this.doorSize = doorSize;
 		chunkInstantiator = ChunkInstantiator.Instance;
 
 		GenerateLevel (graph);
@@ -188,7 +196,7 @@ public class ProceduralLevel{
 			//Since the rooms have been placed and then separated, the door positions have to be recalculated
 			//For the hallway generation.
 			transformation.UpdateDoorPositions ();
-			Vector3 position = new Vector3 (transformation.Rect.center.x, 0f, transformation.Rect.center.y);
+			Vector3 position = new Vector3 (Mathf.Round(transformation.Rect.center.x), 0f, Mathf.Round(transformation.Rect.center.y));
 			transformation.Chunk.transform.position = position;
 		}
 	}
@@ -196,10 +204,12 @@ public class ProceduralLevel{
 	private void CreateHallways(){
 		HallwayGizmo gizmo = GameObject.FindGameObjectWithTag ("Respawn").GetComponent<HallwayGizmo> ();
 		List<Rect> roomRects = GetDeflatedRoomRects ();
+		AStarGrid grid = new AStarGrid (roomRects, positionMeta, spacing);
+		gizmo.grid = grid.Grid;
 		gizmo.ResetPaths ();
 
 		foreach (HallwayMeta hw in hallwayMeta) {
-			HallwayAStar routing = new HallwayAStar (roomRects, hw.StartDoor, hw.EndDoor);
+			HallwayAStar routing = new HallwayAStar (roomRects, hw.StartDoor, hw.EndDoor, doorSize);
 			gizmo.AddNewPath (routing.BuildPath ());
 			//gizmo.availableSpace = routing.AvailableSpace;
 		}

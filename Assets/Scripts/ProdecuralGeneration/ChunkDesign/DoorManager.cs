@@ -54,7 +54,7 @@ public class DoorManager : DoorProperty {
 
 	//Updates positions with offset, clamps values
 	private void UpdateDoors(){
-		foreach (DoorDefinition door in doors) {			
+		foreach (DoorDefinition door in doors) {
 			door.Position = AbstractBounds.Corners [door.CornerIndex] + door.Offset;
 			ClampPosition (door);
 			door.RelPosition = door.Position - transform.position;

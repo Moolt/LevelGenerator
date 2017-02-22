@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class HallwayGizmo : MonoBehaviour {
 
+	public GridPosition[,] grid;
 	public List<List<Square>> paths;
 	public Rect availableSpace;
 	public Rect[] rooms;
@@ -28,6 +29,16 @@ public class HallwayGizmo : MonoBehaviour {
 			}
 		}
 			
+		if (grid != null) {
+			for (int i = 0; i < grid.GetLength (0); i++) {
+				for (int j = 0; j < grid.GetLength (1); j++) {
+					Gizmos.color = grid [i, j].IsAccessible ? Color.white : Color.red;
+					Gizmos.color = grid [i, j].DoorID > -1 ? Color.blue : Gizmos.color;
+					Gizmos.DrawSphere (new Vector3 (grid[i,j].x, 0f, grid[i,j].y), 0.4f);
+				}
+			}
+		}
+
 		//Gizmos.DrawCube (AddY(availableSpace.center, -2f), AddY(availableSpace.size, -2f));
 
 		foreach(Rect r in rooms){

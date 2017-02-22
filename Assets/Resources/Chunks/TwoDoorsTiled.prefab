@@ -9,22 +9,22 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1584450064132768}
+  m_RootGameObject: {fileID: 1470261525888320}
   m_IsPrefabParent: 1
---- !u!1 &1584450064132768
+--- !u!1 &1470261525888320
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 5
   m_Component:
-  - component: {fileID: 4834471046462332}
-  - component: {fileID: 114888275638165950}
-  - component: {fileID: 33779332622428326}
-  - component: {fileID: 23448980164736956}
-  - component: {fileID: 64129327374915686}
-  - component: {fileID: 114683779100612808}
-  - component: {fileID: 114137144651388664}
+  - component: {fileID: 4862866356595944}
+  - component: {fileID: 114957038790189336}
+  - component: {fileID: 33597869487229546}
+  - component: {fileID: 23905649630088018}
+  - component: {fileID: 64430853953578892}
+  - component: {fileID: 114483895317680086}
+  - component: {fileID: 114189568787875894}
   m_Layer: 0
   m_Name: TwoDoorsTiled
   m_TagString: Chunk
@@ -32,25 +32,25 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4834471046462332
+--- !u!4 &4862866356595944
 Transform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1584450064132768}
+  m_GameObject: {fileID: 1470261525888320}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4300, y: -100, z: -100}
+  m_LocalPosition: {x: -8500, y: -100, z: -100}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &23448980164736956
+--- !u!23 &23905649630088018
 MeshRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1584450064132768}
+  m_GameObject: {fileID: 1470261525888320}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -82,19 +82,19 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!33 &33779332622428326
+--- !u!33 &33597869487229546
 MeshFilter:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1584450064132768}
+  m_GameObject: {fileID: 1470261525888320}
   m_Mesh: {fileID: 0}
---- !u!64 &64129327374915686
+--- !u!64 &64430853953578892
 MeshCollider:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1584450064132768}
+  m_GameObject: {fileID: 1470261525888320}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
@@ -103,12 +103,12 @@ MeshCollider:
   m_InflateMesh: 0
   m_SkinWidth: 0.01
   m_Mesh: {fileID: 0}
---- !u!114 &114137144651388664
+--- !u!114 &114189568787875894
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1584450064132768}
+  m_GameObject: {fileID: 1470261525888320}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 00c2bed50c9b319499eaf3852cec0da5, type: 3}
@@ -136,12 +136,12 @@ MonoBehaviour:
   previewDoors: 1
   minCount: 1
   maxCount: 2
---- !u!114 &114683779100612808
+--- !u!114 &114483895317680086
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1584450064132768}
+  m_GameObject: {fileID: 1470261525888320}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 94fc7400b5203fa46abdab2147599eba, type: 3}
@@ -150,18 +150,18 @@ MonoBehaviour:
   floorMaterial: {fileID: 2100000, guid: 703d396c15b721741800ab8f53cb0b65, type: 2}
   wallMaterial: {fileID: 2100000, guid: 76ff537c8e1a84345868e6aeee938ab3, type: 2}
   tiling: 1
---- !u!114 &114888275638165950
+--- !u!114 &114957038790189336
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1584450064132768}
+  m_GameObject: {fileID: 1470261525888320}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e0415933dd954ca4084866980274c917, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minSize: {x: 10, y: 5.96, z: 10}
+  minSize: {x: 10, y: 6, z: 10}
   maxSize: {x: 12, y: 7, z: 12}
   hasFixedSize: 0
   lerp: 0
