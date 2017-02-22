@@ -28,13 +28,16 @@ public class HallwayGizmo : MonoBehaviour {
 				}
 			}
 		}
-			
+
 		if (grid != null) {
 			for (int i = 0; i < grid.GetLength (0); i++) {
 				for (int j = 0; j < grid.GetLength (1); j++) {
 					Gizmos.color = grid [i, j].IsAccessible ? Color.white : Color.red;
 					Gizmos.color = grid [i, j].DoorID > -1 ? Color.blue : Gizmos.color;
-					Gizmos.DrawSphere (new Vector3 (grid[i,j].x, 0f, grid[i,j].y), 0.4f);
+					Gizmos.color = grid [i, j].MarkedOnce ? Color.cyan : Gizmos.color;
+					if (grid[i,j].IsAccessible) {
+						Gizmos.DrawSphere (new Vector3 (grid [i, j].x, 0f, grid [i, j].y), 0.4f);
+					}
 				}
 			}
 		}

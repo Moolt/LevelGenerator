@@ -196,7 +196,7 @@ public class ProceduralLevel{
 			//Since the rooms have been placed and then separated, the door positions have to be recalculated
 			//For the hallway generation.
 			transformation.UpdateDoorPositions ();
-			Vector3 position = new Vector3 (Mathf.Round(transformation.Rect.center.x), 0f, Mathf.Round(transformation.Rect.center.y));
+			Vector3 position = new Vector3 (transformation.Rect.center.x, 0f, transformation.Rect.center.y);
 			transformation.Chunk.transform.position = position;
 		}
 	}
@@ -209,9 +209,8 @@ public class ProceduralLevel{
 		gizmo.ResetPaths ();
 
 		foreach (HallwayMeta hw in hallwayMeta) {
-			HallwayAStar routing = new HallwayAStar (roomRects, hw.StartDoor, hw.EndDoor, doorSize);
+			HallwayAStar routing = new HallwayAStar (roomRects, hw.StartDoor, hw.EndDoor, grid, doorSize);
 			gizmo.AddNewPath (routing.BuildPath ());
-			//gizmo.availableSpace = routing.AvailableSpace;
 		}
 	}
 

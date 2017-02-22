@@ -11,13 +11,15 @@ public class Square{
 	private Square parent;
 	private static float size;
 	private bool isDiagonal;
+	private int[] gridPos;
 
-	public Square(Vector2 pos, bool isDiagonal){
+	public Square(Vector2 pos, int[] gridPos){
 		this.rect = InitRectByCenter (pos);
 		this.isDiagonal = isDiagonal;
 		estimatedMovementCost = 0f;
 		currentMovementCost = 0f;
 		parent = null;
+		this.gridPos = gridPos;
 	}
 
 	private Rect InitRectByCenter(Vector2 center){
@@ -98,6 +100,14 @@ public class Square{
 	public int MovementCost{
 		get{ return isDiagonal ? 14 : 10; }
 	}
+
+	public int GridX{
+		get{ return gridPos [0]; }
+	}
+
+	public int GridY{
+		get{ return gridPos [1]; }
+	}
 }
 
 public class HallwayAStar{
@@ -111,8 +121,9 @@ public class HallwayAStar{
 	private List<Square> closedList;
 	private List<Square> finalPath;
 	private Rect availableSpace;
+	private AStarGrid grid;
 
-	public HallwayAStar (List<Rect> rooms, DoorDefinition start, DoorDefinition end, int doorSize){
+	public HallwayAStar (List<Rect> rooms, DoorDefinition start, DoorDefinition end, AStarGrid grid, int doorSize){
 		this.rooms = rooms;
 		this.startDoor = start;
 		this.endDoor = end;
@@ -121,6 +132,7 @@ public class HallwayAStar{
 		this.finalPath = new List<Square> ();
 		this.doorSize = doorSize;
 		this.padding = doorSize * .5f;
+		this.grid = grid;
 		Square.Size = padding;
 	}
 
@@ -147,7 +159,7 @@ public class HallwayAStar{
 					tmp = tmp.Parent;
 				}
 				finalPath.Reverse();
-				FixStartEndPositions();
+				//FixStartEndPositions();
 				return finalPath;
 			}
 
@@ -188,17 +200,12 @@ public class HallwayAStar{
 
 	private List<Square> AdjacentSquares(Square square){
 		List<Square> squares = new List<Square> ();
-		squares.Add(new Square (square.Position + Vector2.up * padding, false));
-		squares.Add(new Square (square.Position + Vector2.left * padding, false));
-		squares.Add(new Square (square.Position + Vector2.down * padding, false));
-		squares.Add(new Square (square.Position + Vector2.right * padding, false));
+		squares.Add(grid.GetSquareInGrid(square.GridX + 1, square.GridY));
+		squares.Add(grid.GetSquareInGrid(square.GridX - 1, square.GridY));
+		squares.Add(grid.GetSquareInGrid(square.GridX, square.GridY + 1));
+		squares.Add(grid.GetSquareInGrid(square.GridX, square.GridY - 1));
 
-		//squares.Add(new Square (square.Position + (Vector2.up + Vector2.left) * padding, true));
-		//squares.Add(new Square (square.Position + (Vector2.up + Vector2.right) * padding, true));
-		//squares.Add(new Square (square.Position + (Vector2.down + Vector2.left) * padding, true));
-		//squares.Add(new Square (square.Position + (Vector2.down + Vector2.right) * padding, true));
-
-		return squares.Where (s => IsWalkable (s)).ToList();
+		return squares.Where (s => s != null).ToList();
 	}
 
 	private bool IsWalkable(Square square){
@@ -214,21 +221,12 @@ public class HallwayAStar{
 		return new Vector2 (vec.x, vec.z);
 	}
 
-	//The square at the position of the first room's door. It is not placed directly at the doors position but one unit (padding)
-	//In front of it. In case the path is perpendicular to the door's direction, this will ensure that a hallway will always begin facing the
-	//Direction of the door.
 	private Square ComputeStartSquare(){
-		Vector2 startSquarePosition = ClipY (startDoor.Position) + ClipY (startDoor.Direction) * padding * 1f;
-		//RoundByVal (ref startSquarePosition, padding);
-		return new Square (startSquarePosition, false);
+		return grid.SquareAtCoordinate (ClipY(startDoor.Position));
 	}
-
-	//Since the algorithm works on a grid, the end square has to be aligned accordingly
+		
 	private Square ComputeEndSquare(Square startSquare){
-		Vector2 endSquarePosition = ClipY (endDoor.Position);
-		endSquarePosition += padding * ClipY (endDoor.Direction);
-		//RoundByVal (ref endSquarePosition, padding);
-		return new Square (endSquarePosition, false);
+		return grid.SquareAtCoordinate (ClipY(endDoor.Position));
 	}
 		
 	//Good enough solution. a and b can't be tested for equality, since in most cases they will never be equal
@@ -252,7 +250,7 @@ public class HallwayAStar{
 	}
 
 	//Fix the positions, since they may no be aligned to the grid
-	private void FixStartEndPositions(){
+	/*private void FixStartEndPositions(){
 		Square startSquare = new Square (ClipY(startDoor.Position), false);
 		finalPath.Insert (0, startSquare);
 		int index = finalPath.Count - 1;
@@ -285,7 +283,7 @@ public class HallwayAStar{
 
 		Square endSquare = new Square (ClipY(endDoor.Position), false);
 		finalPath.Add (endSquare);
-	}
+	}*/
 
 	public Rect AvailableSpace{
 		get { return availableSpace; }
