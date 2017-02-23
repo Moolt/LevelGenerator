@@ -106,16 +106,16 @@ public class RoomTransformation{
 }
 
 public class ProceduralLevel{
-	private RoomNode rootnode;
-	private ChunkHelper helper;
+	private DebugData debugData;
+	private RoomNode rootnode; //Rootnode of the level graph
+	private ChunkHelper helper; //Helps searching Chunks
 	private ChunkInstantiator chunkInstantiator;
-
-	private int tmpChunkPos = -10000;
+	private int tmpChunkPos = -10000; //Temporary variable used for instantiating chunks at position
 	private List<RoomTransformation> positionMeta;
 	private List<HallwayMeta> hallwayMeta;
-	private float spacing;
-	private float distance;
-	private bool isSeparate;
+	private float spacing; //Space between rooms, used is separation is active
+	private float distance; //Distance used in the FreeTree algorithm
+	private bool isSeparate; //Separate rooms, avoid overlapping
 	private int doorSize;
 
 	public ProceduralLevel(string path, LevelGraph graph, bool separateRooms, float distance, bool isSeparate, float spacing, int doorSize){
@@ -127,6 +127,7 @@ public class ProceduralLevel{
 		this.positionMeta = new List<RoomTransformation>();
 		this.hallwayMeta = new List<HallwayMeta> ();
 		this.doorSize = doorSize;
+		this.debugData = new DebugData ();
 		chunkInstantiator = ChunkInstantiator.Instance;
 
 		GenerateLevel (graph);
@@ -154,9 +155,6 @@ public class ProceduralLevel{
 		Vector3 chunkSize = ChunkSize (chunk);
 		RoomTransformation roomTransform = new RoomTransformation (chunk, node.Position, chunkSize, spacing);
 		positionMeta.Add(roomTransform);
-		//Debug stuff
-		DebugRoomID roomid = chunk.AddComponent<DebugRoomID> () as DebugRoomID;
-		roomid.ID = node.ID;
 
 		if (prevChunk != null) {
 			HallwayMeta hallway = prevChunk.FindMatchingDoors (roomTransform);
@@ -202,15 +200,13 @@ public class ProceduralLevel{
 	}
 
 	private void CreateHallways(){
-		HallwayGizmo gizmo = GameObject.FindGameObjectWithTag ("Respawn").GetComponent<HallwayGizmo> ();
 		List<Rect> roomRects = GetDeflatedRoomRects ();
 		AStarGrid grid = new AStarGrid (roomRects, positionMeta, spacing);
-		gizmo.grid = grid.Grid;
-		gizmo.ResetPaths ();
+		debugData.Grid = grid.Grid;
 
 		foreach (HallwayMeta hw in hallwayMeta) {
 			HallwayAStar routing = new HallwayAStar (roomRects, hw.StartDoor, hw.EndDoor, grid, doorSize);
-			gizmo.AddNewPath (routing.BuildPath ());
+			debugData.AddPath(routing.BuildPath ());
 		}
 	}
 
@@ -262,5 +258,11 @@ public class ProceduralLevel{
 			}
 
 		} while(!separated);
+	}
+
+	public DebugData DebugData {
+		get {
+			return this.debugData;
+		}
 	}
 }

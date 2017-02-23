@@ -97,11 +97,7 @@ public class AStarGrid {
 	List<RoomTransformation> rooms;
 	private GridPosition[,] grid;
 	private Rect availableSpace;
-	private List<Vector2> positions;
 	private List<Rect> roomRects;
-	private List<Vector2> doorPositions;
-	private List<float> xCoordinates;
-	private List<float> yCoordinates;
 	private float padding;
 	private float threshold;
 	private float gridCellSize;
@@ -112,10 +108,6 @@ public class AStarGrid {
 		this.gridCellSize = padding / 3f;
 		this.roomRects = roomRects;
 		this.rooms = rooms;
-		xCoordinates = new List<float> ();
-		yCoordinates = new List<float> ();
-		positions = new List<Vector2> ();
-		doorPositions = new List<Vector2> ();
 		CalculateSpace();
 		BuildGrid ();
 		SortOut ();
@@ -303,7 +295,7 @@ public class AStarGrid {
 		if (!grid [i, j].IsAccessible) {
 			return null;
 		}
-		return new Square (grid [i, j].Position, new int[]{ i, j });;
+		return new Square (grid [i, j].Position, new int[]{ i, j });
 	}
 
 	private Vector2 ClipY(Vector3 vec){

@@ -39,8 +39,6 @@ public class FreeTreeVisualization{
 		Vector2 polar = new Vector2 (p, (a1 + a2) / 2f);
 		cartesian.x = polar.x * Mathf.Cos (polar.y);
 		cartesian.z = polar.x * Mathf.Sin (polar.y);
-		float angle = Mathf.Rad2Deg * polar.y;
-		int id = v.ID;
 		v.Position = cartesian;
 
 		if (r (p) < (a2 - a1)) {

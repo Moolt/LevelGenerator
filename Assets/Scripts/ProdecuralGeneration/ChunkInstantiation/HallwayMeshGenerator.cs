@@ -8,8 +8,7 @@ public class HallwaySegment{
 	private Vector3 direction;
 	private bool isCurve;
 
-	public HallwaySegment (Vector3 fromPosition, Vector3 toPosition, Vector3 direction, bool isCurve)
-	{
+	public HallwaySegment (Vector3 fromPosition, Vector3 toPosition, Vector3 direction, bool isCurve){
 		this.fromPosition = fromPosition;
 		this.toPosition = toPosition;
 		this.direction = direction;

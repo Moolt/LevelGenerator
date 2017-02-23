@@ -19,8 +19,13 @@ public class LevelGeneratorWindow : EditorWindow {
 	private XmlSerializer xmlSerializer;
 	private LevelGeneratorPreset preset;
 	private bool showLevelGraph = true;
+	private bool showDebugGUI = false;
 	private bool isAutoUpdate = false;
 	private string chunkPath = "Chunks";
+	//Debugging
+	private DebugInfo debugInfo;
+	private DebugData debugData;
+	private DebugGizmo debugGizmo;
 
 	[MenuItem("Window/Level Generator")]
 	public static void ShowWindow(){
@@ -31,6 +36,9 @@ public class LevelGeneratorWindow : EditorWindow {
 		if (preset == null) {
 			preset = new LevelGeneratorPreset ();
 			preset.Reset ();
+		}
+		if (debugInfo == null) {
+			debugInfo = new DebugInfo ();
 		}
 		xmlSerializer = new XmlSerializer (typeof(LevelGeneratorPreset));
 	}
@@ -86,6 +94,14 @@ public class LevelGeneratorWindow : EditorWindow {
 			EditorGUILayout.Space ();
 		}
 
+		ManageDebugObject ();
+		showDebugGUI = EditorGUILayout.Foldout (showDebugGUI, "Debug");
+		if (showDebugGUI) {
+			debugInfo.ShowPaths = EditorGUILayout.Toggle ("Show paths", debugInfo.ShowPaths);
+			debugInfo.ShowConnections = EditorGUILayout.Toggle ("Show connections", debugInfo.ShowConnections);
+			debugInfo.ShowAStarGrid = EditorGUILayout.Toggle ("Path grid", debugInfo.ShowAStarGrid);
+		}
+
 		EditorGUILayout.Space ();
 
 		preset.Seed = EditorGUILayout.IntField ("Seed", preset.Seed);
@@ -103,10 +119,32 @@ public class LevelGeneratorWindow : EditorWindow {
 		}
 		GUI.enabled = true;
 		if (isAutoUpdate) {
+			int startMillis = System.DateTime.Now.Millisecond;
 			Generate ();
+			if (System.DateTime.Now.Millisecond - startMillis > 500) {
+				isAutoUpdate = false;
+			}
 		}
 
 		EditorGUILayout.EndHorizontal ();
+	}
+
+	private void ManageDebugObject(){
+		GameObject debugObject = GameObject.FindWithTag ("Debug");
+		if (debugObject == null && debugInfo.IsDebugUsed) {
+			GameObject debug = new GameObject ("Debug");
+			debug.tag = "Debug";
+			debugGizmo = debug.AddComponent<DebugGizmo> ();
+			debugGizmo.DebugInfo = debugInfo;
+
+			if (debugData != null) {
+				debugGizmo.DebugData = debugData;
+			}
+
+		} else if (debugObject != null && !debugInfo.IsDebugUsed) {
+			DestroyImmediate (debugObject);
+			debugGizmo = null;
+		}
 	}
 
 	private void Generate(){
@@ -115,7 +153,15 @@ public class LevelGeneratorWindow : EditorWindow {
 		levelGraph = new LevelGraph ();
 		levelGraph.GenerateGraph (preset.RoomCount, preset.CritPathLength, preset.MaxDoors, preset.Distribution);
 		ProceduralLevel level = new ProceduralLevel (chunkPath, levelGraph, preset.IsSeparateRooms, preset.RoomDistance, preset.IsSeparateRooms, preset.Spacing, preset.DoorSize);
+		SetDebugData (level.DebugData);
 		//generatedObjects = level.GeneratedRooms;
+	}
+
+	private void SetDebugData(DebugData data){
+		debugData = data;
+		if (debugGizmo != null) {
+			debugGizmo.DebugData = data;
+		}
 	}
 
 	private void ClearLevel(){

@@ -4,34 +4,49 @@ using System.Collections.Generic;
 using UnityEditor;
 using System.Linq;
 
+public enum SquareDirection{ UP, RIGHT, DOWN, LEFT, NONE }
+
 public class Square{
 	protected Rect rect;
 	private float estimatedMovementCost;
 	private float currentMovementCost;
 	private Square parent;
 	private static float size;
-	private bool isDiagonal;
 	private int[] gridPos;
+	private SquareDirection direction;
 
 	public Square(Vector2 pos, int[] gridPos){
 		this.rect = InitRectByCenter (pos);
-		this.isDiagonal = isDiagonal;
 		estimatedMovementCost = 0f;
 		currentMovementCost = 0f;
 		parent = null;
 		this.gridPos = gridPos;
+		direction = SquareDirection.NONE;
 	}
 
 	private Rect InitRectByCenter(Vector2 center){
 		return new Rect (center - Vector2.one * (size * .5f), Vector2.one * size);
 	}
 
-	public float Score{
-		get{ return estimatedMovementCost + currentMovementCost; }
+	private void UpdateDirection(Square newParent){
+		int thisX = gridPos [0];
+		int thisY = gridPos [1];
+
+		if (newParent.GridX == thisX) {
+			direction = thisY > newParent.GridY ? SquareDirection.UP : SquareDirection.DOWN;
+		} else {
+			direction = thisX > newParent.GridX ? SquareDirection.RIGHT : SquareDirection.LEFT;
+		}
 	}
 
-	public override bool Equals (object obj)
-	{
+	public float Score{
+		get{
+			float stayStraightBonus = parent.Direction == direction ? 30f : 0f;
+			return estimatedMovementCost + currentMovementCost;
+		}
+	}
+
+	public override bool Equals (object obj){
 		if (obj == null)
 			return false;
 		if (ReferenceEquals (this, obj))
@@ -41,17 +56,14 @@ public class Square{
 		Square other = (Square)obj;
 		return Position == other.Position;
 	}
-	
 
-	public override int GetHashCode ()
-	{
+	public override int GetHashCode (){
 		unchecked {
 			return Position.GetHashCode ();
 		}
 	}	
 
-	public override string ToString ()
-	{
+	public override string ToString (){
 		return string.Format ("[Square: Score={0}, Position={1}, CurrentMovementCost={2}, EstimatedMovementCost={3}]", Score, Position, CurrentMovementCost, EstimatedMovementCost);
 	}
 
@@ -71,10 +83,11 @@ public class Square{
 	}
 
 	public Square Parent {
-		get {
+		get {			
 			return this.parent;
 		}
 		set {
+			UpdateDirection (value);
 			parent = value;
 		}
 	}
@@ -98,7 +111,7 @@ public class Square{
 	}
 
 	public int MovementCost{
-		get{ return isDiagonal ? 14 : 10; }
+		get{ return 1; }
 	}
 
 	public int GridX{
@@ -107,6 +120,12 @@ public class Square{
 
 	public int GridY{
 		get{ return gridPos [1]; }
+	}
+
+	public SquareDirection Direction {
+		get {
+			return this.direction;
+		}
 	}
 }
 
@@ -159,7 +178,6 @@ public class HallwayAStar{
 					tmp = tmp.Parent;
 				}
 				finalPath.Reverse();
-				//FixStartEndPositions();
 				return finalPath;
 			}
 
@@ -202,8 +220,8 @@ public class HallwayAStar{
 		List<Square> squares = new List<Square> ();
 		squares.Add(grid.GetSquareInGrid(square.GridX + 1, square.GridY));
 		squares.Add(grid.GetSquareInGrid(square.GridX - 1, square.GridY));
-		squares.Add(grid.GetSquareInGrid(square.GridX, square.GridY + 1));
 		squares.Add(grid.GetSquareInGrid(square.GridX, square.GridY - 1));
+		squares.Add(grid.GetSquareInGrid(square.GridX, square.GridY + 1));
 
 		return squares.Where (s => s != null).ToList();
 	}
@@ -248,42 +266,6 @@ public class HallwayAStar{
 		availableSpace.xMin -= padding * 2;
 		availableSpace.xMax += padding * 2;
 	}
-
-	//Fix the positions, since they may no be aligned to the grid
-	/*private void FixStartEndPositions(){
-		Square startSquare = new Square (ClipY(startDoor.Position), false);
-		finalPath.Insert (0, startSquare);
-		int index = finalPath.Count - 1;
-
-		while (index > 0) {
-			Square last = finalPath [index];
-			Square secondToLast = finalPath [index - 1];
-			Vector2 pathDirection = (last.Position - secondToLast.Position).normalized;
-
-			//Dot Product is 0 when the two vectors are perpendicular to each other
-			//If they are, the last point has to be aligned to the x or y position of the door
-			if (Vector2.Dot (pathDirection, ClipY (endDoor.Direction)) == 0) {
-				//Vector2 lastPosCoordinate = Vector2.Scale (last.Position, pathDirection);
-				//Vector2 endDoorCoordinate = Vector2.Scale (ClipY (endDoor.Position), pathDirection);
-				Vector2 delta = last.Position - ClipY (endDoor.Position);
-				delta = pathDirection == Vector2.right || pathDirection == Vector2.up ? -delta : delta;
-				if (delta.magnitude > padding) {
-					last.Position += Vector2.Scale (delta, pathDirection);
-				}
-				break;
-			} else { //Not perpendicular, so it's a straigth hallway. Align the hallway.				
-				Vector2 sameHeightAsDoor = last.Position + Vector2.Scale(ClipY (endDoor.Position) - last.Position, pathDirection);
-				Vector2 perpendicularVec = ClipY (endDoor.Position) - sameHeightAsDoor;
-				float delta = perpendicularVec.magnitude;
-				perpendicularVec.Normalize ();
-				last.Position += Vector2.Scale (Vector2.one * delta, perpendicularVec);
-			}
-			index--;
-		}
-
-		Square endSquare = new Square (ClipY(endDoor.Position), false);
-		finalPath.Add (endSquare);
-	}*/
 
 	public Rect AvailableSpace{
 		get { return availableSpace; }

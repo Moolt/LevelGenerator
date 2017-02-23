@@ -8,6 +8,7 @@ TagManager:
   - ChunkCopy
   - ChunkInstance
   - ChunkRemove
+  - Debug
   layers:
   - Default
   - TransparentFX
