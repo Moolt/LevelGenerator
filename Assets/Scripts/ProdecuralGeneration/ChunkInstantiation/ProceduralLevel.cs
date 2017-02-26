@@ -200,14 +200,23 @@ public class ProceduralLevel{
 	}
 
 	private void CreateHallways(){
+		HallwayMeshGenerator meshGenerator = new HallwayMeshGenerator ();
 		List<Rect> roomRects = GetDeflatedRoomRects ();
 		AStarGrid grid = new AStarGrid (roomRects, positionMeta, spacing);
 		debugData.Grid = grid.Grid;
 
 		foreach (HallwayMeta hw in hallwayMeta) {
 			HallwayAStar routing = new HallwayAStar (roomRects, hw.StartDoor, hw.EndDoor, grid, doorSize);
-			debugData.AddPath(routing.BuildPath ());
+			List<Square> path = routing.BuildPath ();
+			debugData.AddPath (path);
+			meshGenerator.AddPath (path);
 		}
+		Mesh mesh = meshGenerator.GenerateMesh ();
+		GameObject hallways = new GameObject ("Hallways");
+		hallways.tag = "ChunkInstance";
+		MeshFilter meshFilter = hallways.AddComponent<MeshFilter> ();
+		meshFilter.sharedMesh = mesh;
+		MeshRenderer meshRenderer = hallways.AddComponent<MeshRenderer> ();
 	}
 
 	private List<Rect> GetDeflatedRoomRects(){
