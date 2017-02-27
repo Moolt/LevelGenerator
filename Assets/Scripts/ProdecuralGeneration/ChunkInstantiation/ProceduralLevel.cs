@@ -200,9 +200,9 @@ public class ProceduralLevel{
 	}
 
 	private void CreateHallways(){
-		HallwayMeshGenerator meshGenerator = new HallwayMeshGenerator ();
 		List<Rect> roomRects = GetDeflatedRoomRects ();
 		AStarGrid grid = new AStarGrid (roomRects, positionMeta, spacing);
+		HallwayMeshGenerator meshGenerator = new HallwayMeshGenerator (grid);
 		debugData.Grid = grid.Grid;
 
 		foreach (HallwayMeta hw in hallwayMeta) {
@@ -217,6 +217,7 @@ public class ProceduralLevel{
 		MeshFilter meshFilter = hallways.AddComponent<MeshFilter> ();
 		meshFilter.sharedMesh = mesh;
 		MeshRenderer meshRenderer = hallways.AddComponent<MeshRenderer> ();
+		meshRenderer.material = Resources.Load ("WireframeMaterial", typeof(Material)) as Material;
 	}
 
 	private List<Rect> GetDeflatedRoomRects(){

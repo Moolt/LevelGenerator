@@ -4,16 +4,22 @@ using UnityEngine;
 using System.Linq;
 
 public class GridPosition{
-	public float x;
-	public float y;
-	public bool shiftedX;
-	public bool shiftedY;
+	private Dictionary<Vector2,GridPosition> adjacentPositions; //Only relevant for hallway mesh
+	private Vector3 doorDirection; //Only relevant for hallway mesh
+	private Vector2 direction; //hallway mesh
 	private bool isAccessible;
 	private bool markedOnce;
+	public bool shiftedX;
+	public bool shiftedY;
 	private int roomID;
 	private int doorID;
+	public float x;
+	public float y;
 
 	public GridPosition (float x, float y){
+		InitAdjacentDict ();
+		doorDirection = Vector3.zero;
+		direction = Vector2.zero;
 		this.x = x;
 		this.y = y;
 		shiftedX = false;
@@ -21,6 +27,14 @@ public class GridPosition{
 		isAccessible = true;
 		roomID = -1;
 		doorID = -1;
+	}
+
+	private void InitAdjacentDict(){
+		adjacentPositions = new Dictionary<Vector2, GridPosition> ();
+		adjacentPositions.Add (Vector2.up, null);
+		adjacentPositions.Add (Vector2.right, null);
+		adjacentPositions.Add (Vector2.down, null);
+		adjacentPositions.Add (Vector2.left, null);
 	}
 
 	public Vector2 Position {
@@ -90,6 +104,39 @@ public class GridPosition{
 			return this.markedOnce;
 		}
 	}
+
+	public void AddAdjacent(Vector2 direction, GridPosition adjacent){
+		if (direction != Vector2.zero) {
+			adjacentPositions [direction] = adjacent;
+		}
+	}
+
+	public Vector3 DoorDirection {
+		get {
+			return this.doorDirection;
+		}
+		set {
+			doorDirection = value;
+		}
+	}
+
+	public Dictionary<Vector2, GridPosition> AdjacentPositions {
+		get {
+			return this.adjacentPositions;
+		}
+	}
+
+	public Vector2 Direction {
+		get {
+			if (direction == Vector2.zero) {
+				direction = new Vector2 (doorDirection.x, doorDirection.z);
+			}
+			return this.direction;
+		}
+		set {
+			direction = value;
+		}
+	}
 }
 
 public class AStarGrid {
@@ -99,24 +146,17 @@ public class AStarGrid {
 	private Rect availableSpace;
 	private List<Rect> roomRects;
 	private float padding;
-	private float threshold;
 	private float gridCellSize;
 
 	public AStarGrid(List<Rect> roomRects, List<RoomTransformation> rooms, float padding){
 		this.padding = 4.88f;
-		this.threshold = padding / 2f;
 		this.gridCellSize = padding / 3f;
 		this.roomRects = roomRects;
 		this.rooms = rooms;
 		CalculateSpace();
 		BuildGrid ();
 		SortOut ();
-		//FindDoorCandidates ();
 		Shift ();
-	}
-
-	private void FindDoorCandidates(){
-		
 	}
 
 	private void Shift(){
@@ -125,6 +165,7 @@ public class AStarGrid {
 				int x = (int)Mathf.Round((door.Position.x - availableSpace.xMin) / gridCellSize);
 				int y = (int)Mathf.Round((door.Position.z - availableSpace.yMin) / gridCellSize);
 				grid [x, y].DoorID = door.ID;
+				grid [x, y].DoorDirection = door.Direction;
 				grid [x, y].IsAccessible = true;
 				int gridRoomID = grid [x, y].RoomID;
 
@@ -300,5 +341,29 @@ public class AStarGrid {
 
 	private Vector2 ClipY(Vector3 vec){
 		return new Vector2(vec.x, vec.z);
+	}
+
+	public void AddAdjacentRelation(Square one, Square two){
+		GridPosition onePos = grid [one.GridX, one.GridY];
+		GridPosition twoPos = grid [two.GridX, two.GridY];
+		onePos.AddAdjacent (AdjacentDirection(one, two), twoPos);
+		twoPos.AddAdjacent (AdjacentDirection(two, one), onePos);
+	}
+
+	private Vector2 AdjacentDirection(Square one, Square two){
+		if (one.GridY < two.GridY) {
+			return Vector2.up;
+		} else if (one.GridY > two.GridY) {
+			return Vector2.down;
+		} else if (one.GridX < two.GridX) {
+			return Vector2.right;
+		} else if (one.GridX > two.GridX) {
+			return Vector2.left;
+		}
+		return Vector2.zero;
+	}
+
+	public void UpdateDirection(Square one){
+		grid [one.GridX, one.GridY].Direction = one.Direction;
 	}
 }

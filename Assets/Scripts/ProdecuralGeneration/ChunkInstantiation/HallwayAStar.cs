@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using UnityEditor;
 using System.Linq;
 
-public enum SquareDirection{ UP, RIGHT, DOWN, LEFT, NONE }
-
 public class Square{
 	protected Rect rect;
 	private float estimatedMovementCost;
@@ -13,7 +11,7 @@ public class Square{
 	private Square parent;
 	private static float size;
 	private int[] gridPos;
-	private SquareDirection direction;
+	private Vector2 direction;
 
 	public Square(Vector2 pos, int[] gridPos){
 		this.rect = InitRectByCenter (pos);
@@ -21,7 +19,7 @@ public class Square{
 		currentMovementCost = 0f;
 		parent = null;
 		this.gridPos = gridPos;
-		direction = SquareDirection.NONE;
+		direction = Vector2.zero;
 	}
 
 	private Rect InitRectByCenter(Vector2 center){
@@ -33,9 +31,9 @@ public class Square{
 		int thisY = gridPos [1];
 
 		if (newParent.GridX == thisX) {
-			direction = thisY > newParent.GridY ? SquareDirection.UP : SquareDirection.DOWN;
+			direction = thisY > newParent.GridY ? Vector2.up : Vector2.down;
 		} else {
-			direction = thisX > newParent.GridX ? SquareDirection.RIGHT : SquareDirection.LEFT;
+			direction = thisX > newParent.GridX ? Vector2.right: Vector2.left;
 		}
 	}
 
@@ -122,7 +120,7 @@ public class Square{
 		get{ return gridPos [1]; }
 	}
 
-	public SquareDirection Direction {
+	public Vector2 Direction {
 		get {
 			return this.direction;
 		}
@@ -178,6 +176,7 @@ public class HallwayAStar{
 					tmp = tmp.Parent;
 				}
 				finalPath.Reverse();
+				UpdateGrid();
 				return finalPath;
 			}
 
@@ -203,6 +202,16 @@ public class HallwayAStar{
 
 		} while(openList.Count > 0);
 		return null;
+	}
+
+	//Update the grid to contain all adjacent positions. This information will be used to create the hallway mesh
+	private void UpdateGrid(){
+		for(int i = 0; i < finalPath.Count; i++){
+			grid.UpdateDirection (finalPath [i]);
+			if (i < finalPath.Count - 1) {
+				grid.AddAdjacentRelation (finalPath [i], finalPath [i + 1]);
+			}
+		}
 	}
 
 	private void InsertInOpenSteps(Square step){
