@@ -137,6 +137,12 @@ public class GridPosition{
 			direction = value;
 		}
 	}
+
+	public bool IsDoor{
+		get{
+			return  doorID > -1;
+		}
+	}
 }
 
 public class AStarGrid {
@@ -187,7 +193,8 @@ public class AStarGrid {
 					shiftFinished |= isOutsideLevel || isInOtherRoom || hasBeenShifted;
 
 					if (isInOtherRoom) {
-						int elementsToUnmark = visitedPositions.Count / 2;
+						visitedPositions.Pop ().UnmarkShifted (interval [2]);
+						int elementsToUnmark = visitedPositions.Count - 1;
 						for (int j = 0; j < elementsToUnmark; j++) {
 							visitedPositions.Pop ().UnmarkShifted (interval [2]);
 						}

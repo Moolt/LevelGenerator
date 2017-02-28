@@ -217,7 +217,11 @@ public class ProceduralLevel{
 		MeshFilter meshFilter = hallways.AddComponent<MeshFilter> ();
 		meshFilter.sharedMesh = mesh;
 		MeshRenderer meshRenderer = hallways.AddComponent<MeshRenderer> ();
-		meshRenderer.material = Resources.Load ("WireframeMaterial", typeof(Material)) as Material;
+		Material[] materials = new Material[2];
+		materials [0] = Resources.Load ("OrangeGrid", typeof(Material)) as Material;
+		materials [1] = Resources.Load ("OrangeGrid", typeof(Material)) as Material;
+		meshRenderer.sharedMaterials = materials;
+		hallways.AddComponent<MeshCollider> ();
 	}
 
 	private List<Rect> GetDeflatedRoomRects(){
