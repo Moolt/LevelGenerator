@@ -128,7 +128,7 @@ public class GridPosition{
 
 	public Vector2 Direction {
 		get {
-			if (direction == Vector2.zero) {
+			if (direction == Vector2.zero || doorID > -1) {
 				direction = new Vector2 (doorDirection.x, doorDirection.z);
 			}
 			return this.direction;

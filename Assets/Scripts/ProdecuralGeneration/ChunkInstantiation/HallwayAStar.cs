@@ -201,7 +201,7 @@ public class HallwayAStar{
 			}
 
 		} while(openList.Count > 0);
-		return null;
+		return new List<Square> ();
 	}
 
 	//Update the grid to contain all adjacent positions. This information will be used to create the hallway mesh
