@@ -8,7 +8,7 @@ public class DoorManager : DoorProperty {
 	public static int doorIndex = 0; //Used for door IDs
 	public List<DoorDefinition> doors = new List<DoorDefinition>(0);
 	public OffsetType offsetType = OffsetType.ABSOLUTE;
-	public float doorSize;
+	public float doorSize = 2f; //Set to a static value. Might be variable in future versions
 	public bool previewDoors = true;
 	public int minCount = 1;
 	public int maxCount = 1;

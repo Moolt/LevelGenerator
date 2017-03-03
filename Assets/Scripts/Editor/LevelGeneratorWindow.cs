@@ -5,6 +5,7 @@ using UnityEditor;
 using System.Linq;
 using System.Xml.Serialization;
 using System.IO;
+using System.Text;
 
 public class LevelGeneratorWindow : EditorWindow {
 	private LevelGraph levelGraph;
@@ -20,6 +21,7 @@ public class LevelGeneratorWindow : EditorWindow {
 	private LevelGeneratorPreset preset;
 	private bool showLevelGraph = true;
 	private bool showDebugGUI = false;
+	private bool showHallwayGUI = false;
 	private bool isAutoUpdate = false;
 	private string chunkPath = "Chunks";
 	//Debugging
@@ -33,6 +35,7 @@ public class LevelGeneratorWindow : EditorWindow {
 	}
 
 	void OnEnable(){
+
 		if (preset == null) {
 			preset = new LevelGeneratorPreset ();
 			preset.Reset ();
@@ -74,29 +77,40 @@ public class LevelGeneratorWindow : EditorWindow {
 			preset.MaxDoors = EditorGUILayout.IntField ("Max. Doors", preset.MaxDoors);
 			preset.MaxDoors = Mathf.Clamp (preset.MaxDoors, 3, 10);
 			preset.Distribution = EditorGUILayout.Slider ("Distribution", preset.Distribution, 0.05f, 1f);
+			EditorGUILayout.Space ();
 		}
-
-		EditorGUILayout.Space ();
-
+			
 		showProceduralLevel = EditorGUILayout.Foldout (showProceduralLevel, "Level Properties");
 		if (showProceduralLevel) {
-			preset.DoorSize = EditorGUILayout.IntField ("Global door size", preset.DoorSize);
-			preset.DoorSize = (int)Mathf.Max (2f, preset.DoorSize);
-			preset.RoomDistance = EditorGUILayout.FloatField ("Distance", preset.RoomDistance);
+			//preset.DoorSize = EditorGUILayout.IntField ("Global door size", preset.DoorSize);
+			preset.DoorSize = (int)Mathf.Floor (Mathf.Clamp (preset.DoorSize, 2f, preset.Spacing / 2f));
+			preset.RoomDistance = EditorGUILayout.FloatField ("Global distance", preset.RoomDistance);
 			preset.RoomDistance = Mathf.Max (1.5f, preset.RoomDistance);
 
 			EditorGUILayout.Space ();
-			preset.IsSeparateRooms = EditorGUILayout.Toggle ("Separate Rooms", preset.IsSeparateRooms);
 			if (preset.IsSeparateRooms) {
-				preset.Spacing = EditorGUILayout.FloatField ("Spacing", preset.Spacing);
-				preset.Spacing = Mathf.Max (0f, preset.Spacing);
+				preset.Spacing = EditorGUILayout.FloatField ("Minimal margin", preset.Spacing);
+				preset.Spacing = Mathf.Clamp (preset.Spacing, preset.DoorSize * 2f, preset.DoorSize * 4f);
 			}
+			EditorGUILayout.Space ();
+		}
+
+		showHallwayGUI = EditorGUILayout.Foldout (showHallwayGUI, "Hallway");
+		if (showHallwayGUI) {
+			preset.HallwayTiling = EditorGUILayout.FloatField ("Texture tiling:", preset.HallwayTiling);
+			preset.HallwayTiling = Mathf.Clamp (preset.HallwayTiling, 0.01f, 10f);
+			EditorGUILayout.Space ();
+			EditorGUILayout.LabelField ("Materials:");
+			preset.HallwayMaterials [0] = EditorGUILayout.ObjectField ("Ceil", preset.HallwayMaterials [0], typeof(Material), false) as Material;
+			preset.HallwayMaterials [1] = EditorGUILayout.ObjectField ("Floor", preset.HallwayMaterials [1], typeof(Material), false) as Material;
+			preset.HallwayMaterials [2] = EditorGUILayout.ObjectField ("Walls", preset.HallwayMaterials [2], typeof(Material), false) as Material;
 			EditorGUILayout.Space ();
 		}
 
 		ManageDebugObject ();
 		showDebugGUI = EditorGUILayout.Foldout (showDebugGUI, "Debug");
 		if (showDebugGUI) {
+			preset.IsSeparateRooms = EditorGUILayout.Toggle ("Separate Rooms", preset.IsSeparateRooms);
 			debugInfo.ShowPaths = EditorGUILayout.Toggle ("Show paths", debugInfo.ShowPaths);
 			debugInfo.ShowConnections = EditorGUILayout.Toggle ("Show connections", debugInfo.ShowConnections);
 			debugInfo.ShowAStarGrid = EditorGUILayout.Toggle ("Path grid", debugInfo.ShowAStarGrid);
@@ -152,7 +166,7 @@ public class LevelGeneratorWindow : EditorWindow {
 		Random.InitState (preset.Seed);
 		levelGraph = new LevelGraph ();
 		levelGraph.GenerateGraph (preset.RoomCount, preset.CritPathLength, preset.MaxDoors, preset.Distribution);
-		ProceduralLevel level = new ProceduralLevel (chunkPath, levelGraph, preset.IsSeparateRooms, preset.RoomDistance, preset.IsSeparateRooms, preset.Spacing, preset.DoorSize);
+		ProceduralLevel level = new ProceduralLevel (chunkPath, levelGraph, preset);
 		SetDebugData (level.DebugData);
 		//generatedObjects = level.GeneratedRooms;
 	}
@@ -195,8 +209,10 @@ public class LevelGeneratorWindow : EditorWindow {
 
 		if (path.Length != 0) {
 			presetName = Path.GetFileName (path);
-			FileStream fileStream = new FileStream (path, FileMode.OpenOrCreate);
-			xmlSerializer.Serialize (fileStream, preset);
+			FileStream fileStream = new FileStream (path, FileMode.Create);
+			using (TextWriter t = new StreamWriter (fileStream, new UnicodeEncoding ())) {
+				xmlSerializer.Serialize (t, preset);
+			}
 			fileStream.Close ();
 			isExternPreset = true;
 		}
@@ -212,6 +228,7 @@ public class LevelGeneratorWindow : EditorWindow {
 				presetName = Path.GetFileName (path);
 				FileStream fileStream = new FileStream (path, FileMode.Open);
 				LevelGeneratorPreset loadedPreset = xmlSerializer.Deserialize (fileStream) as LevelGeneratorPreset;
+				loadedPreset.LoadMaterials ();
 				fileStream.Close ();
 				if (loadedPreset != null) {
 					preset = loadedPreset;

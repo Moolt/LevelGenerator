@@ -4,8 +4,9 @@ using UnityEngine;
 using System.Linq;
 
 public class HallwaySegment{
+	private static float hallwayTiling = 1f;
 	private static Dictionary<Vector2, int[]> directionTrianglesMapping;
-	private float doorSize = 1f;
+	private static float doorSize;
 	//Center of the segment = Center of the gridPosition
 	private Vector2 center;
 	//Hallways hight, should be 2 times the width
@@ -31,7 +32,7 @@ public class HallwaySegment{
 
 	private HallwaySegment(){
 		InitOffsetDict ();
-		height = 2f;
+		height = doorSize * 2f;
 	}
 
 	public HallwaySegment (GridPosition gridPosition, HallwayMeshGenerator generator): this(){
@@ -79,10 +80,13 @@ public class HallwaySegment{
 
 	private void CalculateBounds(){
 		Vector2 oppositeDir = gridPosition.Direction * -1;
+		Vector2[] ortho = OrthogonalDirections (gridPosition.Direction);
+		size [ortho [0]] = GetPaddingForOrtho (ortho [0]);
+		size [ortho [1]] = GetPaddingForOrtho (ortho [1]);
 		//Only modify padding in the direction of the hallway segment
 		//The other directions will have their default value (doorSize)
-		size[gridPosition.Direction] = GetPaddingForDirection(gridPosition.Direction, false);
-		size[oppositeDir] = GetPaddingForDirection (oppositeDir, true);
+		size[gridPosition.Direction] = GetPaddingForDirection(gridPosition.Direction);
+		size[oppositeDir] = GetPaddingForDirection (oppositeDir);
 		HandleOffset ();
 		//Add an epmty gridPosition in the opposite direction, if the segment is a door
 		//This will stop triangles to be created at the beginning of a hallway
@@ -91,7 +95,7 @@ public class HallwaySegment{
 		}
 	}
 
-	private float GetPaddingForDirection(Vector2 direction, bool isOpposite){		
+	private float GetPaddingForDirection(Vector2 direction){		
 		//The direction is pointing inside of a room. Will only happen with door positions
 		if (adjacent [direction] == null && gridPosition.IsDoor) {
 			return 0f;
@@ -100,7 +104,8 @@ public class HallwaySegment{
 		//The door may need the space if it has an offset
 		if (adjacent [direction] != null && adjacent[direction].IsDoor && !IsEdge(gridPosition)) {
 			return 0f;
-		}		
+		}
+
 		//If there is no object in the direction of the current segment
 		//Or if theres a segment to the left / right side of the segment
 		//This will result in a squared segment
@@ -111,26 +116,36 @@ public class HallwaySegment{
 			//This problem is solved by adding a separate segment between the edges, filling the hole
 			//Note, how a different constructor is called with a pre-calculated size and the center between both edges
 			if (adjacent[direction] != null && IsEdge (adjacent [direction])) {
-				CreateFiller (direction);
+				if (IsFillerValidSpace (adjacent [direction])) {
+					CreateFiller (direction, false);
+				} else {
+					return (NeighbourDistance(direction) * direction).magnitude - doorSize;
+				}
 			}
 			return doorSize;
 		}
 
-		Vector2 neighbourPosition = adjacent [direction].Position;
-		float neighbourDistance = Vector2.Distance (Vector2.Scale (gridPosition.Position, direction), Vector2.Scale (neighbourPosition, direction));
-
 		if (IsEdge (adjacent [direction])) {
 			//If the segment in the looking direction is an edge, it will have the default size of doorSize
 			//This segment has to compensate for the lack the edges length by using the whole distance between the segments minus one doorLength
-			return (neighbourDistance * direction - direction * doorSize).magnitude;
+			return (NeighbourDistance(direction) * direction - direction * doorSize).magnitude;
 		} else {
 			if (gridPosition.IsDoor) {
-				return (neighbourDistance * direction).magnitude;
+				return (NeighbourDistance(direction) * direction).magnitude;
 			} else {
 				//The segment is not an edge, meaning that this is a straigth corridor. Use half the distance between the both segments as padding
-				return (neighbourDistance * direction * .5f).magnitude;
+				return (NeighbourDistance(direction) * direction * .5f).magnitude;
 			}
 		}
+	}
+
+	private float NeighbourDistance(Vector2 direction){
+		Vector2 neighbourPosition = adjacent [direction].Position;
+		return Vector2.Distance (Vector2.Scale (gridPosition.Position, direction), Vector2.Scale (neighbourPosition, direction));
+	}
+
+	private bool IsFillerValidSpace(GridPosition other){
+		return Vector2.Distance (gridPosition.Position, other.Position) > doorSize * 2;
 	}
 
 	private void HandleOffset(){
@@ -142,25 +157,52 @@ public class HallwaySegment{
 		}
 	}
 
+	private float GetPaddingForOrtho(Vector2 direction){
+		if (adjacent[direction] != null && IsEdge (gridPosition) && IsEdge (adjacent [direction]) && !IsFillerValidSpace(adjacent[direction])) {
+			CreateFiller (direction, true);
+			return (NeighbourDistance(direction) * direction).magnitude - doorSize;
+		}
+		return doorSize;
+	}
+
+	private Vector2[] OrthogonalDirections(Vector2 direction){
+		if (direction == Vector2.right || direction == Vector2.left) {
+			return new Vector2[]{ Vector2.up, Vector2.down };
+		} else {
+			return new Vector2[]{ Vector2.left, Vector2.right };
+		}
+	}
+
 	//Creates a filler in direction of this segment
 	//Will only be executed if this segment and the segment in the given direction are edges
-	private void CreateFiller(Vector2 direction){
+	private void CreateFiller(Vector2 direction, bool ignoreWalls){
 		//The position between the both segments
 		Vector2 fillerCenter = gridPosition.Position + Vector2.Distance (gridPosition.Position, adjacent [direction].Position) * direction * .5f;
 		//Actually half the full width.
-		float width = Vector2.Distance (gridPosition.Position, fillerCenter) - doorSize;
+		float width = Mathf.Abs(Vector2.Distance (gridPosition.Position, fillerCenter) - doorSize);
 		Vector2 oppositeDir = direction * -1;
 		//A new adjacent dictionary has to be created for the filler, since it doesn't originate from
 		//An actual GridPosition instance.
-		Dictionary<Vector2, GridPosition> fillerAdjacent = new Dictionary<Vector2, GridPosition>();
-		fillerAdjacent.Add (direction, adjacent [direction]);
-		fillerAdjacent.Add (oppositeDir, gridPosition);
+		Dictionary<Vector2, GridPosition> fillerAdjacent;
+		if (!ignoreWalls) {
+			fillerAdjacent = FillerAdjacence (direction, oppositeDir);
+		} else {
+			fillerAdjacent = FillerAdjacence (Vector2.up, Vector2.right, Vector2.down, Vector2.left);
+		}
 		//New size Dictionary. Default values to the sides, width for back and forth
 		Dictionary<Vector2, float> fillerSize = CreateSizeDict ();
 		fillerSize [direction] = width;
 		fillerSize [oppositeDir] = width;
 		//New instance is added to the hallway. The called function will stop duplicates from being added.
 		generator.AddHallwaySegment (new HallwaySegment (fillerSize, fillerAdjacent, fillerCenter));
+	}
+
+	private Dictionary<Vector2, GridPosition> FillerAdjacence(params Vector2[] fill){
+		Dictionary<Vector2, GridPosition> fillerAdjacent = new Dictionary<Vector2, GridPosition>();
+		foreach (Vector2 dir in fill) {
+			fillerAdjacent.Add (dir, new GridPosition (-1, -1));
+		}
+		return fillerAdjacent;
 	}
 
 	//Edges will have squared size
@@ -200,7 +242,7 @@ public class HallwaySegment{
 	}
 
 	private void OffsetVertexIndices(int index){
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < triangles.Length; i++) {
 			for (int j = 0; j < triangles[i].Count; j++) {
 				triangles[i][j] += index;
 			}
@@ -218,7 +260,7 @@ public class HallwaySegment{
 			Vector2 uv = new Vector2 ();
 			uv.x = vertices [i].x * tangent.x + vertices [i].y * tangent.y + vertices [i].z * tangent.z;
 			uv.y = vertices [i].x * biTangent.x + vertices [i].y * biTangent.y + vertices [i].z * biTangent.z;
-			uv *= 1f;
+			uv *= hallwayTiling;
 			faceUVs.Add (uv);
 		}
 
@@ -227,7 +269,7 @@ public class HallwaySegment{
 
 	private void BuildVertexList(Vector3[] _vertices){
 		vertices = new List<Vector3> ();
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < triangles.Length; i++) {
 			for (int j = 0; j < triangles [i].Count; j += 3) {
 				vertices.Add (_vertices [triangles [i] [j]]);
 				vertices.Add (_vertices [triangles [i] [j + 1]]);
@@ -241,7 +283,7 @@ public class HallwaySegment{
 
 	private void CalculateUVs(){
 		uvs = new List<Vector2> ();
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < triangles.Length; i++) {
 			for (int j = 0; j < triangles [i].Count; j += 3) {
 				uvs.AddRange (FaceUVs (
 					vertices [triangles [i] [j]], 
@@ -253,15 +295,16 @@ public class HallwaySegment{
 	}
 
 	private void CalculateTriangles(){
-		triangles = new List<int>[2];
+		triangles = new List<int>[3];
 		triangles[0] = new List<int> ();
 		triangles[0].AddRange (new int[] { 5, 0, 1, 1, 4, 5 });
-		triangles[0].AddRange (new int[] { 7, 2, 3, 3, 6, 7 });
-
 		triangles[1] = new List<int> ();
+		triangles[1].AddRange (new int[] { 7, 2, 3, 3, 6, 7 });
+
+		triangles[2] = new List<int> ();
 		foreach (KeyValuePair<Vector2, int[]> tris in directionTrianglesMapping) {
 			if (!adjacent.ContainsKey (tris.Key) || adjacent [tris.Key] == null) {
-				triangles [1].AddRange (tris.Value);
+				triangles [2].AddRange (tris.Value);
 			}
 		}
 	}
@@ -299,6 +342,24 @@ public class HallwaySegment{
 			return center.GetHashCode ();
 		}
 	}
+
+	public static float HallwayTiling {
+		get {
+			return hallwayTiling;
+		}
+		set {
+			hallwayTiling = value;
+		}
+	}
+
+	public static float DoorSize {
+		get {
+			return doorSize;
+		}
+		set {
+			doorSize = value * .5f;
+		}
+	}
 }
 
 public class HallwayMeshGenerator {
@@ -311,14 +372,18 @@ public class HallwayMeshGenerator {
 	private List<Vector2> uvs;
 	private Mesh mesh;
 
-	public HallwayMeshGenerator(AStarGrid grid){
+	public HallwayMeshGenerator(AStarGrid grid, float hallwayTiling, float doorSize){
+		HallwaySegment.HallwayTiling = hallwayTiling;
+		HallwaySegment.DoorSize = doorSize;
 		this.grid = grid;
 		this.hallwayPaths = new List<List<Square>> ();
 		this.hallwaySegments = new HashSet<HallwaySegment> ();
 		this.vertices = new List<Vector3> ();
-		this.triangles = new List<int>[2];
-		this.triangles [0] = new List<int> ();
-		this.triangles [1] = new List<int> ();
+		this.triangles = new List<int>[3];
+		//Init triangles with empty lists
+		for (int i = 0; i < triangles.Length; i++) {
+			this.triangles [i] = new List<int> ();
+		}
 		this.uvs = new List<Vector2> ();
 	}
 
@@ -332,15 +397,24 @@ public class HallwayMeshGenerator {
 			segment.BuildMesh (currentVertexIndex);
 			vertices.AddRange (segment.Vertices);
 			List<int>[] hwTriangles = segment.Triangles ();
-			currentVertexIndex = Mathf.Max (hwTriangles [0].Max (), hwTriangles [1].Max ()) + 1;
-			triangles[0].AddRange (hwTriangles[0]);
-			triangles[1].AddRange (hwTriangles[1]);
+
+			for(int i = 0; i < triangles.Length; i++){
+				if (hwTriangles [i] != null && hwTriangles[i].Count > 0) {
+					currentVertexIndex = Mathf.Max (hwTriangles [i].Max (), currentVertexIndex);
+				}
+			}
+			currentVertexIndex += 1;
+
+			for(int i = 0; i < triangles.Length; i++){
+				triangles[i].AddRange (hwTriangles[i]);
+			}
 			uvs.AddRange (segment.UVs);
 		}
 		mesh.vertices = vertices.ToArray ();
 		mesh.subMeshCount = triangles.Length;
-		mesh.SetTriangles (triangles [0], 0);
-		mesh.SetTriangles (triangles [1], 1);
+		for(int i = 0; i < triangles.Length; i++){
+			mesh.SetTriangles (triangles [i], i);
+		}
 		mesh.uv = uvs.ToArray();
 		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();

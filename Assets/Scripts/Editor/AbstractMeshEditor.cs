@@ -29,7 +29,7 @@ public class AbstractMeshEditor : Editor{
 
 		EditorGUILayout.Space ();
 
-		abstractMesh.material = EditorGUILayout.ObjectField ("Material", abstractMesh.material, typeof(Material)) as Material;
+		abstractMesh.material = EditorGUILayout.ObjectField ("Material", abstractMesh.material, typeof(Material), false) as Material;
 		abstractMesh.tiling = EditorGUILayout.FloatField ("Tiling", abstractMesh.tiling);
 
 		EditorGUILayout.Space ();

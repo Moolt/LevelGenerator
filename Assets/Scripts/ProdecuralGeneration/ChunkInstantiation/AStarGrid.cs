@@ -4,7 +4,9 @@ using UnityEngine;
 using System.Linq;
 
 public class GridPosition{
+	private static AStarGrid grid;
 	private Dictionary<Vector2,GridPosition> adjacentPositions; //Only relevant for hallway mesh
+	private bool isPartOfPath;
 	private Vector3 doorDirection; //Only relevant for hallway mesh
 	private Vector2 direction; //hallway mesh
 	private bool isAccessible;
@@ -15,9 +17,11 @@ public class GridPosition{
 	private int doorID;
 	public float x;
 	public float y;
+	public bool visitedByAstar = false;
 
 	public GridPosition (float x, float y){
 		InitAdjacentDict ();
+		isPartOfPath = false;
 		doorDirection = Vector3.zero;
 		direction = Vector2.zero;
 		this.x = x;
@@ -143,6 +147,24 @@ public class GridPosition{
 			return  doorID > -1;
 		}
 	}
+
+	public bool IsPartOfPath {
+		get {
+			return this.isPartOfPath;
+		}
+		set {
+			isPartOfPath = value;
+		}
+	}
+
+	public static AStarGrid Grid {
+		get {
+			return grid;
+		}
+		set {
+			grid = value;
+		}
+	}
 }
 
 public class AStarGrid {
@@ -153,10 +175,16 @@ public class AStarGrid {
 	private List<Rect> roomRects;
 	private float padding;
 	private float gridCellSize;
+	private float spacing;
+	private float doorSize;
 
-	public AStarGrid(List<Rect> roomRects, List<RoomTransformation> rooms, float padding){
-		this.padding = 4.88f;
-		this.gridCellSize = padding / 3f;
+	public AStarGrid(List<Rect> roomRects, List<RoomTransformation> rooms, float spacing, float doorSize){
+		GridPosition.Grid = this;
+		this.spacing = spacing;
+		this.doorSize = doorSize;
+		this.padding = doorSize / 2f;
+		this.gridCellSize = spacing / 3f;
+		this.gridCellSize = Mathf.Clamp (gridCellSize, 1f, 100f);
 		this.roomRects = roomRects;
 		this.rooms = rooms;
 		CalculateSpace();
@@ -188,15 +216,25 @@ public class AStarGrid {
 					visitedPositions.Push (gridElement);
 					//Inaccessable and not inside of a room
 					bool isOutsideLevel = !gridElement.IsAccessible && gridElement.RoomID == -1;
-					bool isInOtherRoom = !gridElement.IsAccessible && gridElement.RoomID != gridRoomID;
-					bool hasBeenShifted = gridElement.HasBeenShiftedDir (interval [2]);
-					shiftFinished |= isOutsideLevel || isInOtherRoom || hasBeenShifted;
+					bool isInOtherRoom = !gridElement.IsAccessible && gridElement.RoomID != gridRoomID && gridElement.RoomID != -1;
+					bool isOtherDoor = gridElement.IsDoor && gridElement.RoomID != gridRoomID;
+					//bool hasBeenShifted = gridElement.HasBeenShiftedDir (interval [2]);
+					shiftFinished |=  /*|| hasBeenShifted*/ isOtherDoor || isInOtherRoom || isOutsideLevel;
 
-					if (isInOtherRoom) {
-						visitedPositions.Pop ().UnmarkShifted (interval [2]);
-						int elementsToUnmark = visitedPositions.Count - 1;
+					if (isOtherDoor) {
+						Vector2 endPos = gridElement.Position;
+						Vector2 startPos = grid[x,y].Position;
+						Vector2 mean = (endPos + startPos) * .5f;
+
+						//visitedPositions.Pop ().UnmarkShifted (interval [2]);
+						//visitedPositions.Pop();
+						int elementsToUnmark = visitedPositions.Count;
 						for (int j = 0; j < elementsToUnmark; j++) {
-							visitedPositions.Pop ().UnmarkShifted (interval [2]);
+							GridPosition shiftedPosition = visitedPositions.Pop ();
+							if (!shiftedPosition.IsDoor) {
+								shiftedPosition.Shift (mean, interval [2]);
+							}
+							//visitedPositions.Pop ().UnmarkShifted (interval [2]);
 						}
 					}
 
@@ -240,40 +278,47 @@ public class AStarGrid {
 	}
 
 	private void SortOut(){
-		InflateBy (padding * 0.5f);
+		Rect[] inflatedRoomRects = InflateBy (gridCellSize);
+		Rect[] invertedRoomRects = InflateByRoomDistance ();
+		InflateBy (gridCellSize);
 
+		//Remove GridPosition if it is within a room
 		for (int i = 0; i < grid.GetLength (0); i++) {
 			for (int j = 0; j < grid.GetLength (1); j++) {
 				GridPosition pos = grid [i, j];
+				grid [i, j].IsAccessible = !IsFree (invertedRoomRects, pos.Position);
 				if (pos.IsAccessible) {
-					grid [i, j].RoomID = CollidesWithRoom (pos.Position);
+					grid [i, j].RoomID = CollidesWithRoom (inflatedRoomRects, pos.Position);
 				}
 			}
 		}
-
-		InflateBy (padding * 2f);
-
-		for (int i = 0; i < grid.GetLength (0); i++) {
-			for (int j = 0; j < grid.GetLength (1); j++) {
-				GridPosition pos = grid [i, j];
-				if (pos.IsAccessible) {
-					grid [i, j].IsAccessible = !IsFree (pos.Position);
-				}
-			}
-		}
-
-		InflateBy (padding * -2.5f);
 	}
 
-	private void InflateBy(float val){
-		for(int i = 0; i < roomRects.Count; i++) {
-			Rect r = roomRects [i];
-			r.yMin -= val;
-			r.xMin -= val;
-			r.xMax += val;
-			r.yMax += val;
-			roomRects [i] = r;
+	private Rect InflateBy(Rect original, float val){
+		Rect inflated = original;
+		inflated.yMin -= val;
+		inflated.xMin -= val;
+		inflated.xMax += val;
+		inflated.yMax += val;
+		return inflated;
+	}
+
+	private Rect[] InflateBy(float val){
+		List<Rect> inflatedRects = new List<Rect> ();
+		for(int i = 0; i < roomRects.Count; i++) {			
+			Rect r = InflateBy (rooms [i].Rect, val);
+			inflatedRects.Add (r);
 		}
+		return inflatedRects.ToArray ();
+	}
+
+	private Rect[] InflateByRoomDistance(){
+		List<Rect> inflatedRects = new List<Rect> ();
+		for(int i = 0; i < roomRects.Count; i++) {			
+			Rect r = InflateBy (rooms [i].Rect, rooms[i].FurthestDistance / 2f);
+			inflatedRects.Add (r);
+		}
+		return inflatedRects.ToArray ();
 	}
 
 	private void BuildGrid(){		
@@ -290,6 +335,8 @@ public class AStarGrid {
 		}
 	}
 
+	//Calculates a rectangle that contains all rooms
+	//Used to build and optimize the grid
 	private void CalculateSpace(){
 		availableSpace = new Rect (Vector2.zero, Vector2.zero);
 
@@ -300,15 +347,17 @@ public class AStarGrid {
 			availableSpace.yMax = Mathf.Max (availableSpace.yMax, room.yMax);
 		}
 
-		availableSpace.yMin -= padding * 2f;
-		availableSpace.xMin -= padding * 2f;
-		availableSpace.xMax += padding * 2f;
-		availableSpace.yMax += padding * 2f;
+		availableSpace.yMin -= doorSize * 2f;
+		availableSpace.xMin -= doorSize * 2f;
+		availableSpace.xMax += doorSize * 2f;
+		availableSpace.yMax += doorSize * 2f;
 	}
 
-	private int CollidesWithRoom(Vector2 position){
+	//Returns true, if the position is within a room rect
+	//Returns a room id
+	private int CollidesWithRoom(Rect[] rects, Vector2 position){
 		int id = 0;
-		foreach (Rect rect in roomRects) {
+		foreach (Rect rect in rects) {
 			id++;
 			if (rect.Contains (position)) {
 				return id;
@@ -317,8 +366,9 @@ public class AStarGrid {
 		return 0;
 	}
 
-	private bool IsFree(Vector2 position){
-		return CollidesWithRoom (position) == 0;
+	//Returns true, if the given position is not colliding with any of the given rects
+	private bool IsFree(Rect[] rects, Vector2 position){
+		return CollidesWithRoom (rects, position) == 0;
 	}
 
 	public GridPosition[,] Grid {
@@ -327,6 +377,8 @@ public class AStarGrid {
 		}
 	}
 
+	//Returns a new instance of a Square (AStar Grid Element) at the given Vector2 position
+	//Used for getting the squares for the start and end door, of which at first only the positions are known
 	public Square SquareAtCoordinate(Vector2 position){
 		int[] pos = new int[2];
 		pos[0] = (int)Mathf.Round((position.x - availableSpace.xMin) / gridCellSize);
@@ -335,6 +387,7 @@ public class AStarGrid {
 		return square;
 	}
 
+	//Returns a new Square instance from a grid position
 	public Square GetSquareInGrid(int i, int j){
 		//Return null, if the index is out of bounds or the element is set to be unaccessable
 		if (i < 0 || i > grid.GetLength (0) - 1 || j < 0 || j > grid.GetLength (1) - 1) {
@@ -343,13 +396,21 @@ public class AStarGrid {
 		if (!grid [i, j].IsAccessible) {
 			return null;
 		}
+		grid [i, j].visitedByAstar = true;
 		return new Square (grid [i, j].Position, new int[]{ i, j });
 	}
 
+	//Removes the Y-Coordinate from a Vec3 and returns the resulting Vec2
 	private Vector2 ClipY(Vector3 vec){
 		return new Vector2(vec.x, vec.z);
 	}
 
+	public void MarkPositionAsUsed(Square square){
+		grid [square.GridX, square.GridY].IsPartOfPath = true;
+	}
+
+	//Add adjacent relations between Square one and two
+	//Used in the HallwayMeshGenerator to decide wheter to draw walls or not
 	public void AddAdjacentRelation(Square one, Square two){
 		GridPosition onePos = grid [one.GridX, one.GridY];
 		GridPosition twoPos = grid [two.GridX, two.GridY];
@@ -357,6 +418,7 @@ public class AStarGrid {
 		twoPos.AddAdjacent (AdjacentDirection(two, one), onePos);
 	}
 
+	//Returns the direction of Square two as seen from Square one in the grid as a Vec2
 	private Vector2 AdjacentDirection(Square one, Square two){
 		if (one.GridY < two.GridY) {
 			return Vector2.up;

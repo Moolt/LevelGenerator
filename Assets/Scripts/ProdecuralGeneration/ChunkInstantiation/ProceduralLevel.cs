@@ -5,7 +5,7 @@ using System.Linq;
 
 public class RoomTransformation{
 	protected List<DoorDefinition> availableDoors;
-
+	private List<RoomTransformation> connections;
 	private List<DoorDefinition> doors;
 	private float inflation = 0f;
 	private Vector3 chunkSize;
@@ -21,6 +21,7 @@ public class RoomTransformation{
 		InflateRectBy (inflation);
 		this.doors = ObtainDoors ();
 		this.availableDoors = ObtainDoors ();
+		this.connections = new List<RoomTransformation> ();
 	}
 
 	private Rect CalculateRect(){
@@ -103,10 +104,28 @@ public class RoomTransformation{
 			return this.doors;
 		}
 	}
+
+	//Is neccessary to calculate the furthest distance (see below)
+	//Will store a reference to a connecting room and vice versa
+	public void AddConnection(RoomTransformation otherChunk){
+		if (!connections.Contains (otherChunk) && otherChunk != null) {
+			connections.Add (otherChunk);
+			otherChunk.AddConnection (this);
+		}
+	}
+
+	//Calculates the furthest distance between any rooms connected to this one
+	//Used by the AStarGrid to optimize the grid the AStar Algorithm works on
+	public float FurthestDistance{
+		get{
+			RoomTransformation furthest = connections.OrderByDescending (c => Vector2.Distance (c.rect.center, rect.center)).FirstOrDefault ();
+			return Vector2.Distance (furthest.rect.center, rect.center);
+		}
+	}
 }
 
 public class ProceduralLevel{
-	private DebugData debugData;
+	private DebugData debugData; //Meta data created during the process. Used to display in editor
 	private RoomNode rootnode; //Rootnode of the level graph
 	private ChunkHelper helper; //Helps searching Chunks
 	private ChunkInstantiator chunkInstantiator;
@@ -117,20 +136,25 @@ public class ProceduralLevel{
 	private float distance; //Distance used in the FreeTree algorithm
 	private bool isSeparate; //Separate rooms, avoid overlapping
 	private int doorSize;
+	private Material[] hallwayMaterials;
+	private float hallwayTiling;
 
-	public ProceduralLevel(string path, LevelGraph graph, bool separateRooms, float distance, bool isSeparate, float spacing, int doorSize){
+	public ProceduralLevel(string path, LevelGraph graph, LevelGeneratorPreset preset){
+		this.hallwayTiling = preset.HallwayTiling;
+		this.distance = preset.RoomDistance;
 		this.rootnode = graph.Rootnode;
+		this.spacing = preset.Spacing;
+		this.isSeparate = preset.IsSeparateRooms;
+		this.doorSize = preset.DoorSize;
+		this.hallwayMaterials = preset.HallwayMaterials;
 		this.helper = new ChunkHelper (path);
-		this.distance = distance;
-		this.spacing = spacing;
-		this.isSeparate = isSeparate;
-		this.positionMeta = new List<RoomTransformation>();
-		this.hallwayMeta = new List<HallwayMeta> ();
-		this.doorSize = doorSize;
 		this.debugData = new DebugData ();
-		chunkInstantiator = ChunkInstantiator.Instance;
+		this.chunkInstantiator = ChunkInstantiator.Instance;
+		this.hallwayMeta = new List<HallwayMeta> ();
+		this.positionMeta = new List<RoomTransformation>();
 
 		GenerateLevel (graph);
+		RemoveDelayedAbstractProperties ();
 		ApplyTransformation();
 		CreateHallways ();
 	}
@@ -154,6 +178,7 @@ public class ProceduralLevel{
 		//Obtain the actual position, the chunk will have later on
 		Vector3 chunkSize = ChunkSize (chunk);
 		RoomTransformation roomTransform = new RoomTransformation (chunk, node.Position, chunkSize, spacing);
+		roomTransform.AddConnection (prevChunk);
 		positionMeta.Add(roomTransform);
 
 		if (prevChunk != null) {
@@ -187,6 +212,16 @@ public class ProceduralLevel{
 		return candidates [Random.Range (0, candidates.Count)];
 	}
 
+	//There may be delayed abstract properties on the object that need to be removed
+	//Usually, AbstractProperties are removed during chunk instantiation, but the DoorManager e.g.
+	//Is needed for Hallway creation and is therefore deleted by this function
+	private void RemoveDelayedAbstractProperties(){
+		foreach (RoomTransformation transformation in positionMeta) {
+			List<AbstractProperty> aps = transformation.Chunk.GetComponents<AbstractProperty> ().ToList();
+			aps.ForEach (ap => GameObject.DestroyImmediate (ap));
+		}
+	}
+
 	//Applies the Room positions to the instances.
 	private void ApplyTransformation(){
 		foreach (RoomTransformation transformation in positionMeta) {
@@ -201,8 +236,8 @@ public class ProceduralLevel{
 
 	private void CreateHallways(){
 		List<Rect> roomRects = GetDeflatedRoomRects ();
-		AStarGrid grid = new AStarGrid (roomRects, positionMeta, spacing);
-		HallwayMeshGenerator meshGenerator = new HallwayMeshGenerator (grid);
+		AStarGrid grid = new AStarGrid (roomRects, positionMeta, spacing, doorSize);
+		HallwayMeshGenerator meshGenerator = new HallwayMeshGenerator (grid, hallwayTiling, doorSize);
 		debugData.Grid = grid.Grid;
 
 		foreach (HallwayMeta hw in hallwayMeta) {
@@ -217,10 +252,7 @@ public class ProceduralLevel{
 		MeshFilter meshFilter = hallways.AddComponent<MeshFilter> ();
 		meshFilter.sharedMesh = mesh;
 		MeshRenderer meshRenderer = hallways.AddComponent<MeshRenderer> ();
-		Material[] materials = new Material[2];
-		materials [0] = Resources.Load ("OrangeGrid", typeof(Material)) as Material;
-		materials [1] = Resources.Load ("OrangeGrid", typeof(Material)) as Material;
-		meshRenderer.sharedMaterials = materials;
+		meshRenderer.sharedMaterials = hallwayMaterials;
 		hallways.AddComponent<MeshCollider> ();
 	}
 

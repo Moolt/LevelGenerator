@@ -26,21 +26,32 @@ public class Square{
 		return new Rect (center - Vector2.one * (size * .5f), Vector2.one * size);
 	}
 
-	private void UpdateDirection(Square newParent){
+	private Vector2 DetermineDirection(Square newParent){
 		int thisX = gridPos [0];
 		int thisY = gridPos [1];
 
 		if (newParent.GridX == thisX) {
-			direction = thisY > newParent.GridY ? Vector2.up : Vector2.down;
+			return thisY > newParent.GridY ? Vector2.down : Vector2.up;
 		} else {
-			direction = thisX > newParent.GridX ? Vector2.right: Vector2.left;
+			return thisX > newParent.GridX ? Vector2.left: Vector2.right;
 		}
+	}
+
+	public float TurningPenalty(Square _parent){
+		if (_parent != null) {
+			Vector2 testDirection = DetermineDirection (_parent);
+			return _parent.direction == testDirection ? 0f : 1f;
+		}
+		return 0f;
+	}
+
+	public float TurningPenalty(){
+		return TurningPenalty (parent);
 	}
 
 	public float Score{
 		get{
-			float stayStraightBonus = parent.Direction == direction ? 30f : 0f;
-			return estimatedMovementCost + currentMovementCost;
+			return estimatedMovementCost + currentMovementCost + TurningPenalty (parent);
 		}
 	}
 
@@ -85,7 +96,7 @@ public class Square{
 			return this.parent;
 		}
 		set {
-			UpdateDirection (value);
+			direction = DetermineDirection (value);
 			parent = value;
 		}
 	}
@@ -137,7 +148,6 @@ public class HallwayAStar{
 	private List<Square> openList;
 	private List<Square> closedList;
 	private List<Square> finalPath;
-	private Rect availableSpace;
 	private AStarGrid grid;
 
 	public HallwayAStar (List<Rect> rooms, DoorDefinition start, DoorDefinition end, AStarGrid grid, int doorSize){
@@ -154,7 +164,6 @@ public class HallwayAStar{
 	}
 
 	public List<Square> BuildPath(){
-		ComputeAvailableSpace ();
 		Square originalSquare = ComputeStartSquare ();
 		Square endSquare = ComputeEndSquare (originalSquare);
 		InsertInOpenSteps (originalSquare);
@@ -191,10 +200,15 @@ public class HallwayAStar{
 					adjSquare.EstimatedMovementCost = ComputeHScore(adjSquare, endSquare);
 					InsertInOpenSteps(adjSquare);
 				} else {
+					//Read the existing square from the list, don't use the one from the foreach loop
+					//Equality is determinded by position. Here we want the old square with all it's other data
 					Square existingSquare = openList[openList.IndexOf(adjSquare)];
+					float potentialCost = current.CurrentMovementCost + existingSquare.MovementCost + existingSquare.TurningPenalty(current);
+					float currentCost = existingSquare.CurrentMovementCost + existingSquare.TurningPenalty();
 
-					if(current.CurrentMovementCost + existingSquare.MovementCost < existingSquare.CurrentMovementCost){
+					if(potentialCost < currentCost){
 						existingSquare.CurrentMovementCost = current.CurrentMovementCost + existingSquare.MovementCost;
+						existingSquare.Parent = current;
 						openList = openList.OrderBy(s => s.Score).ToList(); //Score changed, resort list
 					}
 				}
@@ -207,7 +221,9 @@ public class HallwayAStar{
 	//Update the grid to contain all adjacent positions. This information will be used to create the hallway mesh
 	private void UpdateGrid(){
 		for(int i = 0; i < finalPath.Count; i++){
+			grid.MarkPositionAsUsed (finalPath [i]);	
 			grid.UpdateDirection (finalPath [i]);
+
 			if (i < finalPath.Count - 1) {
 				grid.AddAdjacentRelation (finalPath [i], finalPath [i + 1]);
 			}
@@ -235,15 +251,6 @@ public class HallwayAStar{
 		return squares.Where (s => s != null).ToList();
 	}
 
-	private bool IsWalkable(Square square){
-		foreach (Rect room in rooms) {
-			if (square.Rect.Overlaps (room, true)) {
-				return false;
-			}
-		}
-		return availableSpace.Contains(square.Rect.center);
-	}
-
 	private Vector2 ClipY(Vector3 vec){
 		return new Vector2 (vec.x, vec.z);
 	}
@@ -261,23 +268,6 @@ public class HallwayAStar{
 	//The position of the end door will always be a bit off.
 	private bool SquarePositionEquals(Square a, Square b){
 		return Vector2.Distance (a.Position, b.Position) < padding; //a.Equals(b);
-	}
-
-	//An area that spans from start to end door (with a margin) in order to constraint the algorithms space
-	private void ComputeAvailableSpace(){
-		float x = Mathf.Min (startDoor.Position.x, endDoor.Position.x);
-		float y = Mathf.Min (startDoor.Position.z, endDoor.Position.z);
-		float width = Mathf.Max (startDoor.Position.x, endDoor.Position.x) - x;
-		float height = Mathf.Max (startDoor.Position.z, endDoor.Position.z) - y;
-		availableSpace = new Rect (x, y, width, height);
-		availableSpace.yMin -= padding * 2;
-		availableSpace.yMax += padding * 2;
-		availableSpace.xMin -= padding * 2;
-		availableSpace.xMax += padding * 2;
-	}
-
-	public Rect AvailableSpace{
-		get { return availableSpace; }
 	}
 
 	private void RoundByVal(ref Vector2 vec, float val){

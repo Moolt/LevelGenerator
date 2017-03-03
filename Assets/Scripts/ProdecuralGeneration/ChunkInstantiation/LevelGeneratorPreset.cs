@@ -18,17 +18,23 @@ public class LevelGeneratorPreset{
 	private int seed = 0;
 	private bool isSeparateRooms = true;
 	private int doorSize;
+	private string[] hallwayMaterialPaths;
+	private Material[] hallwayMaterials;
+	private float hallwayTiling;
 
 	public void Reset(){
-		roomCount = 2;
-		critPathLength = 2;
-		maxDoors = 3;
-		distribution = 1f;
-		roomDistance = 1.5f;
-		spacing = 4f;
-		seed = 0;
+		hallwayMaterials = new Material[3];
+		hallwayMaterialPaths = new string[] { "null", "null", "null" };
 		isSeparateRooms = false;
+		roomDistance = 1.5f;
+		hallwayTiling = 1f;
+		critPathLength = 2;
+		distribution = 1f;
+		roomCount = 2;
+		maxDoors = 3;
+		spacing = 4f;
 		doorSize = 1;
+		seed = 0;
 	}
 
 	public int RoomCount {
@@ -103,12 +109,68 @@ public class LevelGeneratorPreset{
 		}
 	}
 
+	//Static value, might change in future versions
 	public int DoorSize {
 		get {
-			return this.doorSize;
+			return 2;
 		}
 		set {
-			doorSize = value;
+			//doorSize = value;
+		}
+	}
+
+	public string[] HallwayMaterialPaths {
+		get {
+			return this.hallwayMaterialPaths;
+		}
+		set {
+			hallwayMaterialPaths = value;
+		}
+	}
+
+	[XmlIgnore]
+	public Material[] HallwayMaterials {
+		get {
+			UpdateMatPaths ();
+			return this.hallwayMaterials;
+		}
+		set {
+			hallwayMaterials = value;
+			UpdateMatPaths ();
+		}
+	}
+
+	public float HallwayTiling {
+		get {
+			return this.hallwayTiling;
+		}
+		set {
+			hallwayTiling = value;
+		}
+	}
+
+	private void UpdateMatPaths(){
+		string[] separator = { "Resources/" };
+		for(int i = 0; i < hallwayMaterials.Length; i++){
+			hallwayMaterialPaths [i] = "null";
+			string path = AssetDatabase.GetAssetPath (hallwayMaterials [i]);
+			if (path.Contains ("Resources/")) {
+				path = path.Split (separator, System.StringSplitOptions.None) [1];
+				string filename = Path.GetFileNameWithoutExtension (path);
+				string relPath = Path.GetDirectoryName(path);
+				string sep = relPath.Length > 0 ? "\\" : "";
+				path = relPath + sep + filename;
+				hallwayMaterialPaths [i] = path;
+			}
+		}
+	}
+
+	public void LoadMaterials(){
+		hallwayMaterials = new Material[3];
+		for (int i = 0; i < hallwayMaterials.Length; i++) {
+			if (hallwayMaterialPaths [i] != "null") {
+				hallwayMaterials [i] = Resources.Load (hallwayMaterialPaths [i]) as Material;
+			}
 		}
 	}
 }

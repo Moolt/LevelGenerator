@@ -35,10 +35,10 @@ public class AbstractBoundsEditor : Editor {
 				ConditionalVectorField ("Size", ref abstractBounds.minSize);
 			}
 
-			if (abstractBounds.IsChunk) {
+			/*if (abstractBounds.IsChunk) {
 				abstractBounds.minSize = RoundVector (abstractBounds.minSize);
 				abstractBounds.maxSize = RoundVector (abstractBounds.maxSize);
-			}
+			}*/
 
 			EditorGUILayout.Space ();
 
@@ -94,7 +94,7 @@ public class AbstractBoundsEditor : Editor {
 		EditorGUILayout.EndHorizontal ();
 	}
 
-	private Vector3 RoundVector(Vector3 vec){
+	/*private Vector3 RoundVector(Vector3 vec){
 		return new Vector3 (Mathf.Round (vec.x), Mathf.Round (vec.y), Mathf.Round (vec.z));
-	}
+	}*/
 }

@@ -104,10 +104,9 @@ public class DebugGizmo : MonoBehaviour {
 				for (int i = 0; i < debugData.Grid.GetLength (0); i++) {
 					for (int j = 0; j < debugData.Grid.GetLength (1); j++) {
 						Gizmos.color = Color.white;
-						//Gizmos.color = debugData.Grid [i, j].IsAccessible ? Color.white : Color.red;
-
 						Gizmos.color = debugData.Grid [i, j].MarkedOnce ? Color.cyan : Gizmos.color;
 						Gizmos.color = debugData.Grid [i, j].DoorID > -1 ? Color.blue : Gizmos.color;
+						Gizmos.color = debugData.Grid [i, j].visitedByAstar ? Color.magenta: Gizmos.color;
 
 						if (debugData.Grid [i, j].IsAccessible) {
 							Gizmos.DrawSphere (new Vector3 (debugData.Grid [i, j].x, 0f, debugData.Grid [i, j].y), 0.4f);
