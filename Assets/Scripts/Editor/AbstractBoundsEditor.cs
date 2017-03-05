@@ -84,10 +84,13 @@ public class AbstractBoundsEditor : Editor {
 		EditorGUIUtility.labelWidth = 15;
 		GUI.enabled = lockedAxis.x != 1f;
 		tmpSize.x = EditorGUILayout.FloatField ("X", tmpSize.x);
+		tmpSize.x = GUI.enabled ? Mathf.Max (tmpSize.x, 0f) : tmpSize.x;
 		GUI.enabled = lockedAxis.y != 1f;
 		tmpSize.y = EditorGUILayout.FloatField ("Y", tmpSize.y);
+		tmpSize.y = GUI.enabled ? Mathf.Max (tmpSize.y, 0f) : tmpSize.y;
 		GUI.enabled = lockedAxis.z != 1f;
 		tmpSize.z = EditorGUILayout.FloatField ("Z", tmpSize.z);
+		tmpSize.z = GUI.enabled ? Mathf.Max (tmpSize.z, 0f) : tmpSize.z;
 		GUI.enabled = true;
 		EditorGUIUtility.labelWidth = prevLabelWidth;
 		value = tmpSize;

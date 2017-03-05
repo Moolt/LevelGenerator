@@ -122,6 +122,17 @@ abstract public class DoorProperty : AbstractProperty{
 }
 
 [DisallowMultipleComponent]
+abstract public class TagProperty : AbstractProperty{
+	public override float ExecutionOrder{
+		get { return 0; }
+	}
+
+	public override RemovalTime RemovalTime{
+		get { return RemovalTime.MANUAL; }
+	}
+}
+
+[DisallowMultipleComponent]
 abstract public class MeshProperty : AbstractProperty{
 	public override float ExecutionOrder{
 		get { return 4; }

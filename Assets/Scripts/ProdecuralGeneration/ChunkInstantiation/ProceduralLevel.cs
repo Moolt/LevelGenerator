@@ -241,7 +241,7 @@ public class ProceduralLevel{
 		debugData.Grid = grid.Grid;
 
 		foreach (HallwayMeta hw in hallwayMeta) {
-			HallwayAStar routing = new HallwayAStar (roomRects, hw.StartDoor, hw.EndDoor, grid, doorSize);
+			HallwayAStar routing = new HallwayAStar (hw.StartDoor, hw.EndDoor, grid);
 			List<Square> path = routing.BuildPath ();
 			debugData.AddPath (path);
 			meshGenerator.AddPath (path);

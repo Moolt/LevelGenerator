@@ -12,7 +12,7 @@ public enum OffsetType { ABSOLUTE, RELATIVE, RELATIVEUNIFORM }
 //Used by ScatteredArray
 public enum AreaType{ SPHERICAL, RECT, ABSTRACTBOUNDS }
 //Used by ChunkInstantiator
-public enum ProcessType{ GENERATE, PREVIEW }
+public enum ProcessType{ GENERATE, INEDITOR, PREVIEW }
 //Used by AbstractProperty
 public enum RemovalTime{ INSTANTLY, DELAYED, MANUAL }
 //public enum SquareDirection { HORIZONTAL, VERTICAL }

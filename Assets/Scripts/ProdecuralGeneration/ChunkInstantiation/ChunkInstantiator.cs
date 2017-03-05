@@ -7,6 +7,7 @@ public class ChunkInstantiator : ScriptableObject{
 
 	//There may  still be dependencies to transforming objects. Therefore they are destroyed last.
 	private ICollection<AbstractProperty> delayedRemovalCollection;
+	private static ICollection<AbstractProperty> manualRemovalCollection;
 	private Stack<GameObject> workStack;
 	//Differentiate between in editor preview and actual generation
 	private ProcessType processType;
@@ -33,7 +34,7 @@ public class ChunkInstantiator : ScriptableObject{
 			PushChildrenToStack (currentObj);
 		};
 
-		if (processType == ProcessType.GENERATE) {
+		if (processType == ProcessType.GENERATE || processType == ProcessType.INEDITOR) {
 			CleanUp (); //Don't remove properties on preview
 		}
 	}
@@ -78,7 +79,7 @@ public class ChunkInstantiator : ScriptableObject{
 
 		foreach (AbstractProperty property in properties) {
 			if(!property.IsDirty){
-				if (processType == ProcessType.GENERATE) {
+				if (processType == ProcessType.GENERATE || processType == ProcessType.INEDITOR) {
 					property.Generate ();
 					HandleGeneratedObjects (property); //Add generated objs to work stack, if there are any
 					HandlePropertyRemoval (property); //Remove component after execution
@@ -104,12 +105,21 @@ public class ChunkInstantiator : ScriptableObject{
 	//As there may be dependencies, the removal of several properties can be delayed until the end of the generation process
 	private void HandlePropertyRemoval(AbstractProperty property){
 		if (property.RemovalTime == RemovalTime.DELAYED ||
-			property.RemovalTime == RemovalTime.MANUAL && processType == ProcessType.PREVIEW) {
+		    (property.RemovalTime == RemovalTime.MANUAL && processType == ProcessType.INEDITOR)) {
 			property.IsDirty = true; //Set dirty to avoid another execution
 			delayedRemovalCollection.Add (property);
+		} else if (property.RemovalTime == RemovalTime.MANUAL && processType == ProcessType.GENERATE) {			
+			AddManualProperty (property);
 		} else if (property.RemovalTime == RemovalTime.INSTANTLY) {
 			DestroyImmediate (property);
 		}
+	}
+
+	private void AddManualProperty(AbstractProperty property){
+		if (manualRemovalCollection == null) {
+			manualRemovalCollection = new List<AbstractProperty> ();
+		}
+		manualRemovalCollection.Add (property);
 	}
 
 	//Sorts the Properties regarding to priority
@@ -140,5 +150,9 @@ public class ChunkInstantiator : ScriptableObject{
 			}
 			return instance;
 		}
+	}
+
+	public static void RemoveManualProperties(){
+		manualRemovalCollection.Clear ();
 	}
 }

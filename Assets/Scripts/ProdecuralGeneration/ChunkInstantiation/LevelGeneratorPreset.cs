@@ -17,7 +17,6 @@ public class LevelGeneratorPreset{
 	private float spacing;
 	private int seed = 0;
 	private bool isSeparateRooms = true;
-	private int doorSize;
 	private string[] hallwayMaterialPaths;
 	private Material[] hallwayMaterials;
 	private float hallwayTiling;
@@ -33,7 +32,6 @@ public class LevelGeneratorPreset{
 		roomCount = 2;
 		maxDoors = 3;
 		spacing = 4f;
-		doorSize = 1;
 		seed = 0;
 	}
 
@@ -113,9 +111,6 @@ public class LevelGeneratorPreset{
 	public int DoorSize {
 		get {
 			return 2;
-		}
-		set {
-			//doorSize = value;
 		}
 	}
 

@@ -18,6 +18,7 @@ public class ScatteredArray : MultiplyingProperty {
 
 	private MeshFilter meshFilter;
 	private int iterationsUntilOverflow = 150; //Max. amount of iteration until process stops
+	private int calculatedCount; //for tagging only
 
 	public override void DrawEditorGizmos(){
 		Vector3[] positions = CalculatePositions ();
@@ -37,6 +38,7 @@ public class ScatteredArray : MultiplyingProperty {
 	}
 		
 	protected override Vector3[] CalculatePositions(){
+		calculatedCount = 0;
 		ICollection<Vector3> positions = new List<Vector3> ();
 		float meshSize = (MeshFound()) ? PreviewMesh.sharedMesh.bounds.extents.magnitude : 1f;
 		Vector3 meshBounds = (MeshFound()) ? PreviewMesh.sharedMesh.bounds.size : new Vector3(1f, 1f, 1f);
@@ -85,6 +87,8 @@ public class ScatteredArray : MultiplyingProperty {
 			if (!autoFill && producedPositions > duplicateCount + 1) {
 				done = true;
 			}
+
+			calculatedCount++;
 		}
 		return positions.ToArray();
 	}
@@ -147,5 +151,11 @@ public class ScatteredArray : MultiplyingProperty {
 			}
 		}
 		return false;
+	}
+
+	public int CalculatedCount {
+		get {
+			return this.calculatedCount;
+		}
 	}
 }

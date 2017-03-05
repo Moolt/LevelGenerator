@@ -83,7 +83,7 @@ public class LevelGeneratorWindow : EditorWindow {
 		showProceduralLevel = EditorGUILayout.Foldout (showProceduralLevel, "Level Properties");
 		if (showProceduralLevel) {
 			//preset.DoorSize = EditorGUILayout.IntField ("Global door size", preset.DoorSize);
-			preset.DoorSize = (int)Mathf.Floor (Mathf.Clamp (preset.DoorSize, 2f, preset.Spacing / 2f));
+			//preset.DoorSize = (int)Mathf.Floor (Mathf.Clamp (preset.DoorSize, 2f, preset.Spacing / 2f));
 			preset.RoomDistance = EditorGUILayout.FloatField ("Global distance", preset.RoomDistance);
 			preset.RoomDistance = Mathf.Max (1.5f, preset.RoomDistance);
 

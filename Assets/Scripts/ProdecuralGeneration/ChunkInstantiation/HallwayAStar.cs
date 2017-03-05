@@ -81,10 +81,6 @@ public class Square{
 		set{ this.rect = InitRectByCenter (value); }
 	}
 
-	public static float Size{
-		set{ size = value; }
-	}
-
 	public Rect Rect {
 		get {
 			return this.rect;
@@ -140,27 +136,20 @@ public class Square{
 
 public class HallwayAStar{
 
-	private List<Rect> rooms;
 	private DoorDefinition startDoor;
 	private DoorDefinition endDoor;
-	private int doorSize;
-	private float padding;
 	private List<Square> openList;
 	private List<Square> closedList;
 	private List<Square> finalPath;
 	private AStarGrid grid;
 
-	public HallwayAStar (List<Rect> rooms, DoorDefinition start, DoorDefinition end, AStarGrid grid, int doorSize){
-		this.rooms = rooms;
+	public HallwayAStar (DoorDefinition start, DoorDefinition end, AStarGrid grid){
 		this.startDoor = start;
 		this.endDoor = end;
 		this.openList = new List<Square> ();
 		this.closedList = new List<Square> ();
 		this.finalPath = new List<Square> ();
-		this.doorSize = doorSize;
-		this.padding = doorSize * .5f;
 		this.grid = grid;
-		Square.Size = padding;
 	}
 
 	public List<Square> BuildPath(){
@@ -267,7 +256,7 @@ public class HallwayAStar{
 	//This A* works on a grid defined by the startPosition and padding. Since the room's positions don't align to this grid,
 	//The position of the end door will always be a bit off.
 	private bool SquarePositionEquals(Square a, Square b){
-		return Vector2.Distance (a.Position, b.Position) < padding; //a.Equals(b);
+		return Vector2.Distance (a.Position, b.Position) < 0.1f;
 	}
 
 	private void RoundByVal(ref Vector2 vec, float val){
