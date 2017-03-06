@@ -22,7 +22,17 @@ public static class FuzzyTagDictionary{
 	public static TagInstance FindTag(string descriptor, float value){
 		List<string> tags = Mapping [descriptor];
 		int index = (int)Mathf.Round ((tags.Count - 1) * value);
-		return new TagInstance (descriptor, TagType.GENERATED, tags [index]);
+		return new TagInstance (descriptor, TagType.GENERATED, tags [index], value);
+	}
+
+	public static string[] Descriptors{
+		get{
+			return Mapping.Select (x => x.Key).ToArray();
+		}
+	}
+
+	public static string FindAttribute(int index, float value){
+		return FindTag (Descriptors [index], value).Name;
 	}
 }
 
@@ -31,11 +41,13 @@ public struct TagInstance{
 	public string Descriptor;
 	public TagType Type;
 	public string Name;
+	public float Value;
 
-	public TagInstance (string descriptor, TagType type, string name){
+	public TagInstance (string descriptor, TagType type, string name, float value){
 		this.Descriptor = descriptor;
 		this.Type = type;
 		this.Name = name;
+		this.Value = value;
 	}
 }
 
@@ -207,7 +219,7 @@ public class ChunkTags : TagProperty {
 	}
 
 	public override void Generate(){
-		UpdateTags ();
+		//UpdateTags ();
 	}
 
 	public void UpdateTags(){

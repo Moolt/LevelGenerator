@@ -139,7 +139,7 @@ public class ProceduralLevel{
 	private Material[] hallwayMaterials;
 	private float hallwayTiling;
 
-	public ProceduralLevel(string path, LevelGraph graph, LevelGeneratorPreset preset){
+	public ProceduralLevel(LevelGraph graph, LevelGeneratorPreset preset){
 		this.hallwayTiling = preset.HallwayTiling;
 		this.distance = preset.RoomDistance;
 		this.rootnode = graph.Rootnode;
@@ -147,7 +147,7 @@ public class ProceduralLevel{
 		this.isSeparate = preset.IsSeparateRooms;
 		this.doorSize = preset.DoorSize;
 		this.hallwayMaterials = preset.HallwayMaterials;
-		this.helper = new ChunkHelper (path);
+		this.helper = new ChunkHelper ();
 		this.debugData = new DebugData ();
 		this.chunkInstantiator = ChunkInstantiator.Instance;
 		this.hallwayMeta = new List<HallwayMeta> ();

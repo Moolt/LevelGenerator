@@ -30,17 +30,17 @@ public class ChunkManagerWindow : EditorWindow {
 
 		EditorGUILayout.BeginHorizontal ();
 
-		if (GUILayout.Button ("New")) {
+		if (GUILayout.Button ("New", EditorStyles.miniButtonLeft)) {
 			CreateNewChunk ();
 		}
 
 		GUI.enabled = OriginalChunk != null;
-		if (GUILayout.Button ("Save")) {
+		if (GUILayout.Button ("Save", EditorStyles.miniButtonMid)) {
 			SaveChunk ();
 		}
 		GUI.enabled = true;
 
-		if (GUILayout.Button ("Load")) {
+		if (GUILayout.Button ("Load", EditorStyles.miniButtonRight)) {
 			LoadChunk ();
 		}
 			
@@ -62,11 +62,11 @@ public class ChunkManagerWindow : EditorWindow {
 
 		EditorGUILayout.BeginHorizontal ();
 		GUI.enabled = OriginalChunk != null;
-		if (GUILayout.Button ("Preview Chunk")) {
+		if (GUILayout.Button ("Preview Chunk", EditorStyles.miniButtonLeft)) {
 			InstantiateChunk (DateTime.Now.Millisecond);
 		}
 
-		if (GUILayout.Button ("Restore")) {
+		if (GUILayout.Button ("Restore", EditorStyles.miniButtonRight)) {
 			Restore ();
 		}
 		EditorGUILayout.EndHorizontal ();

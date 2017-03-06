@@ -7,6 +7,16 @@ using System.Xml.Serialization;
 using System.IO;
 using System.Text;
 
+public struct TagMenuData{
+	public Constraint constraint;
+	public string Tag;
+
+	public TagMenuData (Constraint constraint, string tag){
+		this.constraint = constraint;
+		this.Tag = tag;
+	}
+}
+
 public class LevelGeneratorWindow : EditorWindow {
 	private LevelGraph levelGraph;
 	//Preset Properties
@@ -22,8 +32,10 @@ public class LevelGeneratorWindow : EditorWindow {
 	private bool showLevelGraph = true;
 	private bool showDebugGUI = false;
 	private bool showHallwayGUI = false;
+	private bool showConstraintGUI = false;
 	private bool isAutoUpdate = false;
-	private string chunkPath = "Chunks";
+	//Constraints
+	private Vector2 scrollVector = Vector2.zero;
 	//Debugging
 	private DebugInfo debugInfo;
 	private DebugData debugData;
@@ -51,25 +63,28 @@ public class LevelGeneratorWindow : EditorWindow {
 		EditorGUILayout.Space ();
 
 		EditorGUILayout.BeginHorizontal ();
-		if(GUILayout.Button ("Save")){
+		if(GUILayout.Button ("Save", EditorStyles.miniButtonLeft)){
 			SavePreset (false);
 		}
-		if(GUILayout.Button ("Load")){
+		if(GUILayout.Button ("Load", EditorStyles.miniButtonMid)){
 			LoadPreset ();
 		}
-		if(GUILayout.Button ("Save as...")){
+		if(GUILayout.Button ("Save as...", EditorStyles.miniButtonMid)){
 			SavePreset (true);
 		}
-		if(GUILayout.Button ("Reset")){
+		if(GUILayout.Button ("Reset", EditorStyles.miniButtonRight)){
 			ResetValues ();
 		}
 		EditorGUILayout.EndHorizontal();
 		string presetLabelText = isExternPreset ? presetPath + presetName : "Unsaved";
 		EditorGUILayout.LabelField ("Preset: " + presetLabelText);
 
+		scrollVector = EditorGUILayout.BeginScrollView(scrollVector, GUILayout.Height(400));
+		#region LevelGraphProperties
 		EditorGUILayout.Space ();
 		showLevelGraph = EditorGUILayout.Foldout (showLevelGraph, "Level Graph Properties");
 		if (showLevelGraph) {
+			EditorGUI.indentLevel += 1;
 			preset.RoomCount = EditorGUILayout.IntField ("Room Count", preset.RoomCount);
 			preset.RoomCount = Mathf.Clamp (preset.RoomCount, 2, 100);
 			preset.CritPathLength = EditorGUILayout.IntField ("Critical Path", preset.CritPathLength);
@@ -77,26 +92,33 @@ public class LevelGeneratorWindow : EditorWindow {
 			preset.MaxDoors = EditorGUILayout.IntField ("Max. Doors", preset.MaxDoors);
 			preset.MaxDoors = Mathf.Clamp (preset.MaxDoors, 3, 10);
 			preset.Distribution = EditorGUILayout.Slider ("Distribution", preset.Distribution, 0.05f, 1f);
+			EditorGUI.indentLevel -= 1;
 			EditorGUILayout.Space ();
 		}
-			
+		#endregion
+
+		#region LevelProperties
 		showProceduralLevel = EditorGUILayout.Foldout (showProceduralLevel, "Level Properties");
 		if (showProceduralLevel) {
+			EditorGUI.indentLevel += 1;
 			//preset.DoorSize = EditorGUILayout.IntField ("Global door size", preset.DoorSize);
 			//preset.DoorSize = (int)Mathf.Floor (Mathf.Clamp (preset.DoorSize, 2f, preset.Spacing / 2f));
 			preset.RoomDistance = EditorGUILayout.FloatField ("Global distance", preset.RoomDistance);
 			preset.RoomDistance = Mathf.Max (1.5f, preset.RoomDistance);
 
-			EditorGUILayout.Space ();
 			if (preset.IsSeparateRooms) {
 				preset.Spacing = EditorGUILayout.FloatField ("Minimal margin", preset.Spacing);
 				preset.Spacing = Mathf.Clamp (preset.Spacing, preset.DoorSize * 2f, preset.DoorSize * 4f);
 			}
+			EditorGUI.indentLevel -= 1;
 			EditorGUILayout.Space ();
 		}
+		#endregion
 
+		#region HallwayProperties
 		showHallwayGUI = EditorGUILayout.Foldout (showHallwayGUI, "Hallway");
 		if (showHallwayGUI) {
+			EditorGUI.indentLevel += 1;
 			preset.HallwayTiling = EditorGUILayout.FloatField ("Texture tiling:", preset.HallwayTiling);
 			preset.HallwayTiling = Mathf.Clamp (preset.HallwayTiling, 0.01f, 10f);
 			EditorGUILayout.Space ();
@@ -104,9 +126,76 @@ public class LevelGeneratorWindow : EditorWindow {
 			preset.HallwayMaterials [0] = EditorGUILayout.ObjectField ("Ceil", preset.HallwayMaterials [0], typeof(Material), false) as Material;
 			preset.HallwayMaterials [1] = EditorGUILayout.ObjectField ("Floor", preset.HallwayMaterials [1], typeof(Material), false) as Material;
 			preset.HallwayMaterials [2] = EditorGUILayout.ObjectField ("Walls", preset.HallwayMaterials [2], typeof(Material), false) as Material;
+			EditorGUI.indentLevel -= 1;
 			EditorGUILayout.Space ();
 		}
+		#endregion
 
+		#region Constraints
+		showConstraintGUI = EditorGUILayout.Foldout (showConstraintGUI, "Constraints");
+		if (showConstraintGUI) {
+			List<Constraint> constraints = preset.Constraints;
+			List<Constraint> toDelete = new List<Constraint>();
+
+			Separator();
+			EditorGUILayout.Space();
+			for (int i = 0; i < constraints.Count; i++) {				
+				Constraint constraint = constraints[i];
+				constraint.Type = (ConstraintType)EditorGUILayout.EnumPopup("Type", constraint.Type);
+				constraint.Target = (ConstraintTarget)EditorGUILayout.EnumPopup("Target", constraint.Target);
+
+				if(constraint.Type == ConstraintType.FuzzyProperties){
+					constraint.AutoTagIndex = EditorGUILayout.Popup("Tag", constraint.AutoTagIndex, FuzzyTagDictionary.Descriptors);
+					EditorGUILayout.MinMaxSlider(ref constraint.Min, ref constraint.Max, 0f, 1f);
+					EditorGUILayout.BeginHorizontal();
+					EditorGUILayout.LabelField(FuzzyTagDictionary.FindAttribute(constraint.AutoTagIndex, constraint.Min));
+					EditorGUILayout.LabelField(FuzzyTagDictionary.FindAttribute(constraint.AutoTagIndex, constraint.Max), GUILayout.Width(80));
+					EditorGUILayout.EndHorizontal();
+				} else{
+					EditorGUILayout.BeginHorizontal();
+					constraint.RawTags = EditorGUILayout.TextField("User Tags", constraint.RawTags);
+					GUI.SetNextControlName("PlusButton");
+					if (GUILayout.Button ("+", GUILayout.Width(20))) {
+						GUI.FocusControl("PlusButton");
+						int selectedTag = 0;
+						List<string> userTags = new List<string>();
+						string[] allUserTags = ChunkHelper.GlobalUserTags;
+						//Filtering all tags that are already used
+						allUserTags.ToList()
+							.Where(s => !constraint.ParsedTags.Contains(s)).ToList()
+							.ForEach(s => userTags.Add(s));
+
+						TagContextMenu(userTags, constraint);
+						//selectedTag = EditorGUILayout.GetControlRect(selectedTag, userTags);
+						//constraint.RawTags += ";" + userTags[selectedTag];
+					}
+					EditorGUILayout.EndHorizontal();
+					EditorGUILayout.LabelField(" ", "(Separated by semicolons)");
+				}
+
+				if (GUILayout.Button ("Remove", EditorStyles.miniButton)) {
+					toDelete.Add(constraints[i]);
+				}
+				//EditorGUILayout.EndHorizontal();
+				EditorGUILayout.Space();
+				Separator();
+				EditorGUILayout.Space();
+			}
+
+			toDelete.ForEach(c => constraints.Remove(c));
+
+			EditorGUILayout.BeginHorizontal();
+			if (GUILayout.Button ("Add Constraint", EditorStyles.miniButtonLeft)) {
+				constraints.Add(new Constraint());
+			}
+			if (GUILayout.Button ("Display User Tags", EditorStyles.miniButtonRight)) {
+				constraints.Add(new Constraint());
+			}
+			EditorGUILayout.EndHorizontal();
+
+			EditorGUILayout.Space();
+		}
+		#endregion
 		ManageDebugObject ();
 		showDebugGUI = EditorGUILayout.Foldout (showDebugGUI, "Debug");
 		if (showDebugGUI) {
@@ -121,6 +210,7 @@ public class LevelGeneratorWindow : EditorWindow {
 		preset.Seed = EditorGUILayout.IntField ("Seed", preset.Seed);
 		isAutoUpdate = EditorGUILayout.Toggle ("Auto Update", isAutoUpdate);
 
+		EditorGUILayout.EndScrollView();
 		EditorGUILayout.Space ();
 
 		EditorGUILayout.BeginHorizontal ();
@@ -166,7 +256,7 @@ public class LevelGeneratorWindow : EditorWindow {
 		Random.InitState (preset.Seed);
 		levelGraph = new LevelGraph ();
 		levelGraph.GenerateGraph (preset.RoomCount, preset.CritPathLength, preset.MaxDoors, preset.Distribution);
-		ProceduralLevel level = new ProceduralLevel (chunkPath, levelGraph, preset);
+		ProceduralLevel level = new ProceduralLevel (levelGraph, preset);
 		SetDebugData (level.DebugData);
 		//generatedObjects = level.GeneratedRooms;
 	}
@@ -193,6 +283,10 @@ public class LevelGeneratorWindow : EditorWindow {
 		if (preset != null) {
 			preset.Reset ();
 		}
+	}
+
+	private void Separator(){
+		GUILayout.Box("", GUILayout.ExpandWidth(true), GUILayout.Height(1));
 	}
 
 	private void SavePreset(bool isShowDialog){
@@ -235,5 +329,20 @@ public class LevelGeneratorWindow : EditorWindow {
 				}
 			}
 		}
+	}
+
+	private void TagContextMenu(List<string> items, Constraint constraint){
+		GenericMenu contextMenu = new GenericMenu();
+		foreach (string s in items) {
+			contextMenu.AddItem (new GUIContent (s), false, TagMenuCallback, new TagMenuData(constraint, s));
+		}
+		contextMenu.ShowAsContext();
+	}
+
+	public void TagMenuCallback(object o){
+		TagMenuData data = (TagMenuData)o;
+		data.constraint.RawTags += data.constraint.RawTags.Length == 0 ? "" : ";";
+		data.constraint.RawTags += data.Tag;
+		Repaint ();
 	}
 }

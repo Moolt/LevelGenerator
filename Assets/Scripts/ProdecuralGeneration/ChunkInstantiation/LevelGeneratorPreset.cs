@@ -20,11 +20,14 @@ public class LevelGeneratorPreset{
 	private string[] hallwayMaterialPaths;
 	private Material[] hallwayMaterials;
 	private float hallwayTiling;
+	//Constraints
+	private List<Constraint> constraints;
 
 	public void Reset(){
+		constraints = new List<Constraint> ();
 		hallwayMaterials = new Material[3];
 		hallwayMaterialPaths = new string[] { "null", "null", "null" };
-		isSeparateRooms = false;
+		isSeparateRooms = true;
 		roomDistance = 1.5f;
 		hallwayTiling = 1f;
 		critPathLength = 2;
@@ -144,7 +147,22 @@ public class LevelGeneratorPreset{
 		}
 	}
 
+	public List<Constraint> Constraints {
+		get {
+			if (constraints == null) {
+				constraints = new List<Constraint> ();
+			}
+			return this.constraints;
+		}
+		set {
+			constraints = value;
+		}
+	}
+
 	private void UpdateMatPaths(){
+		if (hallwayMaterials == null) {
+			hallwayMaterials = new Material[3];
+		}
 		string[] separator = { "Resources/" };
 		for(int i = 0; i < hallwayMaterials.Length; i++){
 			hallwayMaterialPaths [i] = "null";
