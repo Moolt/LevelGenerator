@@ -14,7 +14,6 @@ public class ChunkInstantiator : ScriptableObject{
 	private static ChunkInstantiator instance;
 
 	private ChunkInstantiator(){
-
 	}
 
 	//1. Depth first search, traversing through the Object tree

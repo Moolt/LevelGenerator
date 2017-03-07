@@ -32,13 +32,14 @@ public class LevelGraph{
 	}
 
 	private void CreateCriticalPath(){
-		RoomNode prevNode = new RoomNode (true);
+		RoomNode prevNode = new RoomNode (true, NodeType.START);
 		rootnode = prevNode;
 		rootnodes.Add (rootnode);
 		nodesCreated++;
 
 		for (int i = 1; i < critPathLength; i++) {
-			RoomNode newNode = new RoomNode (true);
+			NodeType nodeType = i == critPathLength - 1 ? NodeType.END : NodeType.MIDDLE;
+			RoomNode newNode = new RoomNode (true, nodeType);
 			prevNode.AddConnection (newNode);
 			rootnodes.Add (newNode);
 			prevNode = newNode;
@@ -105,7 +106,7 @@ public class LevelGraph{
 		int supplyPerNode = (remainingSupply > 0) ? (int)Mathf.Ceil (remainingSupply / (float)roomsCreated) : 0;
 		//Create new graph nodes, recursively call this function again with the remainingSupply
 		for (int i = 0; i < roomsCreated; i++) {
-			RoomNode newNode = new RoomNode (false);
+			RoomNode newNode = new RoomNode (false, NodeType.SIDE);
 			node.AddConnection (newNode);
 			int newNodeSupply = (supplyPerNode > remainingSupply) ? Mathf.Max(0, remainingSupply) : supplyPerNode;
 			CreateSideRooms (newNode, newNodeSupply);

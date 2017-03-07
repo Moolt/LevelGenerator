@@ -125,6 +125,7 @@ public class RoomTransformation{
 }
 
 public class ProceduralLevel{
+	private static bool isGenerating = false;
 	private DebugData debugData; //Meta data created during the process. Used to display in editor
 	private RoomNode rootnode; //Rootnode of the level graph
 	private ChunkHelper helper; //Helps searching Chunks
@@ -140,6 +141,7 @@ public class ProceduralLevel{
 	private float hallwayTiling;
 
 	public ProceduralLevel(LevelGraph graph, LevelGeneratorPreset preset){
+		isGenerating = true;
 		this.hallwayTiling = preset.HallwayTiling;
 		this.distance = preset.RoomDistance;
 		this.rootnode = graph.Rootnode;
@@ -147,7 +149,7 @@ public class ProceduralLevel{
 		this.isSeparate = preset.IsSeparateRooms;
 		this.doorSize = preset.DoorSize;
 		this.hallwayMaterials = preset.HallwayMaterials;
-		this.helper = new ChunkHelper ();
+		this.helper = new ChunkHelper (preset);
 		this.debugData = new DebugData ();
 		this.chunkInstantiator = ChunkInstantiator.Instance;
 		this.hallwayMeta = new List<HallwayMeta> ();
@@ -157,6 +159,7 @@ public class ProceduralLevel{
 		RemoveDelayedAbstractProperties ();
 		ApplyTransformation();
 		CreateHallways ();
+		isGenerating = false;
 	}
 
 	//Creates a visual representation of the level graph using a free tree algorithm
@@ -198,7 +201,7 @@ public class ProceduralLevel{
 
 	//Instantiates a Chunk at a certain Position. The node is used to determinde the amount of doors needed.
 	private GameObject InstantiateChunk(RoomNode node, Vector3 position){
-		GameObject randomChunk = PickRandomChunk (helper.FindChunks (node.DoorCount));
+		GameObject randomChunk = PickRandomChunk (helper.FindChunks (node));
 		randomChunk.transform.position = position;
 		randomChunk = GameObject.Instantiate (randomChunk); //Instantiate Unity Object
 		chunkInstantiator.ProcessType = ProcessType.GENERATE;
@@ -309,6 +312,12 @@ public class ProceduralLevel{
 	public DebugData DebugData {
 		get {
 			return this.debugData;
+		}
+	}
+
+	public static bool IsGenerating {
+		get {
+			return isGenerating;
 		}
 	}
 }

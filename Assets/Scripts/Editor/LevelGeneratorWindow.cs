@@ -104,7 +104,7 @@ public class LevelGeneratorWindow : EditorWindow {
 			//preset.DoorSize = EditorGUILayout.IntField ("Global door size", preset.DoorSize);
 			//preset.DoorSize = (int)Mathf.Floor (Mathf.Clamp (preset.DoorSize, 2f, preset.Spacing / 2f));
 			preset.RoomDistance = EditorGUILayout.FloatField ("Global distance", preset.RoomDistance);
-			preset.RoomDistance = Mathf.Max (1.5f, preset.RoomDistance);
+			preset.RoomDistance = Mathf.Clamp (preset.RoomDistance, 1.5f, 10f);
 
 			if (preset.IsSeparateRooms) {
 				preset.Spacing = EditorGUILayout.FloatField ("Minimal margin", preset.Spacing);
@@ -141,8 +141,40 @@ public class LevelGeneratorWindow : EditorWindow {
 			EditorGUILayout.Space();
 			for (int i = 0; i < constraints.Count; i++) {				
 				Constraint constraint = constraints[i];
-				constraint.Type = (ConstraintType)EditorGUILayout.EnumPopup("Type", constraint.Type);
 				constraint.Target = (ConstraintTarget)EditorGUILayout.EnumPopup("Target", constraint.Target);
+				constraint.Type = (ConstraintType)EditorGUILayout.EnumPopup("Type", constraint.Type);
+
+				if(constraint.Target == ConstraintTarget.AllRooms ||
+					constraint.Target == ConstraintTarget.MiddleRooms ||
+					constraint.Target == ConstraintTarget.SideRooms){
+					constraint.Amount = (ConstraintAmount)EditorGUILayout.EnumPopup("Rooms", constraint.Amount);
+
+					if(constraint.Amount != ConstraintAmount.All && constraint.Amount != ConstraintAmount.None){
+						EditorGUILayout.BeginHorizontal();
+						if(constraint.AmountType == ConstraintAmountType.Absolute){
+							constraint.AbsolutAmount = EditorGUILayout.IntField("Amount (absolute)", constraint.AbsolutAmount);
+							int maxVal = 0;
+
+							switch(constraint.Target){
+								case ConstraintTarget.AllRooms: maxVal = preset.RoomCount; break;
+								case ConstraintTarget.SideRooms: maxVal = preset.RoomCount - preset.CritPathLength; break;
+								case ConstraintTarget.MiddleRooms: maxVal = preset.CritPathLength; break;
+							}
+							constraint.AbsolutAmount = Mathf.Clamp(constraint.AbsolutAmount, 0, maxVal);
+						} else{
+							constraint.RelativeAmount = EditorGUILayout.FloatField("Amount (relative)", constraint.RelativeAmount);
+							constraint.RelativeAmount = Mathf.Clamp(constraint.RelativeAmount, 0f, 1f);
+						}
+						if (GUILayout.Button ("↷", GUILayout.Width(20))) {
+							if(constraint.AmountType == ConstraintAmountType.Absolute){
+								constraint.AmountType = ConstraintAmountType.Percentual;
+							} else {
+								constraint.AmountType = ConstraintAmountType.Absolute;
+							}
+						}
+						EditorGUILayout.EndHorizontal();
+					}
+				}
 
 				if(constraint.Type == ConstraintType.FuzzyProperties){
 					constraint.AutoTagIndex = EditorGUILayout.Popup("Tag", constraint.AutoTagIndex, FuzzyTagDictionary.Descriptors);
@@ -185,10 +217,7 @@ public class LevelGeneratorWindow : EditorWindow {
 			toDelete.ForEach(c => constraints.Remove(c));
 
 			EditorGUILayout.BeginHorizontal();
-			if (GUILayout.Button ("Add Constraint", EditorStyles.miniButtonLeft)) {
-				constraints.Add(new Constraint());
-			}
-			if (GUILayout.Button ("Display User Tags", EditorStyles.miniButtonRight)) {
+			if (GUILayout.Button ("Add Constraint", EditorStyles.miniButton)) {
 				constraints.Add(new Constraint());
 			}
 			EditorGUILayout.EndHorizontal();

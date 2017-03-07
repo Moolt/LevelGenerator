@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
+public enum NodeType{ START, END, MIDDLE, SIDE }
+
 public class RoomNode{
 	protected List<RoomNode> connections;
 	protected bool isCriticalPath;
@@ -14,12 +16,14 @@ public class RoomNode{
 	protected int depth = -1;
 	protected bool marked = false;
 	protected Vector3 position;
+	protected NodeType nodeType;
 	private RoomNode safeState;
 
 	public static int id_ = 0;
 	private int id;
 
-	public RoomNode(bool isCriticalPath){
+	public RoomNode(bool isCriticalPath, NodeType nodeType){
+		this.nodeType = nodeType;
 		connections = new List<RoomNode> ();
 		this.isCriticalPath = isCriticalPath;
 		id = id_++;
@@ -31,13 +35,14 @@ public class RoomNode{
 		dest.doorCount = source.doorCount;
 		dest.parent = source.parent;
 		dest.childrenCount = source.childrenCount;
+		dest.nodeType = source.nodeType;
 		//dest.depth = source.depth;
 		//dest.marked = source.marked;
 		//Dont restore position
 	}
 
 	public void Save(){
-		safeState = new RoomNode (true);
+		safeState = new RoomNode (true, NodeType.MIDDLE);
 		CopyValues (this, safeState);
 	}
 
@@ -153,6 +158,12 @@ public class RoomNode{
 		}
 		set {
 			position = value;
+		}
+	}
+
+	public NodeType NodeType {
+		get {
+			return this.nodeType;
 		}
 	}
 }

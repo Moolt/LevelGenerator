@@ -25,18 +25,30 @@ public class DoorManager : DoorProperty {
 	public override void Generate(){
 		UpdateDoors ();
 		if (fixedAmount == -1) {
-			ChooseRandomDoors ();
+			ChooseRandomDoors (minCount, maxCount);
 		} else {
-			ChooseRandomDoors ();
+			ChooseRandomDoors (fixedAmount, fixedAmount);
 		}
 		fixedAmount = -1;
 	}
 
-	private void ChooseRandomDoors(){
+	private void ChooseFixedAmount(int amount){
+		randomDoors.Clear ();
+		List<DoorDefinition> allDoors = new List<DoorDefinition> (doors);
+
+		for (int i = 0; i < amount; i++) {
+			int randomIndex = (int)Mathf.Round ((allDoors.Count - 1) * Random.value);
+			DoorDefinition randomDoor = allDoors [randomIndex];
+			randomDoors.Add (randomDoor);
+			allDoors.Remove (randomDoor);
+		}
+	}
+
+	private void ChooseRandomDoors(int min, int max){
 		randomDoors.Clear ();
 		List<DoorDefinition> allDoors = new List<DoorDefinition> ();
 		allDoors.AddRange (doors);
-		int quantity = (int)(Mathf.Round (Random.value * (maxCount - minCount)) + minCount);
+		int quantity = (int)(Mathf.Round (Random.value * (max - min)) + min);
 		quantity = Mathf.Min (quantity, doors.Count);
 
 		for (int i = 0; i < quantity; i++) {
@@ -66,7 +78,7 @@ public class DoorManager : DoorProperty {
 	public List<DoorDefinition> RandomDoors{
 		get{
 			areDoorsDirty = false;
-			if (Application.isEditor && SceneUpdater.IsActive) {
+			if (Application.isEditor && SceneUpdater.IsActive && !ProceduralLevel.IsGenerating) {
 				return previewDoors ? doors : new List<DoorDefinition> (0);
 			}
 			return randomDoors;
