@@ -49,6 +49,24 @@ public struct TagInstance{
 		this.Name = name;
 		this.Value = value;
 	}
+
+	public override bool Equals (object obj){
+		if (obj == null)
+			return false;
+		if (ReferenceEquals (this, obj))
+			return true;
+		if (obj.GetType () != typeof(TagInstance))
+			return false;
+		TagInstance other = (TagInstance)obj;
+		return Name == other.Name;
+	}
+	
+
+	public override int GetHashCode (){
+		unchecked {
+			return (Name != null ? Name.GetHashCode () : 0);
+		}
+	}	
 }
 
 public class LightingTag : DynamicTag{
@@ -130,7 +148,6 @@ public class RoomTypeTag : DynamicTag{
 		int doorCount = doorManager.doors.Count;
 		float minValue = 1f;
 		float maxValue = 4f;
-		float height = bounds.Size.y;
 		return Mathf.InverseLerp (minValue, maxValue, doorCount);
 	}
 }

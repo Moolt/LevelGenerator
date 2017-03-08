@@ -79,7 +79,21 @@ public class LevelGeneratorWindow : EditorWindow {
 		string presetLabelText = isExternPreset ? presetPath + presetName : "Unsaved";
 		EditorGUILayout.LabelField ("Preset: " + presetLabelText);
 
-		scrollVector = EditorGUILayout.BeginScrollView(scrollVector, GUILayout.Height(400));
+		EditorGUILayout.Space ();
+		EditorGUILayout.BeginHorizontal ();
+		if (GUILayout.Button ("Generate Level", EditorStyles.miniButtonLeft)) {
+			Generate ();
+		}
+		GUI.enabled = !isAutoUpdate;
+		if (GUILayout.Button ("Clear", EditorStyles.miniButtonRight)) {
+			ClearLevel ();
+		}
+		GUI.enabled = true;
+		EditorGUILayout.EndHorizontal ();
+		EditorGUILayout.Space ();
+		preset.Seed = EditorGUILayout.IntField ("Seed", preset.Seed);
+
+		scrollVector = EditorGUILayout.BeginScrollView(scrollVector, GUILayout.Height(position.height - 100));
 		#region LevelGraphProperties
 		EditorGUILayout.Space ();
 		showLevelGraph = EditorGUILayout.Foldout (showLevelGraph, "Level Graph Properties");
@@ -152,7 +166,7 @@ public class LevelGeneratorWindow : EditorWindow {
 					if(constraint.Amount != ConstraintAmount.All && constraint.Amount != ConstraintAmount.None){
 						EditorGUILayout.BeginHorizontal();
 						if(constraint.AmountType == ConstraintAmountType.Absolute){
-							constraint.AbsolutAmount = EditorGUILayout.IntField("Amount (absolute)", constraint.AbsolutAmount);
+							constraint.AbsoluteAmount = EditorGUILayout.IntField("Amount (absolute)", constraint.AbsoluteAmount);
 							int maxVal = 0;
 
 							switch(constraint.Target){
@@ -160,7 +174,7 @@ public class LevelGeneratorWindow : EditorWindow {
 								case ConstraintTarget.SideRooms: maxVal = preset.RoomCount - preset.CritPathLength; break;
 								case ConstraintTarget.MiddleRooms: maxVal = preset.CritPathLength; break;
 							}
-							constraint.AbsolutAmount = Mathf.Clamp(constraint.AbsolutAmount, 0, maxVal);
+							constraint.AbsoluteAmount = Mathf.Clamp(constraint.AbsoluteAmount, 0, maxVal);
 						} else{
 							constraint.RelativeAmount = EditorGUILayout.FloatField("Amount (relative)", constraint.RelativeAmount);
 							constraint.RelativeAmount = Mathf.Clamp(constraint.RelativeAmount, 0f, 1f);
@@ -185,11 +199,10 @@ public class LevelGeneratorWindow : EditorWindow {
 					EditorGUILayout.EndHorizontal();
 				} else{
 					EditorGUILayout.BeginHorizontal();
-					constraint.RawTags = EditorGUILayout.TextField("User Tags", constraint.RawTags);
+					constraint.RawTags = EditorGUILayout.TextField("Containing tag(s)", constraint.RawTags);
 					GUI.SetNextControlName("PlusButton");
 					if (GUILayout.Button ("+", GUILayout.Width(20))) {
 						GUI.FocusControl("PlusButton");
-						int selectedTag = 0;
 						List<string> userTags = new List<string>();
 						string[] allUserTags = ChunkHelper.GlobalUserTags;
 						//Filtering all tags that are already used
@@ -232,25 +245,15 @@ public class LevelGeneratorWindow : EditorWindow {
 			debugInfo.ShowPaths = EditorGUILayout.Toggle ("Show paths", debugInfo.ShowPaths);
 			debugInfo.ShowConnections = EditorGUILayout.Toggle ("Show connections", debugInfo.ShowConnections);
 			debugInfo.ShowAStarGrid = EditorGUILayout.Toggle ("Path grid", debugInfo.ShowAStarGrid);
+			debugInfo.ShowRoomTypes = EditorGUILayout.Toggle ("Show room types", debugInfo.ShowRoomTypes);
 		}
 
 		EditorGUILayout.Space ();
 
-		preset.Seed = EditorGUILayout.IntField ("Seed", preset.Seed);
 		isAutoUpdate = EditorGUILayout.Toggle ("Auto Update", isAutoUpdate);
 
 		EditorGUILayout.EndScrollView();
-		EditorGUILayout.Space ();
 
-		EditorGUILayout.BeginHorizontal ();
-		if (GUILayout.Button ("Generate Level")) {
-			Generate ();
-		}
-		GUI.enabled = !isAutoUpdate;
-		if (GUILayout.Button ("Clear")) {
-			ClearLevel ();
-		}
-		GUI.enabled = true;
 		if (isAutoUpdate) {
 			int startMillis = System.DateTime.Now.Millisecond;
 			Generate ();
@@ -258,8 +261,6 @@ public class LevelGeneratorWindow : EditorWindow {
 				isAutoUpdate = false;
 			}
 		}
-
-		EditorGUILayout.EndHorizontal ();
 	}
 
 	private void ManageDebugObject(){

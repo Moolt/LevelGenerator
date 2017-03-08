@@ -2,12 +2,27 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct RoomMeta{
+	public GameObject Chunk;
+	public RoomNode Node;
+
+	public RoomMeta (GameObject chunk, RoomNode node){
+		this.Chunk = chunk;
+		this.Node = node;
+	}
+	
+}
+
 public class DebugData{
-	GridPosition[,] grid;
-	List<List<Square>> paths;
+	private GridPosition[,] grid;
+	private List<List<Square>> paths;
+	private List<RoomMeta> roomMeta;
+	private bool aborted;
 
 	public DebugData(){
 		paths = new List<List<Square>> ();
+		roomMeta = new List<RoomMeta> ();
+		aborted = false;
 	}
 
 	public GridPosition[,] Grid {
@@ -33,12 +48,32 @@ public class DebugData{
 			paths.Add (path);
 		}
 	}
+
+	public void AddRoomMeta(GameObject chunk, RoomNode node){
+		roomMeta.Add (new RoomMeta (chunk, node));
+	}
+
+	public List<RoomMeta> RoomMeta {
+		get {
+			return this.roomMeta;
+		}
+	}
+
+	public bool Aborted {
+		get {
+			return this.aborted;
+		}
+		set {
+			aborted = value;
+		}
+	}
 }
 
 public class DebugInfo{
 	private bool showPaths;
 	private bool showConnections;
 	private bool showAStarGrid;
+	private bool showRoomTypes;
 
 	public DebugInfo(){
 		this.showPaths = false;
@@ -47,7 +82,7 @@ public class DebugInfo{
 	}
 
 	public bool IsDebugUsed{
-		get { return showPaths || showConnections || showAStarGrid; }
+		get { return showPaths || showConnections || showAStarGrid || showRoomTypes; }
 	}
 
 	public bool ShowPaths {
@@ -76,6 +111,15 @@ public class DebugInfo{
 			showAStarGrid = value;
 		}
 	}
+
+	public bool ShowRoomTypes {
+		get {
+			return this.showRoomTypes;
+		}
+		set {
+			showRoomTypes = value;
+		}
+	}
 }
 
 
@@ -85,7 +129,7 @@ public class DebugGizmo : MonoBehaviour {
 	public DebugData debugData;
 
 	void OnDrawGizmos(){
-		if (debugInfo != null && debugData != null) {
+		if (debugInfo != null && debugData != null && !debugData.Aborted) {
 			
 			if (debugInfo.ShowPaths && debugData.Paths != null) {
 				foreach (List<Square> subPath in debugData.Paths) {
@@ -114,7 +158,29 @@ public class DebugGizmo : MonoBehaviour {
 					}
 				}
 			}
+
+			if (debugInfo.ShowRoomTypes) {
+				foreach (RoomMeta meta in debugData.RoomMeta) {
+					Gizmos.color = RoomTypeColor (meta.Node.NodeType);
+					Gizmos.DrawSphere (meta.Chunk.transform.position, 1.5f);
+					Gizmos.color = Color.white;
+				}
+			}
 		}
+	}
+
+	private Color RoomTypeColor(NodeType nodeType){
+		switch (nodeType) {
+		case NodeType.END:
+			return Color.red;
+		case NodeType.MIDDLE:
+			return Color.blue;
+		case NodeType.START:
+			return Color.green;
+		case NodeType.SIDE:
+			return Color.yellow;
+		}
+		return Color.black;
 	}
 
 	private Vector3 AddY(Vector2 vec, float y){

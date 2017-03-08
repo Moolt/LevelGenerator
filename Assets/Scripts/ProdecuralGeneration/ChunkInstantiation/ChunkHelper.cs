@@ -3,28 +3,111 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
-public struct ChunkMetadata{
+public class ChunkMetadata{
+	public List<Constraint> matchingConstraints;
 	public GameObject Chunk;
 	public DoorManager DoorManager;
 	public ChunkTags ChunkTags;
-	public int Priority;
+	public float Priority;
+
+	public ChunkMetadata(){
+		matchingConstraints = new List<Constraint> ();
+	}
+
+	public void RegisterAsMatching(Constraint constraint){
+		if (!matchingConstraints.Contains (constraint)) {
+			matchingConstraints.Add (constraint);
+		}
+	}
+
+	public void NotifyConstraints(){
+		matchingConstraints.ForEach (mc => mc.MatchingChunkHasBeendUsed ());
+	}
+
+	public void ClearConstraintDependencies(){
+		matchingConstraints.Clear ();
+	}
+}
+
+public class ChunkHelperProgress{
+	private LevelGeneratorPreset preset;
+	private List<ChunkMetadata> created;
+	private int sideRoomsCreated = 0;
+	private int middleRoomsCreated = 0;
+
+	public ChunkHelperProgress (LevelGeneratorPreset preset){
+		this.created = new List<ChunkMetadata> ();
+		this.preset = preset;
+	}
+
+	public int TotalRoomCount(ConstraintTarget target){		
+		switch (target) {
+		case ConstraintTarget.AllRooms:
+			return preset.RoomCount;
+		case ConstraintTarget.MiddleRooms:
+			return preset.CritPathLength - 2;
+		case ConstraintTarget.SideRooms:
+			return preset.RoomCount - preset.CritPathLength;
+		}
+		return 1;
+	}
+
+	public int InstantiatedRoomCount(ConstraintTarget target){		
+		switch (target) {
+		case ConstraintTarget.AllRooms:
+			return created.Count;
+		case ConstraintTarget.MiddleRooms:
+			return middleRoomsCreated;
+		case ConstraintTarget.SideRooms:
+			return sideRoomsCreated;
+		}
+		return 1;
+	}		
+
+	public void NoteChunkUsed(ChunkMetadata meta, NodeType nodeType){
+		if (meta != null) {
+			meta.NotifyConstraints ();
+			created.Add (meta);
+
+			switch (nodeType) {
+			case NodeType.MIDDLE:
+				middleRoomsCreated++;
+				break;
+			case NodeType.SIDE:
+				sideRoomsCreated++;
+				break;
+			}
+		}
+	}
+
+	public int Remaining(ConstraintTarget target){
+		return TotalRoomCount (target) - InstantiatedRoomCount (target);
+	}
 }
 
 public class ChunkHelper{
 	private static string path = "Chunks";
 	private List<ChunkMetadata> chunkMetaData;
 	private LevelGeneratorPreset preset;
-	private Dictionary<ConstraintTarget, List<NodeType>> targetMapping = new Dictionary<ConstraintTarget, List<NodeType>>{
-		{ ConstraintTarget.AllRooms, new List<NodeType>{NodeType.END, NodeType.MIDDLE, NodeType.SIDE, NodeType.START}},
-		{ ConstraintTarget.EndRoom, new List<NodeType>{NodeType.END, NodeType.MIDDLE}},
-		{ ConstraintTarget.MiddleRooms, new List<NodeType>{NodeType.START, NodeType.MIDDLE, NodeType.END}},
-		{ ConstraintTarget.SideRooms, new List<NodeType>{NodeType.SIDE}},
-		{ ConstraintTarget.StartRoom, new List<NodeType>{NodeType.START, NodeType.MIDDLE}}
+	private ChunkHelperProgress progress;
+	private Dictionary<ConstraintTarget, List<NodeType>> targetMapping = new Dictionary<ConstraintTarget, List<NodeType>> {
+		{ ConstraintTarget.AllRooms, new List<NodeType>{ NodeType.END, NodeType.MIDDLE, NodeType.SIDE, NodeType.START } },
+		{ ConstraintTarget.EndRoom, new List<NodeType>{ NodeType.END} },
+		{ ConstraintTarget.MiddleRooms, new List<NodeType>{ NodeType.MIDDLE} },
+		{ ConstraintTarget.SideRooms, new List<NodeType>{ NodeType.SIDE } },
+		{ ConstraintTarget.StartRoom, new List<NodeType>{ NodeType.START } }
 	};
 
 	public ChunkHelper(LevelGeneratorPreset preset){
+		this.preset = preset;
 		chunkMetaData = new List<ChunkMetadata> ();
 		BuildMetadata (Resources.LoadAll<GameObject> (path));
+		this.progress = new ChunkHelperProgress (preset);
+	}
+
+	public void CleanUp(){
+		//Reset all temporary values in the constraints that are only relevant for instantiation
+		preset.Constraints.ForEach(c => c.ResetConstraint());
 	}
 
 	private void BuildMetadata(GameObject[] chunks){
@@ -35,22 +118,37 @@ public class ChunkHelper{
 				meta.Chunk = chunk;
 				meta.DoorManager = doorManager;
 				meta.ChunkTags = chunk.GetComponent<ChunkTags> ();
-				meta.Priority = 0;
+				meta.Priority = Random.value;
 				chunkMetaData.Add (meta);
 			}
 		}
 	}
 
-	public List<GameObject> FindChunks(RoomNode node){
-		List<GameObject> matchingChunks = FilterByDoorCount (node.DoorCount);
+	private void ResetMetadata(){
+		chunkMetaData.ForEach (cm => cm.Priority = Random.value);
+		chunkMetaData.ForEach (cm => cm.ClearConstraintDependencies());
+	}
+
+	public GameObject PickRandomChunk(RoomNode node){
+		ResetMetadata ();
+		List<ChunkMetadata> candidates = FindChunks (node);
+		candidates = candidates.OrderByDescending (cm => cm.Priority).ToList();
+		ChunkMetadata selectedMeta = candidates.Count > 0 ? candidates [0] : null;
+		GameObject selectedChunk = selectedMeta == null ? null : selectedMeta.Chunk;
+		progress.NoteChunkUsed (selectedMeta, node.NodeType);
+		return selectedChunk;
+	}
+
+	private List<ChunkMetadata> FindChunks(RoomNode node){
+		List<ChunkMetadata> matchingChunks = FilterByDoorCount (node.DoorCount);
 		List<Constraint> applicableConstraints = FindApplicableConstraints (node.NodeType);
 		matchingChunks.RemoveAll (c => !MatchesConstraints (c, applicableConstraints));
 		return matchingChunks;
 	}
 
-	private bool MatchesConstraints(GameObject chunk, List<Constraint> constraints){
+	private bool MatchesConstraints(ChunkMetadata chunkMeta, List<Constraint> constraints){
 		bool isMatching = true;
-		constraints.ForEach (c => isMatching &= c.IsConstraintSatisfied (chunk));
+		constraints.ForEach (c => isMatching &= c.IsConstraintSatisfied (chunkMeta, progress));
 		return isMatching;
 	}
 
@@ -60,10 +158,10 @@ public class ChunkHelper{
 		return applicableConstraints;
 	}
 
-	private List<GameObject> FilterByDoorCount(int doorCount){
+	private List<ChunkMetadata> FilterByDoorCount(int doorCount){
 		return (from meta in chunkMetaData
 		        where meta.DoorManager.minCount <= doorCount && meta.DoorManager.maxCount >= doorCount
-		        select meta.Chunk).ToList ();
+		        select meta).ToList ();
 	}
 
 	private bool IsConstraintTargetMatching(ConstraintTarget cTarget, NodeType nType){

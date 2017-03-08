@@ -12,18 +12,15 @@ public class Square{
 	private static float size;
 	private int[] gridPos;
 	private Vector2 direction;
+	private Vector2 position;
 
-	public Square(Vector2 pos, int[] gridPos){
-		this.rect = InitRectByCenter (pos);
+	public Square(Vector2 position, int[] gridPos){
+		this.position = position;
 		estimatedMovementCost = 0f;
 		currentMovementCost = 0f;
 		parent = null;
 		this.gridPos = gridPos;
 		direction = Vector2.zero;
-	}
-
-	private Rect InitRectByCenter(Vector2 center){
-		return new Rect (center - Vector2.one * (size * .5f), Vector2.one * size);
 	}
 
 	private Vector2 DetermineDirection(Square newParent){
@@ -76,9 +73,13 @@ public class Square{
 		return string.Format ("[Square: Score={0}, Position={1}, CurrentMovementCost={2}, EstimatedMovementCost={3}]", Score, Position, CurrentMovementCost, EstimatedMovementCost);
 	}
 
-	public Vector2 Position{
-		get{ return rect.center; }
-		set{ this.rect = InitRectByCenter (value); }
+	public Vector2 Position {
+		get {
+			return this.position;
+		}
+		set {
+			position = value;
+		}
 	}
 
 	public Rect Rect {

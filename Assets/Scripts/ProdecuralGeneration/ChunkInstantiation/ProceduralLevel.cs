@@ -132,6 +132,7 @@ public class ProceduralLevel{
 	private ChunkInstantiator chunkInstantiator;
 	private int tmpChunkPos = -10000; //Temporary variable used for instantiating chunks at position
 	private List<RoomTransformation> positionMeta;
+	private bool isConstraintError = false; //True, if no chunk could be found
 	private List<HallwayMeta> hallwayMeta;
 	private float spacing; //Space between rooms, used is separation is active
 	private float distance; //Distance used in the FreeTree algorithm
@@ -156,9 +157,14 @@ public class ProceduralLevel{
 		this.positionMeta = new List<RoomTransformation>();
 
 		GenerateLevel (graph);
-		RemoveDelayedAbstractProperties ();
-		ApplyTransformation();
-		CreateHallways ();
+		ChunkInstantiator.RemoveManualProperties ();
+		if (!isConstraintError) {
+			ApplyTransformation ();
+			CreateHallways ();
+		} else {
+			HandleRollback ();
+		}
+		helper.CleanUp ();
 		isGenerating = false;
 	}
 
@@ -177,12 +183,18 @@ public class ProceduralLevel{
 	private void GenerateLevel(RoomNode node, RoomTransformation prevChunk){
 		//Place the Chunk somewhere, where it won't collide with another chunk
 		GameObject chunk = InstantiateChunk (node, new Vector3(tmpChunkPos, -100f, -100f));
+
+		if (isConstraintError) {
+			return;
+		}
+
 		tmpChunkPos += 100;
 		//Obtain the actual position, the chunk will have later on
 		Vector3 chunkSize = ChunkSize (chunk);
 		RoomTransformation roomTransform = new RoomTransformation (chunk, node.Position, chunkSize, spacing);
 		roomTransform.AddConnection (prevChunk);
 		positionMeta.Add(roomTransform);
+		debugData.AddRoomMeta (chunk, node);
 
 		if (prevChunk != null) {
 			HallwayMeta hallway = prevChunk.FindMatchingDoors (roomTransform);
@@ -201,18 +213,23 @@ public class ProceduralLevel{
 
 	//Instantiates a Chunk at a certain Position. The node is used to determinde the amount of doors needed.
 	private GameObject InstantiateChunk(RoomNode node, Vector3 position){
-		GameObject randomChunk = PickRandomChunk (helper.FindChunks (node));
-		randomChunk.transform.position = position;
-		randomChunk = GameObject.Instantiate (randomChunk); //Instantiate Unity Object
-		chunkInstantiator.ProcessType = ProcessType.GENERATE;
-		chunkInstantiator.InstantiateChunk (randomChunk, node.DoorCount); //Instantiate Abstract Object
-		randomChunk.tag = "ChunkInstance";
+		GameObject randomChunk = helper.PickRandomChunk (node);
+		if (randomChunk != null) {
+			randomChunk.transform.position = position;
+			randomChunk = GameObject.Instantiate (randomChunk); //Instantiate Unity Object
+			chunkInstantiator.ProcessType = ProcessType.GENERATE;
+			chunkInstantiator.InstantiateChunk (randomChunk, node.DoorCount); //Instantiate Abstract Object
+			randomChunk.tag = "ChunkInstance";
+		} else {
+			isConstraintError = true;
+		}
 		return randomChunk;
 	}
 
-	//Determindes chunk candidates using the door amount specified. A random chunk is then picked and returned.
-	private GameObject PickRandomChunk(List<GameObject> candidates){
-		return candidates [Random.Range (0, candidates.Count)];
+	private void HandleRollback(){
+		positionMeta.ForEach (pm => GameObject.DestroyImmediate (pm.Chunk));
+		debugData.Aborted = true;
+		Debug.LogWarning ("No chunk could be found that satisfy all of your constraints.");
 	}
 
 	//There may be delayed abstract properties on the object that need to be removed

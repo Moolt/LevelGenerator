@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using System.Linq;
 using UnityEditor;
+using System.IO;
 using System;
 
 public class ChunkManagerWindow : EditorWindow {
@@ -130,7 +131,7 @@ public class ChunkManagerWindow : EditorWindow {
 		Restore ();
 		ShowSaveFirstDialog ();
 		DestroyImmediate (OriginalChunk, true);
-		UnityEngine.Object newChunkPrefab = Resources.Load ("NewChunk");
+		UnityEngine.Object newChunkPrefab = Resources.Load (chunkFolderName + "/NewChunk");
 		if (newChunkPrefab != null) {
 			OriginalChunk = (GameObject)GameObject.Instantiate (newChunkPrefab);
 			SceneUpdater.UpdateScene ();
@@ -163,8 +164,13 @@ public class ChunkManagerWindow : EditorWindow {
 		if (dialogPath.Length > 0) {
 			//Since the dialog outputs the complete path, which Resources.Load doesn't work with, a relative path is used
 			//Resources.Load only works with files inside the Resources folder. The path therefore only has to contain the folder the chunks
-			//Are stored in
-			string filePath = chunkFolderName + "/" + System.IO.Path.GetFileNameWithoutExtension (dialogPath);
+			//Are stored in+
+			string parentFolder = Path.GetDirectoryName(dialogPath).Split(new string[]{"Resources"}, StringSplitOptions.None)[1];
+			string filePath = parentFolder + "/" + System.IO.Path.GetFileNameWithoutExtension (dialogPath);
+			if (filePath.StartsWith ("/")) {
+				filePath = filePath.Remove (0, 1);
+			}
+			//Debug.Log (filePath);
 			//OriginalChunk.tag = "ChunkRemove";
 			DestroyImmediate (OriginalChunk, true);
 			OriginalChunk = null;

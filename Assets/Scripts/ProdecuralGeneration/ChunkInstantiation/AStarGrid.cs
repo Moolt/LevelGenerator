@@ -347,10 +347,10 @@ public class AStarGrid {
 			availableSpace.yMax = Mathf.Max (availableSpace.yMax, room.yMax);
 		}
 
-		availableSpace.yMin -= doorSize * 2f;
-		availableSpace.xMin -= doorSize * 2f;
-		availableSpace.xMax += doorSize * 2f;
-		availableSpace.yMax += doorSize * 2f;
+		availableSpace.yMin -= doorSize * 4f;
+		availableSpace.xMin -= doorSize * 4f;
+		availableSpace.xMax += doorSize * 4f;
+		availableSpace.yMax += doorSize * 4f;
 	}
 
 	//Returns true, if the position is within a room rect
