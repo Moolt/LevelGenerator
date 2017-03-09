@@ -17,6 +17,10 @@ public class DoorManager : DoorProperty {
 	private List<DoorDefinition> randomDoors = new List<DoorDefinition> (0);
 	//Used by ChunkInstantiatior to define how many doors are needed
 	private int fixedAmount = -1;
+	[SerializeField]
+	private float globalYOffset = 0f;
+	[SerializeField]
+	private int globalYCornerHeight = 0;
 
 	public override void Preview(){
 		UpdateDoors ();
@@ -106,6 +110,10 @@ public class DoorManager : DoorProperty {
 		}
 	}
 
+	public void UpdateYOffset(float val){
+		doors.ForEach (d => d.Offset.y = val);
+	}
+
 	//Clamp function that calculated min and max. Border is used to include the doors size into the calculation
 	private float Clamp(float val, float lim1, float lim2, float border){
 		float min = Mathf.Min (lim1, lim2) + border;
@@ -136,6 +144,21 @@ public class DoorManager : DoorProperty {
 		get{
 			float highestDoorPos = (doors.Count > 0) ? doors.OrderByDescending (d => d.Position.y).FirstOrDefault ().Position.y + doorSize / 2f : doorSize;
 			return new Vector3 (doorSize, highestDoorPos, doorSize);
+		}
+	}
+
+	public int GlobalYCornerHeight {
+		get {
+			return this.globalYCornerHeight;
+		}
+		set {
+			globalYCornerHeight = value;
+		}
+	}
+
+	public float GlobalYOffset {
+		get {
+			return this.globalYOffset;
 		}
 	}
 }

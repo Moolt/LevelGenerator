@@ -6,7 +6,7 @@ using System.Linq;
 using System;
 
 public enum ConstraintType{ FuzzyProperties, UserDefinedTags }
-public enum ConstraintTarget{ AllRooms, StartRoom, EndRoom, MiddleRooms, SideRooms}
+public enum ConstraintTarget{ AllRooms, StartRoom, EndRoom, MiddleRooms, SideRooms, Disabled}
 public enum ConstraintAmount{ All, AtLeast, AtMost, Exactly, None}
 public enum ConstraintAmountType{ Absolute, Percentual }
 

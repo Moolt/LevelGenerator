@@ -122,6 +122,20 @@ public class RoomTransformation{
 			return Vector2.Distance (furthest.rect.center, rect.center);
 		}
 	}
+
+	//Y position will be calculated using the door positions
+	//At this point, all doors of a chunk have the same y position
+	private float FindYPosition(){
+		//Doors currently have a static size of 2*2 resulting in extends of 1*1
+		//Subtract 1 to compensate for the doors position being mesured from the center
+		return doors.Count == 0 ? 0f : -(doors [0].RelPosition.y - 1f);
+	}
+
+	public Vector3 Position {
+		get {
+			return new Vector3 (rect.center.x, FindYPosition(), rect.center.y);
+		}
+	}
 }
 
 public class ProceduralLevel{
@@ -249,7 +263,7 @@ public class ProceduralLevel{
 			//Since the rooms have been placed and then separated, the door positions have to be recalculated
 			//For the hallway generation.
 			transformation.UpdateDoorPositions ();
-			Vector3 position = new Vector3 (transformation.Rect.center.x, 0f, transformation.Rect.center.y);
+			Vector3 position = transformation.Position;
 			transformation.Chunk.transform.position = position;
 		}
 	}

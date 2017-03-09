@@ -48,7 +48,7 @@ public class ChunkTagsEditor : Editor {
 				SerializedProperty serTagInstance = serTagList.GetArrayElementAtIndex (i);
 				SerializedProperty serTagName = serTagInstance.FindPropertyRelative ("Name");
 				serTagName.stringValue = EditorGUILayout.TextField (serTagName.stringValue);
-				if (GUILayout.Button ("✕", GUILayout.Width (20))) {
+				if (GUILayout.Button ("x", GUILayout.Width (20))) {
 					serTagList.DeleteArrayElementAtIndex (i);
 				}
 				EditorGUILayout.EndHorizontal ();

@@ -179,7 +179,8 @@ public class LevelGeneratorWindow : EditorWindow {
 							constraint.RelativeAmount = EditorGUILayout.FloatField("Amount (relative)", constraint.RelativeAmount);
 							constraint.RelativeAmount = Mathf.Clamp(constraint.RelativeAmount, 0f, 1f);
 						}
-						if (GUILayout.Button ("↷", GUILayout.Width(20))) {
+						string toggleButtonText = constraint.AmountType == ConstraintAmountType.Absolute ? "P" : "A";
+						if (GUILayout.Button (toggleButtonText, GUILayout.Width(20))) {
 							if(constraint.AmountType == ConstraintAmountType.Absolute){
 								constraint.AmountType = ConstraintAmountType.Percentual;
 							} else {

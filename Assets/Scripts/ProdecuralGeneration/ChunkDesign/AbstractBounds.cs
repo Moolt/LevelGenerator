@@ -139,6 +139,22 @@ public class AbstractBounds : TransformingProperty {
 		return new int[0];
 	}
 
+	public int CornersHeightDegree(int cornerIndex){
+		if (cornerIndex < 9) {
+			return 0;
+		} else if (cornerIndex < 18) {
+			return 1;
+		} else {
+			return 2;
+		}
+	}
+
+	public int ChangeCornersHeight(int originalCorner, int targetHeight){
+		int originalHeight = CornersHeightDegree (originalCorner);
+		int difference = targetHeight - originalHeight;
+		return originalCorner + 9 * difference;
+	}
+
 	public Vector3 FindCorner(int relativeIndex, Vector3 direction){
 		int[] absoluteIndices = CornerIndicesByDirection (direction);
 		return Corners [absoluteIndices [relativeIndex]];

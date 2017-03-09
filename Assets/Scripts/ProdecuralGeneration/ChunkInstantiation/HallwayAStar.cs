@@ -5,6 +5,7 @@ using UnityEditor;
 using System.Linq;
 
 public class Square{
+	private static AStarGrid grid;
 	protected Rect rect;
 	private float estimatedMovementCost;
 	private float currentMovementCost;
@@ -37,7 +38,7 @@ public class Square{
 	public float TurningPenalty(Square _parent){
 		if (_parent != null) {
 			Vector2 testDirection = DetermineDirection (_parent);
-			return _parent.direction == testDirection ? 0f : 1f;
+			return _parent.direction == testDirection ? 0f : 4f;
 		}
 		return 0f;
 	}
@@ -117,7 +118,16 @@ public class Square{
 	}
 
 	public int MovementCost{
-		get{ return 1; }
+		get{
+			return MovementCostWithParent (parent);	
+		}
+	}
+
+	public int MovementCostWithParent(Square _parent){
+		if (parent != null && Vector2.Distance (position, _parent.position) < 1f && grid.Grid[GridX, GridY].IsPartOfPath)
+			return 1;
+
+		return 2;
 	}
 
 	public int GridX{
@@ -133,6 +143,14 @@ public class Square{
 			return this.direction;
 		}
 	}
+	public static AStarGrid Grid {
+		get {
+			return grid;
+		}
+		set {
+			grid = value;
+		}
+	}
 }
 
 public class HallwayAStar{
@@ -145,6 +163,7 @@ public class HallwayAStar{
 	private AStarGrid grid;
 
 	public HallwayAStar (DoorDefinition start, DoorDefinition end, AStarGrid grid){
+		Square.Grid = grid;
 		this.startDoor = start;
 		this.endDoor = end;
 		this.openList = new List<Square> ();
@@ -193,11 +212,11 @@ public class HallwayAStar{
 					//Read the existing square from the list, don't use the one from the foreach loop
 					//Equality is determinded by position. Here we want the old square with all it's other data
 					Square existingSquare = openList[openList.IndexOf(adjSquare)];
-					float potentialCost = current.CurrentMovementCost + existingSquare.MovementCost + existingSquare.TurningPenalty(current);
+					float potentialCost = current.CurrentMovementCost + existingSquare.MovementCostWithParent(current) + existingSquare.TurningPenalty(current);
 					float currentCost = existingSquare.CurrentMovementCost + existingSquare.TurningPenalty();
 
 					if(potentialCost < currentCost){
-						existingSquare.CurrentMovementCost = current.CurrentMovementCost + existingSquare.MovementCost;
+						existingSquare.CurrentMovementCost = potentialCost;
 						existingSquare.Parent = current;
 						openList = openList.OrderBy(s => s.Score).ToList(); //Score changed, resort list
 					}

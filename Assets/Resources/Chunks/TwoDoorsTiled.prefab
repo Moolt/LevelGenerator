@@ -9,23 +9,23 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1180605639479978}
+  m_RootGameObject: {fileID: 1340861230499676}
   m_IsPrefabParent: 1
---- !u!1 &1180605639479978
+--- !u!1 &1340861230499676
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 5
   m_Component:
-  - component: {fileID: 4615643555822492}
-  - component: {fileID: 114666556080797132}
-  - component: {fileID: 33349043604356362}
-  - component: {fileID: 23169482335357150}
-  - component: {fileID: 64966669432964298}
-  - component: {fileID: 114271225188310964}
-  - component: {fileID: 114198021031847936}
-  - component: {fileID: 114393288513989138}
+  - component: {fileID: 4180489739763398}
+  - component: {fileID: 114163170365879608}
+  - component: {fileID: 33237283396907548}
+  - component: {fileID: 23900587062538110}
+  - component: {fileID: 64301171977587250}
+  - component: {fileID: 114560646378000054}
+  - component: {fileID: 114046645815782122}
+  - component: {fileID: 114478332374385932}
   m_Layer: 0
   m_Name: TwoDoorsTiled
   m_TagString: Chunk
@@ -33,25 +33,25 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4615643555822492
+--- !u!4 &4180489739763398
 Transform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1180605639479978}
+  m_GameObject: {fileID: 1340861230499676}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -8400, y: -100, z: -100}
+  m_LocalPosition: {x: -5200, y: -100, z: -100}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &23169482335357150
+--- !u!23 &23900587062538110
 MeshRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1180605639479978}
+  m_GameObject: {fileID: 1340861230499676}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -83,19 +83,19 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!33 &33349043604356362
+--- !u!33 &33237283396907548
 MeshFilter:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1180605639479978}
+  m_GameObject: {fileID: 1340861230499676}
   m_Mesh: {fileID: 0}
---- !u!64 &64966669432964298
+--- !u!64 &64301171977587250
 MeshCollider:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1180605639479978}
+  m_GameObject: {fileID: 1340861230499676}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
@@ -104,12 +104,12 @@ MeshCollider:
   m_InflateMesh: 0
   m_SkinWidth: 0.01
   m_Mesh: {fileID: 0}
---- !u!114 &114198021031847936
+--- !u!114 &114046645815782122
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1180605639479978}
+  m_GameObject: {fileID: 1340861230499676}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 00c2bed50c9b319499eaf3852cec0da5, type: 3}
@@ -145,26 +145,47 @@ MonoBehaviour:
   previewDoors: 1
   minCount: 1
   maxCount: 3
---- !u!114 &114271225188310964
+  globalYOffset: 0
+  globalYCornerHeight: 0
+--- !u!114 &114163170365879608
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1180605639479978}
+  m_GameObject: {fileID: 1340861230499676}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94fc7400b5203fa46abdab2147599eba, type: 3}
+  m_Script: {fileID: 11500000, guid: e0415933dd954ca4084866980274c917, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  floorMaterial: {fileID: 2100000, guid: 703d396c15b721741800ab8f53cb0b65, type: 2}
-  wallMaterial: {fileID: 2100000, guid: 76ff537c8e1a84345868e6aeee938ab3, type: 2}
-  tiling: 1
---- !u!114 &114393288513989138
+  minSize: {x: 8.16, y: 3.74, z: 10}
+  maxSize: {x: 9.87, y: 4.74, z: 12}
+  hasFixedSize: 0
+  lerp: 0
+  keepAspectRatio: 1
+  adaptToParent: {fileID: 0}
+  stretchInfos:
+  - Active: 0
+    Direction: {x: 1, y: 0, z: 0}
+    IsCenter: 1
+    Percent: 1
+    Label: X
+  - Active: 0
+    Direction: {x: 0, y: 1, z: 0}
+    IsCenter: 1
+    Percent: 1
+    Label: Y
+  - Active: 0
+    Direction: {x: 0, y: 0, z: 1}
+    IsCenter: 1
+    Percent: 1
+    Label: Z
+--- !u!114 &114478332374385932
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1180605639479978}
+  m_GameObject: {fileID: 1340861230499676}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ef49ebc184221ab499feca70f8adb64c, type: 3}
@@ -216,36 +237,17 @@ MonoBehaviour:
     Type: 0
     Name: Small
     Value: 0.043568265
---- !u!114 &114666556080797132
+--- !u!114 &114560646378000054
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1180605639479978}
+  m_GameObject: {fileID: 1340861230499676}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0415933dd954ca4084866980274c917, type: 3}
+  m_Script: {fileID: 11500000, guid: 94fc7400b5203fa46abdab2147599eba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minSize: {x: 8.16, y: 3.74, z: 10}
-  maxSize: {x: 9.87, y: 4.74, z: 12}
-  hasFixedSize: 0
-  lerp: 0
-  keepAspectRatio: 1
-  adaptToParent: {fileID: 0}
-  stretchInfos:
-  - Active: 0
-    Direction: {x: 1, y: 0, z: 0}
-    IsCenter: 1
-    Percent: 1
-    Label: X
-  - Active: 0
-    Direction: {x: 0, y: 1, z: 0}
-    IsCenter: 1
-    Percent: 1
-    Label: Y
-  - Active: 0
-    Direction: {x: 0, y: 0, z: 1}
-    IsCenter: 1
-    Percent: 1
-    Label: Z
+  floorMaterial: {fileID: 2100000, guid: 703d396c15b721741800ab8f53cb0b65, type: 2}
+  wallMaterial: {fileID: 2100000, guid: 76ff537c8e1a84345868e6aeee938ab3, type: 2}
+  tiling: 1

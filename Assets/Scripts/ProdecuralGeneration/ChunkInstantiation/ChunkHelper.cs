@@ -95,7 +95,8 @@ public class ChunkHelper{
 		{ ConstraintTarget.EndRoom, new List<NodeType>{ NodeType.END} },
 		{ ConstraintTarget.MiddleRooms, new List<NodeType>{ NodeType.MIDDLE} },
 		{ ConstraintTarget.SideRooms, new List<NodeType>{ NodeType.SIDE } },
-		{ ConstraintTarget.StartRoom, new List<NodeType>{ NodeType.START } }
+		{ ConstraintTarget.StartRoom, new List<NodeType>{ NodeType.START } },
+		{ ConstraintTarget.Disabled, new List<NodeType>(0) }
 	};
 
 	public ChunkHelper(LevelGeneratorPreset preset){

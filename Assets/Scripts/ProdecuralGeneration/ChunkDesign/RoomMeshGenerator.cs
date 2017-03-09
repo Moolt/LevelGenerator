@@ -81,7 +81,7 @@ public class RoomMeshData{
 	}
 
 	public void ConstructRoom(){
-		if (isDirty) {
+		if (isDirty || true) {
 		    Vertices = new List<Vector3> ();
 		    Triangles = new List<int>[6];
 		    UVs = new List<Vector2> ();
@@ -283,6 +283,7 @@ public class RoomMeshData{
 
 	public bool IsDirty {
 		get {
+			//return true;
 			return this.isDirty;
 		}
 		set {

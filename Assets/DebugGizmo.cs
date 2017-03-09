@@ -159,7 +159,7 @@ public class DebugGizmo : MonoBehaviour {
 				}
 			}
 
-			if (debugInfo.ShowRoomTypes) {
+			if (debugData.RoomMeta != null && debugInfo.ShowRoomTypes) {
 				foreach (RoomMeta meta in debugData.RoomMeta) {
 					Gizmos.color = RoomTypeColor (meta.Node.NodeType);
 					Gizmos.DrawSphere (meta.Chunk.transform.position, 1.5f);
