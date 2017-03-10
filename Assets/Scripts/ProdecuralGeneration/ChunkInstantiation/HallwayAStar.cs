@@ -127,7 +127,7 @@ public class Square{
 		if (parent != null && Vector2.Distance (position, _parent.position) < 1f && grid.Grid[GridX, GridY].IsPartOfPath)
 			return 1;
 
-		return 2;
+		return 3;
 	}
 
 	public int GridX{

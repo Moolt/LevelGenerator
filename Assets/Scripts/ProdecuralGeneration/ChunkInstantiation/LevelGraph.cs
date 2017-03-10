@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
+//Generates a graph that is then used by the FreeTreeVisualization to position the nodes and then by Procedural level to instantiate rooms
 public class LevelGraph{
 	private List<RoomNode> rootnodes;
 	private RoomNode rootnode;

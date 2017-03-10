@@ -85,11 +85,16 @@ public class ChunkHelperProgress{
 	}
 }
 
+/// <summary>
+/// Used by ProceduralLevel to Obtain Chunk / Room instances. All logic concerning the selection
+/// Of chunks to instantiate is in here. Also evaluates all constraints.
+/// </summary>
 public class ChunkHelper{
 	private static string path = "Chunks";
 	private List<ChunkMetadata> chunkMetaData;
-	private LevelGeneratorPreset preset;
-	private ChunkHelperProgress progress;
+	private LevelGeneratorPreset preset; //Preset as defined in the GUI or XML
+	private ChunkHelperProgress progress; //Stores how many chunks of whitch types have been created
+	//Stores the mapping between the ConstraintTarget defined in the GUI and the automatically generated NodeTypes
 	private Dictionary<ConstraintTarget, List<NodeType>> targetMapping = new Dictionary<ConstraintTarget, List<NodeType>> {
 		{ ConstraintTarget.AllRooms, new List<NodeType>{ NodeType.END, NodeType.MIDDLE, NodeType.SIDE, NodeType.START } },
 		{ ConstraintTarget.EndRoom, new List<NodeType>{ NodeType.END} },
@@ -111,6 +116,8 @@ public class ChunkHelper{
 		preset.Constraints.ForEach(c => c.ResetConstraint());
 	}
 
+	//Fills a list of objects containing chunks and their metadata required for the following selection of chunks
+	//Only needs to be built once per level generation process
 	private void BuildMetadata(GameObject[] chunks){
 		foreach (GameObject chunk in chunks) {
 			DoorManager doorManager = chunk.GetComponent<DoorManager> ();
@@ -119,27 +126,33 @@ public class ChunkHelper{
 				meta.Chunk = chunk;
 				meta.DoorManager = doorManager;
 				meta.ChunkTags = chunk.GetComponent<ChunkTags> ();
-				meta.Priority = Random.value;
+				meta.Priority = Random.value; //Used to naturally shuffle the list (is sorted by Priority)
 				chunkMetaData.Add (meta);
 			}
 		}
 	}
 
+	//Called once per Chunk
 	private void ResetMetadata(){
 		chunkMetaData.ForEach (cm => cm.Priority = Random.value);
 		chunkMetaData.ForEach (cm => cm.ClearConstraintDependencies());
 	}
 
+	//Externally called by ProceduralLevel
+	//Returns a chunk that satisfies all constraints and has the same amount of doors definied by the node
 	public GameObject PickRandomChunk(RoomNode node){
 		ResetMetadata ();
 		List<ChunkMetadata> candidates = FindChunks (node);
 		candidates = candidates.OrderByDescending (cm => cm.Priority).ToList();
 		ChunkMetadata selectedMeta = candidates.Count > 0 ? candidates [0] : null;
 		GameObject selectedChunk = selectedMeta == null ? null : selectedMeta.Chunk;
-		progress.NoteChunkUsed (selectedMeta, node.NodeType);
+		progress.NoteChunkUsed (selectedMeta, node.NodeType); //Informs all constraints, that this chunk has been used
 		return selectedChunk;
 	}
 
+	//Finds all chunks filtered by the door amount needed (defined by the node)
+	//Then searches for all constraints whichs target match the node
+	//All chunks not satisfying the constraints are then removed and the resulting list is returned
 	private List<ChunkMetadata> FindChunks(RoomNode node){
 		List<ChunkMetadata> matchingChunks = FilterByDoorCount (node.DoorCount);
 		List<Constraint> applicableConstraints = FindApplicableConstraints (node.NodeType);
@@ -153,12 +166,15 @@ public class ChunkHelper{
 		return isMatching;
 	}
 
+	//A constraint is applicable, if the constraint target and nodeType match
+	//The mapping is defined in the targetMapping dictionary above
 	private List<Constraint> FindApplicableConstraints(NodeType nodeType){
 		List<Constraint> applicableConstraints = new List<Constraint> (preset.Constraints);
 		applicableConstraints.RemoveAll (c => !IsConstraintTargetMatching (c.Target, nodeType));
 		return applicableConstraints;
 	}
 
+	//Returns all chunks that allow the specified amount of doors
 	private List<ChunkMetadata> FilterByDoorCount(int doorCount){
 		return (from meta in chunkMetaData
 		        where meta.DoorManager.minCount <= doorCount && meta.DoorManager.maxCount >= doorCount

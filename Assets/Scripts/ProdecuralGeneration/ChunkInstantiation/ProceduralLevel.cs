@@ -215,6 +215,7 @@ public class ProceduralLevel{
 			hallwayMeta.Add (hallway);
 		}
 
+		//Recursively generate subrooms
 		foreach (RoomNode subNode in node.Connections) {
 			GenerateLevel (subNode, roomTransform);
 		}
@@ -240,6 +241,8 @@ public class ProceduralLevel{
 		return randomChunk;
 	}
 
+	//A rollback happens, when not chunks could be found to be instantiated
+	//This can happen, if the constraints defined by the user are too strict
 	private void HandleRollback(){
 		positionMeta.ForEach (pm => GameObject.DestroyImmediate (pm.Chunk));
 		debugData.Aborted = true;
