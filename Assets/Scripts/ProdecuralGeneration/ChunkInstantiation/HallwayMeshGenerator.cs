@@ -6,7 +6,7 @@ using System.Linq;
 public class HallwaySegment{
 	private static float hallwayTiling = 1f;
 	private static Dictionary<Vector2, int[]> directionTrianglesMapping;
-	private static float doorSize;
+	private static float doorSize = 2f;
 	//Center of the segment = Center of the gridPosition
 	private Vector2 center;
 	//Hallways hight, should be 2 times the width
@@ -78,7 +78,17 @@ public class HallwaySegment{
 		}
 	}
 
+	/*private void HandleInsideEdge(GridPosition targetPosition){
+		//GridPosition targetPosition = adjacent [gridPosition.Direction];
+		GridPosition next = targetPosition.AdjacentPositions[targetPosition.Direction];
+		if (IsEdge (next) && Vector2.Distance (targetPosition.Position, next.Position) < doorSize * .5f) {
+			generator.RemoveHallwaySegment (new HallwaySegment (targetPosition, generator));
+			gridPosition.AdjacentPositions [gridPosition.Direction] = next;
+		}
+	}*/
+
 	private void CalculateBounds(){
+		//HandleInsideEdge(adjacent[gridPosition.Direction]);
 		Vector2 oppositeDir = gridPosition.Direction * -1;
 		Vector2[] ortho = OrthogonalDirections (gridPosition.Direction);
 		size [ortho [0]] = GetPaddingForOrtho (ortho [0]);
@@ -145,7 +155,7 @@ public class HallwaySegment{
 	}
 
 	private bool IsFillerValidSpace(GridPosition other){
-		return Vector2.Distance (gridPosition.Position, other.Position) > doorSize * 2;
+		return Vector2.Distance (gridPosition.Position, other.Position) > doorSize;
 	}
 
 	private void HandleOffset(){
@@ -185,7 +195,7 @@ public class HallwaySegment{
 		//An actual GridPosition instance.
 		Dictionary<Vector2, GridPosition> fillerAdjacent;
 		if (!ignoreWalls) {
-			fillerAdjacent = FillerAdjacence (direction, oppositeDir);
+			fillerAdjacent = adjacent;// CombineAdjacents(gridPosition, direction);//FillerAdjacence (direction, oppositeDir);
 		} else {
 			fillerAdjacent = FillerAdjacence (Vector2.up, Vector2.right, Vector2.down, Vector2.left);
 		}
@@ -195,6 +205,21 @@ public class HallwaySegment{
 		fillerSize [oppositeDir] = width;
 		//New instance is added to the hallway. The called function will stop duplicates from being added.
 		generator.AddHallwaySegment (new HallwaySegment (fillerSize, fillerAdjacent, fillerCenter));
+	}
+
+	private Dictionary<Vector2, GridPosition> CombineAdjacents(GridPosition gridPosition, Vector2 dir){
+		Dictionary<Vector2, GridPosition> newDict = new Dictionary<Vector2, GridPosition> ();
+		for (int i = 0; i < 4; i++) {
+			Vector2 direction = gridPosition.AdjacentPositions.ElementAt (i).Key;
+			GridPosition gp1 = gridPosition.AdjacentPositions.ElementAt (i).Value;
+			GridPosition gp2 = adjacent [dir].AdjacentPositions.ElementAt (i).Value;
+			if (gp1 != null) {
+				newDict.Add (direction, gp1);
+			} else if (gp2 != null) {
+				newDict.Add (direction, gp2);
+			}
+		}
+		return newDict;
 	}
 
 	private Dictionary<Vector2, GridPosition> FillerAdjacence(params Vector2[] fill){
@@ -371,10 +396,12 @@ public class HallwayMeshGenerator {
 	private List<int>[] triangles;
 	private List<Vector2> uvs;
 	private Mesh mesh;
+	private float doorSize;
 
 	public HallwayMeshGenerator(AStarGrid grid, float hallwayTiling, float doorSize){
 		HallwaySegment.HallwayTiling = hallwayTiling;
 		HallwaySegment.DoorSize = doorSize;
+		this.doorSize = 2f;
 		this.grid = grid;
 		this.hallwayPaths = new List<List<Square>> ();
 		this.hallwaySegments = new HashSet<HallwaySegment> ();
@@ -425,10 +452,22 @@ public class HallwayMeshGenerator {
 		foreach (List<Square> squares in hallwayPaths) {
 			foreach (Square square in squares) {
 				GridPosition gridPosition = grid.Grid [square.GridX, square.GridY];
+				SearchForIndirectAdjacents (gridPosition);
 				HallwaySegment newSegment = new HallwaySegment (gridPosition, this);
 				if (!hallwaySegments.Contains (newSegment)) {
 					hallwaySegments.Add (newSegment);
 				}
+			}
+		}
+	}
+
+	private void SearchForIndirectAdjacents(GridPosition gridPosition){
+		Vector2[] directions = new Vector2[]{ Vector2.up, Vector2.right, Vector2.down, Vector2.left };
+		int[] indices = new int[]{ 0, 1, 1, 0, 0, -1, -1, 0 };
+		for (int i = 0; i < 4; i++) {
+			GridPosition adjacent = grid.Grid [gridPosition.i + indices [i * 2], gridPosition.j + indices [i * 2 + 1]];
+			if (adjacent.IsPartOfPath && gridPosition.AdjacentPositions[directions[i]] == null && Vector2.Distance (gridPosition.Position, adjacent.Position) <= doorSize) {
+				gridPosition.AddAdjacent (directions [i], adjacent);
 			}
 		}
 	}
@@ -458,5 +497,9 @@ public class HallwayMeshGenerator {
 		if (!hallwaySegments.Contains (segment)) {
 			hallwaySegments.Add (segment);
 		}
+	}
+
+	public void RemoveHallwaySegment(HallwaySegment segment){
+		hallwaySegments.Remove (segment);
 	}
 }

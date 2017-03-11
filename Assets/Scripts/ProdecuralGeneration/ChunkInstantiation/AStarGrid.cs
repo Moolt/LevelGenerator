@@ -18,6 +18,7 @@ public class GridPosition{
 	public float x;
 	public float y;
 	public bool visitedByAstar = false;
+	public int i, j;
 
 	public GridPosition (float x, float y){
 		InitAdjacentDict ();
@@ -181,9 +182,9 @@ public class AStarGrid {
 	public AStarGrid(List<Rect> roomRects, List<RoomTransformation> rooms, float spacing, float doorSize){
 		GridPosition.Grid = this;
 		this.spacing = spacing;
-		this.doorSize = doorSize;
+		this.doorSize = 2f;//doorSize;
 		this.padding = doorSize / 2f;
-		this.gridCellSize = spacing / 3f;
+		this.gridCellSize = spacing / 2.1f;
 		this.gridCellSize = Mathf.Clamp (gridCellSize, 1f, 100f);
 		this.roomRects = roomRects;
 		this.rooms = rooms;
@@ -278,7 +279,7 @@ public class AStarGrid {
 	}
 
 	private void SortOut(){
-		Rect[] inflatedRoomRects = InflateBy (gridCellSize);
+		Rect[] inflatedRoomRects = InflateBy (doorSize / 2f);
 		Rect[] invertedRoomRects = InflateByRoomDistance ();
 		InflateBy (gridCellSize);
 
@@ -325,12 +326,14 @@ public class AStarGrid {
 		int xIterations = (int)(availableSpace.width / gridCellSize);
 		int yIterations = (int)(availableSpace.height / gridCellSize);
 
-		grid = new GridPosition[xIterations, yIterations];
+		grid = new GridPosition[xIterations, yIterations];	
 
 		for (int i = 0; i < xIterations; i++) {
 			for (int j = 0; j < yIterations; j++) {
 				Vector2 newPos = new Vector2 (availableSpace.xMin + i * gridCellSize, availableSpace.yMin + j * gridCellSize);
 				grid [i, j] = new GridPosition (newPos.x, newPos.y);
+				grid [i, j].i = i;
+				grid [i, j].j = j;
 			}
 		}
 	}
