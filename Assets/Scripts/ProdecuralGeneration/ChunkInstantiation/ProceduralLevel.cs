@@ -60,9 +60,18 @@ public class RoomTransformation{
 		inflation = 0f;
 	}
 
-	public void UpdateRect(Vector2 position, Vector2 size){
+	public void UpdateRect(Vector2 position, Vector2 size){		
 		rect.position = position;
 		rect.size = size;
+		AlignToGrid ();
+	}
+
+	public void AlignToGrid(){
+		Vector2 pos = rect.position;
+		float gridSize = DoorDefinition.GlobalSize * 2f;
+		pos.x = Mathf.Round (pos.x / gridSize) * gridSize;
+		pos.y = Mathf.Round (pos.y / gridSize) * gridSize;
+		rect.position = pos;
 	}
 
 	public GameObject Chunk {
@@ -151,7 +160,6 @@ public class ProceduralLevel{
 	private float spacing; //Space between rooms, used is separation is active
 	private float distance; //Distance used in the FreeTree algorithm
 	private bool isSeparate; //Separate rooms, avoid overlapping
-	private int doorSize;
 	private Material[] hallwayMaterials;
 	private float hallwayTiling;
 
@@ -162,7 +170,6 @@ public class ProceduralLevel{
 		this.rootnode = graph.Rootnode;
 		this.spacing = preset.Spacing;
 		this.isSeparate = preset.IsSeparateRooms;
-		this.doorSize = preset.DoorSize;
 		this.hallwayMaterials = preset.HallwayMaterials;
 		this.helper = new ChunkHelper (preset);
 		this.debugData = new DebugData ();
@@ -273,9 +280,9 @@ public class ProceduralLevel{
 
 	private void CreateHallways(){
 		List<Rect> roomRects = GetDeflatedRoomRects ();
-		AStarGrid grid = new AStarGrid (roomRects, positionMeta, spacing, doorSize);
-		HallwayMeshGenerator meshGenerator = new HallwayMeshGenerator (grid, hallwayTiling, doorSize);
+		AStarGrid grid = new AStarGrid (roomRects, positionMeta);
 		debugData.Grid = grid.Grid;
+		HallwayMeshGenerator meshGenerator = new HallwayMeshGenerator (grid, hallwayTiling);
 
 		foreach (HallwayMeta hw in hallwayMeta) {
 			HallwayAStar routing = new HallwayAStar (hw.StartDoor, hw.EndDoor, grid);
@@ -305,6 +312,7 @@ public class ProceduralLevel{
 	}
 
 	private void SeparateRooms(){
+		positionMeta.ForEach (pm => pm.AlignToGrid ());
 		bool separated = false;
 		do {
 			separated = true;
@@ -336,6 +344,7 @@ public class ProceduralLevel{
 					separated = false;
 
 					velocity.Normalize();
+					velocity *= DoorDefinition.GlobalSize * 2f;
 					room.UpdateRect(room.Rect.position + velocity, room.Rect.size);
 				}
 			}

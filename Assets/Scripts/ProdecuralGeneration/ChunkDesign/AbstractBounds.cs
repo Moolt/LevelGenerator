@@ -2,6 +2,53 @@
 using System.Collections;
 using System.Collections.Generic;
 
+[System.Serializable]
+public class ChunkBoundsHelper{
+	public Vector3 MinSize;
+	public Vector3 MaxSize;
+	public Vector3 Size;
+
+	public ChunkBoundsHelper(Vector3 min, Vector3 max, Vector3 size){
+		Size = size;
+		UpdateValues (min, max);
+	}
+
+	public void UpdateValues (Vector3 min, Vector3 max){
+		MinSize = min;
+		MaxSize = max;
+	}
+
+	public Vector3 RoundedMin {
+		get {
+			return RoundVector (MinSize);
+		}
+	}
+
+	public Vector3 RoundedMax {
+		get {
+			return RoundVector (MaxSize);
+		}
+	}
+
+	public Vector3 RoundedSize {
+		get {
+			return RoundVector (Size);
+		}
+	}
+
+	public static Vector3 RoundVector(Vector3 input){
+		float factor = DoorDefinition.GlobalSize * 2f;
+		input.x = Mathf.Max (factor / 2f, RoundTo (input.x, factor));
+		input.y = Mathf.Max (factor / 2f, RoundTo (input.y, factor));
+		input.z = Mathf.Max (factor / 2f, RoundTo (input.z, factor));
+		return input;
+	}
+
+	public static float RoundTo(float value, float roundTo){
+		return Mathf.Round (value / roundTo) * roundTo;
+	}
+}
+
 [DisallowMultipleComponent]
 public class AbstractBounds : TransformingProperty {
 	public Vector3 minSize = Vector3.one;
@@ -11,11 +58,16 @@ public class AbstractBounds : TransformingProperty {
 	public float lerp;
 	public bool keepAspectRatio;
 	public AbstractBounds adaptToParent = null;
+	public ChunkBoundsHelper chunkBounds;
 
 	[SerializeField]
 	private StretchInfo[] stretchInfos = null;
 	private Vector3 size;
 	private List<Vector3> corners;
+
+	public AbstractBounds(){
+		chunkBounds = new ChunkBoundsHelper (minSize, maxSize, size);
+	}
 
 	public override void DrawEditorGizmos(){
 		Gizmos.color = (hasFixedSize) ? Color.yellow : Color.white;
@@ -44,6 +96,7 @@ public class AbstractBounds : TransformingProperty {
 	public override void Preview(){
 		UpdateScaling (false);
 		ClampValues ();
+		ChunkPositionAtOrigin ();
 	}
 
 	public override void Generate(){
@@ -179,7 +232,17 @@ public class AbstractBounds : TransformingProperty {
 		} else if (IsChunk) {
 			//Set size to minSize if the size is fixed. Else: lerp between min / max
 			size = hasFixedSize ? minSize : RandomizeVector(randomize, MinSize, MaxSize);
+			ApplyRoundedChunkValues ();
 		}
+	}
+
+	private void ApplyRoundedChunkValues(){
+		//chunkBounds.UpdateValues (minSize, maxSize);
+		this.size = ChunkBoundsHelper.RoundVector (size);
+		//this.size = chunkBounds.RoundedSize;
+		this.minSize = chunkBounds.RoundedMin;
+		this.maxSize = chunkBounds.RoundedMax;
+		ClampChunkValues ();
 	}
 
 	private Vector3 RandomizeVector(bool randomize, Vector3 min, Vector3 max){
@@ -195,6 +258,12 @@ public class AbstractBounds : TransformingProperty {
 		}
 	}
 
+	private void ClampChunkValues(){
+		chunkBounds.MaxSize = Clamp (chunkBounds.MaxSize, chunkBounds.MinSize, chunkBounds.MaxSize);
+		chunkBounds.MinSize = Clamp (chunkBounds.MinSize, chunkBounds.MinSize, chunkBounds.MaxSize);
+		//chunkBounds.UpdateValues (minSize, maxSize, size);
+	}
+
 	private void ClampValues(){
 		Vector3 requiredSpace = Vector3.zero;
 
@@ -206,6 +275,7 @@ public class AbstractBounds : TransformingProperty {
 		this.transform.localScale = Vector3.one;
 		maxSize = Clamp (maxSize, MinSize, maxSize);
 		minSize = Clamp (minSize, requiredSpace, MaxSize);
+		//chunkBounds.UpdateValues (minSize, maxSize, size);
 	}
 
 	public Vector3 LockedAxes {
@@ -227,6 +297,12 @@ public class AbstractBounds : TransformingProperty {
 			stretchVector.y = StretchInfos [1].Percent;
 			stretchVector.z = StretchInfos [2].Percent;
 			return stretchVector;
+		}
+	}
+
+	private void ChunkPositionAtOrigin(){
+		if (IsChunk) {
+			transform.position = Vector3.zero;
 		}
 	}
 

@@ -8,6 +8,8 @@ public class AbstractBoundsEditor : Editor {
 	private AbstractBounds abstractBounds;
 	[SerializeField]
 	private bool showStretch;
+	[SerializeField]
+	private bool showInfo;
 
 	void OnEnable(){
 		abstractBounds = target as AbstractBounds;
@@ -18,8 +20,14 @@ public class AbstractBoundsEditor : Editor {
 			abstractBounds.GizmoPreviewState = (GizmoPreviewState)EditorGUILayout.EnumPopup ("Gizmo visibility", abstractBounds.GizmoPreviewState);
 			EditorGUILayout.Space ();
 
-			if (abstractBounds.IsConstrainedByDoors) {
-				EditorGUILayout.HelpBox ("Please note, that the size is constrained by the doors defined by the DoorManager component", MessageType.Info);
+			if (abstractBounds.IsChunk) {
+				showInfo = EditorGUILayout.Foldout (showInfo, "Show info");
+				if (showInfo) {
+					if (abstractBounds.IsConstrainedByDoors) {
+						EditorGUILayout.HelpBox ("Please note, that the size is constrained by the doors defined by the DoorManager component", MessageType.Info);
+					}
+					EditorGUILayout.HelpBox ("A Chunk's size always snaps to a grid defined by the size of doors.", MessageType.Info);
+				}
 			}
 
 			EditorGUILayout.Space ();
@@ -28,17 +36,22 @@ public class AbstractBoundsEditor : Editor {
 			abstractBounds.hasFixedSize = EditorGUILayout.Toggle("Fixed size", abstractBounds.hasFixedSize);
 
 			EditorGUILayout.Space ();
-			if (!abstractBounds.hasFixedSize) {
-				ConditionalVectorField ("Minimal", ref abstractBounds.minSize);
-				ConditionalVectorField ("Maximal", ref abstractBounds.maxSize);
+			if (!abstractBounds.IsChunk) {
+				if (!abstractBounds.hasFixedSize) {
+					ConditionalVectorField ("Minimal", ref abstractBounds.minSize);
+					ConditionalVectorField ("Maximal", ref abstractBounds.maxSize);
+				} else {
+					ConditionalVectorField ("Size", ref abstractBounds.minSize);
+				}
 			} else {
-				ConditionalVectorField ("Size", ref abstractBounds.minSize);
+				if (!abstractBounds.hasFixedSize) {
+					ConditionalVectorField ("Minimal", ref abstractBounds.chunkBounds.MinSize);
+					ConditionalVectorField ("Maximal", ref abstractBounds.chunkBounds.MaxSize);
+				} else {
+					ConditionalVectorField ("Size", ref abstractBounds.chunkBounds.MinSize);
+				}
+				EditorGUILayout.LabelField ("Rounded size", abstractBounds.Size.ToString());
 			}
-
-			/*if (abstractBounds.IsChunk) {
-				abstractBounds.minSize = RoundVector (abstractBounds.minSize);
-				abstractBounds.maxSize = RoundVector (abstractBounds.maxSize);
-			}*/
 
 			EditorGUILayout.Space ();
 

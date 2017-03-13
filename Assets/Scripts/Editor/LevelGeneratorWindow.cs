@@ -118,11 +118,11 @@ public class LevelGeneratorWindow : EditorWindow {
 			//preset.DoorSize = EditorGUILayout.IntField ("Global door size", preset.DoorSize);
 			//preset.DoorSize = (int)Mathf.Floor (Mathf.Clamp (preset.DoorSize, 2f, preset.Spacing / 2f));
 			preset.RoomDistance = EditorGUILayout.FloatField ("Global distance", preset.RoomDistance);
-			preset.RoomDistance = Mathf.Clamp (preset.RoomDistance, 1.5f, 10f);
+			preset.RoomDistance = Mathf.Clamp (preset.RoomDistance, 0.5f, 10f);
 
 			if (preset.IsSeparateRooms) {
 				preset.Spacing = EditorGUILayout.FloatField ("Minimal margin", preset.Spacing);
-				preset.Spacing = Mathf.Clamp (preset.Spacing, preset.DoorSize * 2f, preset.DoorSize * 4f);
+				preset.Spacing = Mathf.Clamp (preset.Spacing, DoorDefinition.GlobalSize * 2f, DoorDefinition.GlobalSize * 4f);
 			}
 			EditorGUI.indentLevel -= 1;
 			EditorGUILayout.Space ();

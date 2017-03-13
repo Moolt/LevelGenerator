@@ -78,7 +78,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1121866632991452}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -9400, y: -100, z: -100}
+  m_LocalPosition: {x: -9100, y: -100, z: -100}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4729999858157950}
@@ -293,6 +293,10 @@ MonoBehaviour:
   lerp: 1
   keepAspectRatio: 1
   adaptToParent: {fileID: 0}
+  chunkBounds:
+    MinSize: {x: 1, y: 1, z: 1}
+    MaxSize: {x: 2, y: 2, z: 2}
+    Size: {x: 0, y: 0, z: 0}
   stretchInfos:
   - Active: 0
     Direction: {x: 1, y: 0, z: 0}
@@ -354,6 +358,7 @@ MonoBehaviour:
   - ID: 0
     Size: {x: 2, y: 2, z: 2}
     Position: {x: 6.7187963, y: 1, z: -9}
+    WorkingPosition: {x: 0, y: 0, z: 0}
     RelPosition: {x: 6.7187963, y: 1, z: -9}
     Direction: {x: 0, y: 0, z: -1}
     CornerIndex: 2
@@ -362,6 +367,7 @@ MonoBehaviour:
   - ID: 0
     Size: {x: 2, y: 2, z: 2}
     Position: {x: -6.526042, y: 1, z: -9}
+    WorkingPosition: {x: 0, y: 0, z: 0}
     RelPosition: {x: -6.526042, y: 1, z: -9}
     Direction: {x: 0, y: 0, z: -1}
     CornerIndex: 0
@@ -370,6 +376,7 @@ MonoBehaviour:
   - ID: 1
     Size: {x: 2, y: 2, z: 2}
     Position: {x: 0, y: 1, z: -9}
+    WorkingPosition: {x: 0, y: 0, z: 0}
     RelPosition: {x: 0, y: 1, z: -9}
     Direction: {x: 0, y: 0, z: -1}
     CornerIndex: 1
@@ -378,6 +385,7 @@ MonoBehaviour:
   - ID: 0
     Size: {x: 2, y: 2, z: 2}
     Position: {x: -9, y: 1, z: 2.4451294}
+    WorkingPosition: {x: 0, y: 0, z: 0}
     RelPosition: {x: -9, y: 1, z: 2.4451294}
     Direction: {x: -1, y: 0, z: 0}
     CornerIndex: 3
@@ -386,6 +394,7 @@ MonoBehaviour:
   - ID: 1
     Size: {x: 2, y: 2, z: 2}
     Position: {x: -9, y: 1, z: -2.132431}
+    WorkingPosition: {x: 0, y: 0, z: 0}
     RelPosition: {x: -9, y: 1, z: -2.132431}
     Direction: {x: -1, y: 0, z: 0}
     CornerIndex: 3
@@ -394,18 +403,28 @@ MonoBehaviour:
   - ID: 2
     Size: {x: 2, y: 2, z: 2}
     Position: {x: 0, y: 1, z: 9}
+    WorkingPosition: {x: 0, y: 0, z: 0}
     RelPosition: {x: 0, y: 1, z: 9}
     Direction: {x: 0, y: 0, z: 1}
     CornerIndex: 7
     Offset: {x: 0, y: 1, z: 0}
     Name: Door 2
   offsetType: 0
-  doorSize: 2
   previewDoors: 1
   minCount: 1
   maxCount: 3
   globalYOffset: 0
   globalYCornerHeight: 0
+  draggingDoor:
+    ID: 0
+    Size: {x: 0, y: 0, z: 0}
+    Position: {x: 0, y: 0, z: 0}
+    WorkingPosition: {x: 0, y: 0, z: 0}
+    RelPosition: {x: 0, y: 0, z: 0}
+    Direction: {x: 0, y: 0, z: 0}
+    CornerIndex: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Name: 
 --- !u!114 &114766246452765542
 MonoBehaviour:
   m_ObjectHideFlags: 1

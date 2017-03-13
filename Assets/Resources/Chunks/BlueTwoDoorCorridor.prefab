@@ -235,7 +235,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1821625225621964}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -9300, y: -100, z: -100}
+  m_LocalPosition: {x: -9400, y: -100, z: -100}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4330902181052474}
@@ -663,6 +663,10 @@ MonoBehaviour:
   lerp: 0
   keepAspectRatio: 0
   adaptToParent: {fileID: 0}
+  chunkBounds:
+    MinSize: {x: 1, y: 1, z: 1}
+    MaxSize: {x: 2, y: 2, z: 2}
+    Size: {x: 0, y: 0, z: 0}
   stretchInfos:
   - Active: 1
     Direction: {x: 1, y: 0, z: 0}
@@ -696,6 +700,10 @@ MonoBehaviour:
   lerp: 0
   keepAspectRatio: 0
   adaptToParent: {fileID: 0}
+  chunkBounds:
+    MinSize: {x: 1, y: 1, z: 1}
+    MaxSize: {x: 2, y: 2, z: 2}
+    Size: {x: 0, y: 0, z: 0}
   stretchInfos:
   - Active: 1
     Direction: {x: 1, y: 0, z: 0}
@@ -745,6 +753,10 @@ MonoBehaviour:
   lerp: 0
   keepAspectRatio: 0
   adaptToParent: {fileID: 0}
+  chunkBounds:
+    MinSize: {x: 1, y: 1, z: 1}
+    MaxSize: {x: 2, y: 2, z: 2}
+    Size: {x: 0, y: 0, z: 0}
   stretchInfos:
   - Active: 1
     Direction: {x: 1, y: 0, z: 0}
@@ -838,6 +850,7 @@ MonoBehaviour:
   - ID: 0
     Size: {x: 2, y: 2, z: 2}
     Position: {x: -5.29, y: 6.319521, z: 0}
+    WorkingPosition: {x: 0, y: 0, z: 0}
     RelPosition: {x: -5.29, y: 6.319521, z: 0}
     Direction: {x: -1, y: 0, z: 0}
     CornerIndex: 21
@@ -846,18 +859,28 @@ MonoBehaviour:
   - ID: 2
     Size: {x: 2, y: 2, z: 2}
     Position: {x: 5.29, y: 6.319521, z: 0}
+    WorkingPosition: {x: 0, y: 0, z: 0}
     RelPosition: {x: 5.29, y: 6.319521, z: 0}
     Direction: {x: 1, y: 0, z: 0}
     CornerIndex: 23
     Offset: {x: 0, y: -3.3804789, z: 0}
     Name: Door 2
   offsetType: 0
-  doorSize: 2
   previewDoors: 1
   minCount: 2
   maxCount: 2
   globalYOffset: 0
   globalYCornerHeight: 2
+  draggingDoor:
+    ID: 0
+    Size: {x: 0, y: 0, z: 0}
+    Position: {x: 0, y: 0, z: 0}
+    WorkingPosition: {x: 0, y: 0, z: 0}
+    RelPosition: {x: 0, y: 0, z: 0}
+    Direction: {x: 0, y: 0, z: 0}
+    CornerIndex: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Name: 
 --- !u!114 &114815360424130736
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -947,6 +970,10 @@ MonoBehaviour:
   lerp: 0
   keepAspectRatio: 0
   adaptToParent: {fileID: 0}
+  chunkBounds:
+    MinSize: {x: 1, y: 1, z: 1}
+    MaxSize: {x: 2, y: 2, z: 2}
+    Size: {x: 0, y: 0, z: 0}
   stretchInfos:
   - Active: 1
     Direction: {x: 1, y: 0, z: 0}
@@ -980,6 +1007,10 @@ MonoBehaviour:
   lerp: 0
   keepAspectRatio: 1
   adaptToParent: {fileID: 0}
+  chunkBounds:
+    MinSize: {x: 1, y: 1, z: 1}
+    MaxSize: {x: 2, y: 2, z: 2}
+    Size: {x: 0, y: 0, z: 0}
   stretchInfos:
   - Active: 0
     Direction: {x: 1, y: 0, z: 0}

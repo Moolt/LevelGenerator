@@ -97,7 +97,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1444147828772690}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -9500, y: -100, z: -100}
+  m_LocalPosition: {x: -8600, y: -100, z: -100}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4944445369964094}
@@ -309,6 +309,7 @@ MonoBehaviour:
   - ID: 0
     Size: {x: 2, y: 2, z: 2}
     Position: {x: -4.575, y: 1.7599101, z: 0.0112294555}
+    WorkingPosition: {x: 0, y: 0, z: 0}
     RelPosition: {x: -4.575, y: 1.7599101, z: 0.0112294555}
     Direction: {x: -1, y: 0, z: 0}
     CornerIndex: 3
@@ -317,18 +318,28 @@ MonoBehaviour:
   - ID: 2
     Size: {x: 2, y: 2, z: 2}
     Position: {x: 4.575, y: 1.7599101, z: 0}
+    WorkingPosition: {x: 0, y: 0, z: 0}
     RelPosition: {x: 4.575, y: 1.7599101, z: 0}
     Direction: {x: 1, y: 0, z: 0}
     CornerIndex: 5
     Offset: {x: 0, y: 1.7599101, z: 0}
     Name: Door 2
   offsetType: 0
-  doorSize: 2
   previewDoors: 1
   minCount: 2
   maxCount: 2
   globalYOffset: 0
   globalYCornerHeight: 0
+  draggingDoor:
+    ID: 0
+    Size: {x: 0, y: 0, z: 0}
+    Position: {x: 0, y: 0, z: 0}
+    WorkingPosition: {x: 0, y: 0, z: 0}
+    RelPosition: {x: 0, y: 0, z: 0}
+    Direction: {x: 0, y: 0, z: 0}
+    CornerIndex: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Name: 
 --- !u!114 &114106504913703388
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -361,6 +372,10 @@ MonoBehaviour:
   lerp: 0
   keepAspectRatio: 1
   adaptToParent: {fileID: 0}
+  chunkBounds:
+    MinSize: {x: 1, y: 1, z: 1}
+    MaxSize: {x: 2, y: 2, z: 2}
+    Size: {x: 0, y: 0, z: 0}
   stretchInfos:
   - Active: 0
     Direction: {x: 1, y: 0, z: 0}
@@ -423,6 +438,10 @@ MonoBehaviour:
   lerp: 0
   keepAspectRatio: 0
   adaptToParent: {fileID: 0}
+  chunkBounds:
+    MinSize: {x: 1, y: 1, z: 1}
+    MaxSize: {x: 2, y: 2, z: 2}
+    Size: {x: 0, y: 0, z: 0}
   stretchInfos:
   - Active: 0
     Direction: {x: 1, y: 0, z: 0}
@@ -555,6 +574,10 @@ MonoBehaviour:
   lerp: 0
   keepAspectRatio: 0
   adaptToParent: {fileID: 0}
+  chunkBounds:
+    MinSize: {x: 1, y: 1, z: 1}
+    MaxSize: {x: 2, y: 2, z: 2}
+    Size: {x: 0, y: 0, z: 0}
   stretchInfos:
   - Active: 0
     Direction: {x: 1, y: 0, z: 0}

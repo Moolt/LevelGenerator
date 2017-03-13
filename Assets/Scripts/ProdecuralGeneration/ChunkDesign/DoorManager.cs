@@ -8,12 +8,10 @@ public class DoorManager : DoorProperty {
 	public static int doorIndex = 0; //Used for door IDs
 	public List<DoorDefinition> doors = new List<DoorDefinition>(0);
 	public OffsetType offsetType = OffsetType.ABSOLUTE;
-	public float doorSize = 2f; //Set to a static value. Might be variable in future versions
 	public bool previewDoors = true;
 	public int minCount = 1;
 	public int maxCount = 1;
 
-	private bool areDoorsDirty = true;
 	private List<DoorDefinition> randomDoors = new List<DoorDefinition> (0);
 	//Used by ChunkInstantiatior to define how many doors are needed
 	private int fixedAmount = -1;
@@ -21,6 +19,8 @@ public class DoorManager : DoorProperty {
 	private float globalYOffset = 0f;
 	[SerializeField]
 	private int globalYCornerHeight = 0;
+	[SerializeField]
+	private DoorDefinition draggingDoor = null; //Used by GUI, update preview (working pos) if it's not currently being dragged
 
 	public override void Preview(){
 		UpdateDoors ();
@@ -70,22 +70,37 @@ public class DoorManager : DoorProperty {
 
 	//Updates positions with offset, clamps values
 	private void UpdateDoors(){
-		foreach (DoorDefinition door in doors) {
-			door.Position = AbstractBounds.Corners [door.CornerIndex] + door.Offset;
-			ClampPosition (door);
-			door.RelPosition = door.Position - transform.position;
-			//The doorsize should never be larger thant the actual room
-			doorSize = Mathf.Clamp (doorSize, 1f, AbstractBounds.minSize.y);
+		doors.ForEach (door => UpdateDoor (door));
+	}
+
+	private void UpdateDoor(DoorDefinition door){
+		door.Position = AbstractBounds.Corners [door.CornerIndex] + door.Offset;
+		ClampPosition (door);
+		RoundValues (door);
+
+		door.RelPosition = door.Position - transform.position;
+
+		if (door != draggingDoor) {
+			AdjustWorkingPosition (door);
 		}
+		//The doorsize should never be larger thant the actual room
+		//doorSize = Mathf.Clamp (doorSize, 1f, AbstractBounds.minSize.y);
 	}
 
 	public List<DoorDefinition> RandomDoors{
 		get{
-			areDoorsDirty = false;
 			if (Application.isEditor && SceneUpdater.IsActive && !ProceduralLevel.IsGenerating) {
 				return previewDoors ? doors : new List<DoorDefinition> (0);
 			}
 			return randomDoors;
+		}
+	}
+
+	private void RoundValues(DoorDefinition door){
+		if (door.Direction == Vector3.right || door.Direction == Vector3.left) {
+			door.Position.z = ChunkBoundsHelper.RoundTo (door.Position.z, DoorDefinition.GlobalSize);
+		} else {
+			door.Position.x = ChunkBoundsHelper.RoundTo (door.Position.x, DoorDefinition.GlobalSize);
 		}
 	}
 
@@ -103,15 +118,20 @@ public class DoorManager : DoorProperty {
 			Vector3 clampFilter = VectorAbs (Vector3.Cross (door.Direction, Vector3.up) + Vector3.up);
 			//Clamp on all axis. Depending on the direction the door is facing, one axis' value is going to be discarded using the clampFilter
 			Vector3 clampedPos;
-			clampedPos.x = Clamp (door.Position.x, roomBottomLeft.x, roomTopRight.x, door.Extends.x);
-			clampedPos.y = Clamp (door.Position.y, roomBottomLeft.y, roomTopRight.y, door.Extends.y);
-			clampedPos.z = Clamp (door.Position.z, roomBottomLeft.z, roomTopRight.z, door.Extends.z);
+			clampedPos.x = Clamp (door.Position.x, roomBottomLeft.x, roomTopRight.x, DoorDefinition.GlobalSize);
+			clampedPos.y = Clamp (door.Position.y, roomBottomLeft.y, roomTopRight.y - 0.1f, DoorDefinition.GlobalSize / 2f);
+			clampedPos.z = Clamp (door.Position.z, roomBottomLeft.z, roomTopRight.z, DoorDefinition.GlobalSize);
 			door.Position = Vector3.Scale (clampedPos, clampFilter) + Vector3.Scale (door.Position, VectorAbs (door.Direction));
 		}
 	}
 
 	public void UpdateYOffset(float val){
 		doors.ForEach (d => d.Offset.y = val);
+	}
+
+	public void AdjustWorkingPosition(DoorDefinition doorDefinition){
+		//UpdateDoor (doorDefinition);
+		doorDefinition.WorkingPosition = doorDefinition.Position;
 	}
 
 	//Clamp function that calculated min and max. Border is used to include the doors size into the calculation
@@ -126,11 +146,6 @@ public class DoorManager : DoorProperty {
 		return new Vector3(Mathf.Abs(vec.x), Mathf.Abs(vec.y), Mathf.Abs(vec.z));
 	}
 
-	public bool AreDoorsDirty{
-		get{ return areDoorsDirty; }
-		set{ areDoorsDirty = value; }
-	}
-
 	public int FixedAmount {
 		get {
 			return this.fixedAmount;
@@ -142,6 +157,7 @@ public class DoorManager : DoorProperty {
 
 	public Vector3 RequiredSpace{
 		get{
+			float doorSize = DoorDefinition.GlobalSize;
 			float highestDoorPos = (doors.Count > 0) ? doors.OrderByDescending (d => d.Position.y).FirstOrDefault ().Position.y + doorSize / 2f : doorSize;
 			return new Vector3 (doorSize, highestDoorPos, doorSize);
 		}
@@ -159,6 +175,15 @@ public class DoorManager : DoorProperty {
 	public float GlobalYOffset {
 		get {
 			return this.globalYOffset;
+		}
+	}
+
+	public DoorDefinition DraggingDoor {
+		get {
+			return this.draggingDoor;
+		}
+		set {
+			draggingDoor = value;
 		}
 	}
 }

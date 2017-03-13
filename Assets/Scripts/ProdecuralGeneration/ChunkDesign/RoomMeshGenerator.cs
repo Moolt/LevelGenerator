@@ -387,7 +387,7 @@ public class RoomMeshGenerator : MeshProperty {
 	private void ObtainDoors(){
 		DoorManager doorDefinitions = GetComponent<DoorManager> () as DoorManager;
 		if (doorDefinitions != null) {
-			if (doorDefinitions.AreDoorsDirty || meshData.Doors == null) {
+			if (true) {
 				doors.Clear ();
 				doors.AddRange (doorDefinitions.RandomDoors);
 				meshData.Doors = doors;

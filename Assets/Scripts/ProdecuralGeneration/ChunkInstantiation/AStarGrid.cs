@@ -4,21 +4,19 @@ using UnityEngine;
 using System.Linq;
 
 public class GridPosition{
-	private static AStarGrid grid;
 	private Dictionary<Vector2,GridPosition> adjacentPositions; //Only relevant for hallway mesh
-	private bool isPartOfPath;
+	public bool visitedByAstar = false;
+	private static AStarGrid grid;
 	private Vector3 doorDirection; //Only relevant for hallway mesh
+	private bool isPartOfPath;
 	private Vector2 direction; //hallway mesh
 	private bool isAccessible;
-	private bool markedOnce;
-	public bool shiftedX;
-	public bool shiftedY;
 	private int roomID;
 	private int doorID;
 	public float x;
 	public float y;
-	public bool visitedByAstar = false;
-	public int i, j;
+	public int i; 
+	public int j;
 
 	public GridPosition (float x, float y){
 		InitAdjacentDict ();
@@ -27,8 +25,6 @@ public class GridPosition{
 		direction = Vector2.zero;
 		this.x = x;
 		this.y = y;
-		shiftedX = false;
-		shiftedY = false;
 		isAccessible = true;
 		roomID = -1;
 		doorID = -1;
@@ -59,14 +55,6 @@ public class GridPosition{
 		}
 	}
 
-	public bool HasBeenShifted{
-		get{ return shiftedX || shiftedY; }
-	}
-
-	public bool HasBeenShiftedDir(int direction){
-		return direction == 1 && shiftedX || direction == 0 && shiftedY;
-	}
-
 	public int RoomID {
 		get {
 			return this.roomID;
@@ -83,30 +71,6 @@ public class GridPosition{
 		}
 		set {
 			doorID = value;
-		}
-	}
-
-	public void UnmarkShifted(int direction){
-		shiftedX = direction == 1 ? false : shiftedX;
-		shiftedY = direction == 0 ? false : shiftedY;
-	}
-
-	//0 = horizontal
-	//1 = vertical
-	public void Shift(Vector2 shift, int direction){
-		if (direction == 1) {
-			x = shift.x;
-			shiftedX = true;
-		} else {
-			y = shift.y;
-			shiftedY = true;
-		}
-		markedOnce = true;
-	}
-
-	public bool MarkedOnce {
-		get {
-			return this.markedOnce;
 		}
 	}
 
@@ -174,27 +138,24 @@ public class AStarGrid {
 	private GridPosition[,] grid;
 	private Rect availableSpace;
 	private List<Rect> roomRects;
-	private float padding;
 	private float gridCellSize;
-	private float spacing;
 	private float doorSize;
 
-	public AStarGrid(List<Rect> roomRects, List<RoomTransformation> rooms, float spacing, float doorSize){
+	public AStarGrid(List<Rect> roomRects, List<RoomTransformation> rooms){
 		GridPosition.Grid = this;
-		this.spacing = spacing;
-		this.doorSize = 2f;//doorSize;
-		this.padding = doorSize / 2f;
-		this.gridCellSize = spacing / 2.1f;
-		this.gridCellSize = Mathf.Clamp (gridCellSize, 1f, 100f);
+		this.doorSize = DoorDefinition.GlobalSize;
+		this.gridCellSize = DoorDefinition.GlobalSize;
 		this.roomRects = roomRects;
 		this.rooms = rooms;
 		CalculateSpace();
 		BuildGrid ();
 		SortOut ();
-		Shift ();
+		FindDoorNodes ();
 	}
 
-	private void Shift(){
+	//Iterate through all rooms and their doors and search for their corresponding nodes
+	//Since door node are always inside of the room, they have to be set to accessiable again
+	private void FindDoorNodes(){
 		foreach (RoomTransformation room in rooms) {
 			foreach (DoorDefinition door in room.Doors) {
 				int x = (int)Mathf.Round((door.Position.x - availableSpace.xMin) / gridCellSize);
@@ -202,82 +163,11 @@ public class AStarGrid {
 				grid [x, y].DoorID = door.ID;
 				grid [x, y].DoorDirection = door.Direction;
 				grid [x, y].IsAccessible = true;
-				int gridRoomID = grid [x, y].RoomID;
-
-				grid [x, y].Position = new Vector2 (door.Position.x, door.Position.z);
-				int[] interval = GetInterval(x,y, ClipY(door.Direction));
-
-				bool shiftFinished = false;
-				int i = interval[0];
-				Stack<GridPosition> visitedPositions = new Stack<GridPosition> ();
-
-				while (!shiftFinished) {
-					//Determine whether algorithm iterates horizontally ([2] = 0) or vertically ([2] = 1)
-					GridPosition gridElement = interval [2] == 0 ? grid [i, y] : grid [x, i];
-					visitedPositions.Push (gridElement);
-					//Inaccessable and not inside of a room
-					bool isOutsideLevel = !gridElement.IsAccessible && gridElement.RoomID == -1;
-					bool isInOtherRoom = !gridElement.IsAccessible && gridElement.RoomID != gridRoomID && gridElement.RoomID != -1;
-					bool isOtherDoor = gridElement.IsDoor && gridElement.RoomID != gridRoomID;
-					//bool hasBeenShifted = gridElement.HasBeenShiftedDir (interval [2]);
-					shiftFinished |=  /*|| hasBeenShifted*/ isOtherDoor || isInOtherRoom || isOutsideLevel;
-
-					if (isOtherDoor) {
-						Vector2 endPos = gridElement.Position;
-						Vector2 startPos = grid[x,y].Position;
-						Vector2 mean = (endPos + startPos) * .5f;
-
-						//visitedPositions.Pop ().UnmarkShifted (interval [2]);
-						//visitedPositions.Pop();
-						int elementsToUnmark = visitedPositions.Count;
-						for (int j = 0; j < elementsToUnmark; j++) {
-							GridPosition shiftedPosition = visitedPositions.Pop ();
-							if (!shiftedPosition.IsDoor) {
-								shiftedPosition.Shift (mean, interval [2]);
-							}
-							//visitedPositions.Pop ().UnmarkShifted (interval [2]);
-						}
-					}
-
-					if (shiftFinished) {
-						break;
-					}
-
-					gridElement.IsAccessible = true;
-					gridElement.Shift (ClipY(door.Position), interval[2]);
-
-					i += interval [0] > interval [1] ? -1 : 1;
-					shiftFinished |= i == interval [1];
-				}
 			}
 		}
 	}
 
-	private int[] GetInterval(int x, int y, Vector2 direction){
-		int[] interval = new int[3];
-
-		if (direction == Vector2.left) {
-			interval [0] = x;
-			interval [1] = -1;
-			interval [2] = 0;
-		} else if (direction == Vector2.right) {
-			interval [0] = x;
-			interval [1] = grid.GetLength(0);
-			interval [2] = 0;
-		}
-		else if (direction == Vector2.up) {
-			interval [0] = y;
-			interval [1] = grid.GetLength(1);
-			interval [2] = 1;
-		}
-		else if (direction == Vector2.down) {
-			interval [0] = y;
-			interval [1] = -1;
-			interval [2] = 1;
-		}
-		return interval;
-	}
-
+	//Remove nodes that are either in a room of too far away from any room
 	private void SortOut(){
 		Rect[] inflatedRoomRects = InflateBy (doorSize / 2f);
 		Rect[] invertedRoomRects = InflateByRoomDistance ();
@@ -322,7 +212,8 @@ public class AStarGrid {
 		return inflatedRects.ToArray ();
 	}
 
-	private void BuildGrid(){		
+	private void BuildGrid(){
+		gridCellSize = 2f;
 		int xIterations = (int)(availableSpace.width / gridCellSize);
 		int yIterations = (int)(availableSpace.height / gridCellSize);
 
