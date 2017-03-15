@@ -152,6 +152,8 @@ public class ChunkInstantiator : ScriptableObject{
 	}
 
 	public static void RemoveManualProperties(){
-		manualRemovalCollection.Clear ();
+		if (manualRemovalCollection != null) {
+			manualRemovalCollection.Clear ();
+		}
 	}
 }

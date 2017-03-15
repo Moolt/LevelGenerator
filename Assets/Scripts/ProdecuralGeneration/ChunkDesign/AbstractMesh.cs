@@ -8,7 +8,13 @@ public class AbstractMesh : MeshProperty {
 	public Vector3 extends = Vector3.one;
 	public Material material;
 	public float tiling = 1f;
+	//Cylinder
 	public int iterations = 4;
+	//Terrain
+	public float terrainCellSize = 0.5f;
+	public float terrainScale = 1f;
+	public float terrainElevation = 1f;
+	public bool zeroEdges = true;
 
 	private ProceduralMeshData meshData = new ProceduralMeshData ();
 	private MeshRenderer meshRenderer;
@@ -36,7 +42,13 @@ public class AbstractMesh : MeshProperty {
 		meshData.Extends = extends;
 		meshData.Tiling = tiling;
 		meshData.MeshShape = meshShape;
+		//Mesh Properties
 		meshData.Iterations = iterations;
+		meshData.TerrainCellSize = terrainCellSize;
+		meshData.TerrainScale = terrainScale;
+		meshData.TerrainElevation = terrainElevation;
+		meshData.ZeroEdges = zeroEdges;
+		//Mesh Generation
 		meshData.BuildMesh ();
 		mesh.vertices = meshData.Vertices;
 		mesh.triangles = meshData.Triangles;

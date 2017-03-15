@@ -74,18 +74,6 @@ public class RoomTransformation{
 		rect.position = pos;
 	}
 
-	public GameObject Chunk {
-		get {
-			return this.chunk;
-		}
-	}
-
-	public Rect Rect {
-		get {
-			return this.rect;
-		}
-	}
-
 	public HallwayMeta FindMatchingDoors(RoomTransformation otherRoom){
 		float distance = float.MaxValue;
 		Vector3 thisPosition = new Vector3 (rect.x, 0f, rect.y);
@@ -106,12 +94,6 @@ public class RoomTransformation{
 		availableDoors.Remove (hallwayMeta.StartDoor);
 		otherRoom.availableDoors.Remove (hallwayMeta.EndDoor);
 		return hallwayMeta;
-	}
-
-	public List<DoorDefinition> Doors {
-		get {
-			return this.doors;
-		}
 	}
 
 	//Is neccessary to calculate the furthest distance (see below)
@@ -145,11 +127,36 @@ public class RoomTransformation{
 			return new Vector3 (rect.center.x, FindYPosition(), rect.center.y);
 		}
 	}
+
+	public List<RoomTransformation> Connections {
+		get {
+			return this.connections;
+		}
+	}
+
+	public GameObject Chunk {
+		get {
+			return this.chunk;
+		}
+	}
+
+	public Rect Rect {
+		get {
+			return this.rect;
+		}
+	}
+
+	public List<DoorDefinition> Doors {
+		get {
+			return this.doors;
+		}
+	}
 }
 
 public class ProceduralLevel{
 	private static bool isGenerating = false;
 	private DebugData debugData; //Meta data created during the process. Used to display in editor
+	private LevelMetadata levelMetadata; //Output of the generation process
 	private RoomNode rootnode; //Rootnode of the level graph
 	private ChunkHelper helper; //Helps searching Chunks
 	private ChunkInstantiator chunkInstantiator;
@@ -176,9 +183,9 @@ public class ProceduralLevel{
 		this.chunkInstantiator = ChunkInstantiator.Instance;
 		this.hallwayMeta = new List<HallwayMeta> ();
 		this.positionMeta = new List<RoomTransformation>();
+		this.levelMetadata = new LevelMetadata ();
 
 		GenerateLevel (graph);
-		ChunkInstantiator.RemoveManualProperties ();
 		if (!isConstraintError) {
 			ApplyTransformation ();
 			CreateHallways ();
@@ -186,6 +193,7 @@ public class ProceduralLevel{
 			HandleRollback ();
 		}
 		helper.CleanUp ();
+		ChunkInstantiator.RemoveManualProperties ();
 		isGenerating = false;
 	}
 
@@ -268,18 +276,21 @@ public class ProceduralLevel{
 
 	//Applies the Room positions to the instances.
 	private void ApplyTransformation(){
+		positionMeta.ForEach (t => t.DeflateRect ());
 		foreach (RoomTransformation transformation in positionMeta) {
 			//Usually door's positions are updated during editor time, but not during generation time
 			//Since the rooms have been placed and then separated, the door positions have to be recalculated
 			//For the hallway generation.
 			transformation.UpdateDoorPositions ();
 			Vector3 position = transformation.Position;
+			AddLevelMetadataRoom (transformation);
 			transformation.Chunk.transform.position = position;
 		}
+		levelMetadata.RoomCount = positionMeta.Count;
 	}
 
 	private void CreateHallways(){
-		List<Rect> roomRects = GetDeflatedRoomRects ();
+		List<Rect> roomRects = GetRoomRects ();
 		AStarGrid grid = new AStarGrid (roomRects, positionMeta);
 		debugData.Grid = grid.Grid;
 		HallwayMeshGenerator meshGenerator = new HallwayMeshGenerator (grid, hallwayTiling);
@@ -288,6 +299,7 @@ public class ProceduralLevel{
 			HallwayAStar routing = new HallwayAStar (hw.StartDoor, hw.EndDoor, grid);
 			List<Square> path = routing.BuildPath ();
 			debugData.AddPath (path);
+			AddLevelMetadataPath (path);
 			meshGenerator.AddPath (path);
 		}
 		Mesh mesh = meshGenerator.GenerateMesh ();
@@ -300,8 +312,7 @@ public class ProceduralLevel{
 		hallways.AddComponent<MeshCollider> ();
 	}
 
-	private List<Rect> GetDeflatedRoomRects(){
-		positionMeta.ForEach (t => t.DeflateRect ());
+	private List<Rect> GetRoomRects(){		
 		List<Rect> rects = positionMeta.Select (t => t.Rect).ToList ();
 		return rects;
 	}
@@ -361,6 +372,22 @@ public class ProceduralLevel{
 	public static bool IsGenerating {
 		get {
 			return isGenerating;
+		}
+	}
+
+	private void AddLevelMetadataPath(List<Square> path){
+		List<Vector3> _path = new List<Vector3> ();
+		path.ForEach (s => _path.Add (new Vector3 (s.Position.x, DoorDefinition.GlobalSize, s.Position.y)));
+		levelMetadata.Paths.Add (_path.ToArray ());
+	}
+
+	private void AddLevelMetadataRoom(RoomTransformation roomTransformation){
+		levelMetadata.Rooms.Add (new RoomInstanceMeta (roomTransformation));
+	}
+
+	public LevelMetadata LevelMetadata {
+		get {
+			return this.levelMetadata;
 		}
 	}
 }

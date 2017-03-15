@@ -1,6 +1,6 @@
 ﻿public enum GizmoPreviewState { HIDDEN, ONSELECTION, ALWAYS }
 //Used by AbstractShape
-public enum MeshShape{ CUBE, RAMP, TRIANGULAR, CYLINDER, PLANE }
+public enum MeshShape{ CUBE, RAMP, TRIANGULAR, CYLINDER, PLANE, TERRAIN }
 //Used by AbstractProperty
 public enum PropertyType { INSTANTIATING, TRANSFORMING, MESHGENERATION };
 //Used by AbstractScaling

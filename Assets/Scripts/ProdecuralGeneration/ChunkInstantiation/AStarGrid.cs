@@ -294,6 +294,10 @@ public class AStarGrid {
 		return new Square (grid [i, j].Position, new int[]{ i, j });
 	}
 
+	public bool AreBothDoors(Square one, Square two){
+		return grid [one.GridX, one.GridY].IsDoor && grid [two.GridX, two.GridY].IsDoor;
+	}
+
 	//Removes the Y-Coordinate from a Vec3 and returns the resulting Vec2
 	private Vector2 ClipY(Vector3 vec){
 		return new Vector2(vec.x, vec.z);

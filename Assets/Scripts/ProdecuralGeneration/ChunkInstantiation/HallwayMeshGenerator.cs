@@ -18,8 +18,6 @@ public class HallwaySegment{
 	//The size of the segment in the direction stored as Vector2.
 	//Always positive values, used for mesh generation
 	private Dictionary<Vector2, float> size;
-	//Reference to the hallwayGenerator to add filler segments, if neccessary
-	private HallwayMeshGenerator generator;
 	private GridPosition gridPosition;
 	//The results of the generation process are the triangles and vertices
 	private List<int>[] triangles;
@@ -31,12 +29,11 @@ public class HallwaySegment{
 		height = doorSize * 2f;
 	}
 
-	public HallwaySegment (GridPosition gridPosition, HallwayMeshGenerator generator): this(){
+	public HallwaySegment (GridPosition gridPosition): this(){
 		InitTriangleMapping ();
 		this.gridPosition = gridPosition;
 		this.center = gridPosition.Position;
 		this.adjacent = gridPosition.AdjacentPositions;
-		this.generator = generator;
 		size = CreateSizeDict ();
 		CalculateBounds ();
 	}
@@ -282,7 +279,7 @@ public class HallwayMeshGenerator {
 			foreach (Square square in squares) {
 				GridPosition gridPosition = grid.Grid [square.GridX, square.GridY];
 				SearchForIndirectAdjacents (gridPosition);
-				HallwaySegment newSegment = new HallwaySegment (gridPosition, this);
+				HallwaySegment newSegment = new HallwaySegment (gridPosition);
 				if (!hallwaySegments.Contains (newSegment)) {
 					hallwaySegments.Add (newSegment);
 				}
@@ -290,6 +287,8 @@ public class HallwayMeshGenerator {
 		}
 	}
 
+	//Actual adjascents, meaning adjascent positions on the same path, were computed before when creating the paths in the astar algorithm
+	//Here the positions of _all_ paths are compared
 	private void SearchForIndirectAdjacents(GridPosition gridPosition){
 		Vector2[] directions = new Vector2[]{ Vector2.up, Vector2.right, Vector2.down, Vector2.left };
 		int[] indices = new int[]{ 0, 1, 1, 0, 0, -1, -1, 0 };
@@ -301,16 +300,6 @@ public class HallwayMeshGenerator {
 		}
 	}
 
-	//Create four vertices each square
-
-	private List<Vector3> ComputeVertices(List<Square> squares){
-		/*List<Vector3>
-		foreach (Square square in squares) {
-			
-		}*/
-		return null;
-	}
-
 	public void AddPath(List<Square> path){
 		hallwayPaths.Add (path);
 	}
@@ -320,15 +309,5 @@ public class HallwayMeshGenerator {
 			GenerateMesh ();
 			return mesh; 
 		}
-	}
-
-	public void AddHallwaySegment(HallwaySegment segment){
-		if (!hallwaySegments.Contains (segment)) {
-			hallwaySegments.Add (segment);
-		}
-	}
-
-	public void RemoveHallwaySegment(HallwaySegment segment){
-		hallwaySegments.Remove (segment);
 	}
 }

@@ -90,7 +90,7 @@ public class ChunkHelperProgress{
 /// Of chunks to instantiate is in here. Also evaluates all constraints.
 /// </summary>
 public class ChunkHelper{
-	private static string path = "Chunks";
+	//private static string path = "Chunks";
 	private List<ChunkMetadata> chunkMetaData;
 	private LevelGeneratorPreset preset; //Preset as defined in the GUI or XML
 	private ChunkHelperProgress progress; //Stores how many chunks of whitch types have been created
@@ -107,7 +107,7 @@ public class ChunkHelper{
 	public ChunkHelper(LevelGeneratorPreset preset){
 		this.preset = preset;
 		chunkMetaData = new List<ChunkMetadata> ();
-		BuildMetadata (Resources.LoadAll<GameObject> (path));
+		BuildMetadata (Resources.LoadAll<GameObject> (GlobalPaths.RelativeChunkPath));
 		this.progress = new ChunkHelperProgress (preset);
 	}
 
@@ -189,7 +189,7 @@ public class ChunkHelper{
 	public static string[] GlobalUserTags{
 		get{
 			List<string> globalUserTags = new List<string> ();
-			List<GameObject> chunks = Resources.LoadAll<GameObject> (path).ToList();
+			List<GameObject> chunks = Resources.LoadAll<GameObject> (GlobalPaths.RelativeChunkPath).ToList();
 			List<ChunkTags> chunkTags = new List<ChunkTags> ();
 
 			chunks.Where (c => c.GetComponent<ChunkTags> () != null)
@@ -207,11 +207,5 @@ public class ChunkHelper{
 
 	public int MaxDoors(){
 		return 0;
-	}
-
-	public static string Path {
-		get {
-			return path;
-		}
 	}
 }

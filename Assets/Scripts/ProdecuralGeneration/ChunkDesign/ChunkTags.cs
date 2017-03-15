@@ -266,4 +266,8 @@ public class ChunkTags : TagProperty {
 			autoUpdate = value;
 		}
 	}
+
+	public override RemovalTime RemovalTime{
+		get { return RemovalTime.MANUAL; }
+	}
 }

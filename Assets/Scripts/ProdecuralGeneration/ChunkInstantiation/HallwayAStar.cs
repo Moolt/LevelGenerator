@@ -4,26 +4,29 @@ using System.Collections.Generic;
 using UnityEditor;
 using System.Linq;
 
+//Used by the AStar algorithm to navigate on
+//Based on the AStar grid, but is one abstraction layer above it
+//Implements two extra heuristics making paths more straight and have a preference of blending in with other paths
 public class Square{
 	private static AStarGrid grid;
-	protected Rect rect;
-	private float estimatedMovementCost;
-	private float currentMovementCost;
-	private Square parent;
-	private static float size;
-	private int[] gridPos;
-	private Vector2 direction;
-	private Vector2 position;
+	private float estimatedMovementCost; //Calculated with Manhattan Heuristic
+	private float currentMovementCost; //The current steps it takes to get to this square, might change as parent changes
+	private Square parent; //Always an adjascent Square, might change
+	private int[] gridPos; //Position in AStarGrid
+	private Vector2 direction; //Direction, computed by delta with parent Square
+	private Vector2 position; //Pixel position in world space
 
 	public Square(Vector2 position, int[] gridPos){
-		this.position = position;
 		estimatedMovementCost = 0f;
 		currentMovementCost = 0f;
-		parent = null;
-		this.gridPos = gridPos;
 		direction = Vector2.zero;
+		this.position = position;
+		this.gridPos = gridPos;
+		parent = null;
 	}
 
+	//Calculate the direction by calculating the x or y difference
+	//Will result in right, up, down or left Vector2
 	private Vector2 DetermineDirection(Square newParent){
 		int thisX = gridPos [0];
 		int thisY = gridPos [1];
@@ -35,10 +38,12 @@ public class Square{
 		}
 	}
 
+	//If the parents direction differs from this direction, this square will have a higher cost and is more likely
+	//Not to be considered as a candidate. This will result in straighter paths
 	public float TurningPenalty(Square _parent){
 		if (_parent != null) {
 			Vector2 testDirection = DetermineDirection (_parent);
-			return _parent.direction == testDirection ? 0f : 4f;
+			return _parent.direction == testDirection ? 0f : 5f;
 		}
 		return 0f;
 	}
@@ -46,7 +51,7 @@ public class Square{
 	public float TurningPenalty(){
 		return TurningPenalty (parent);
 	}
-
+		
 	public float Score{
 		get{
 			return estimatedMovementCost + currentMovementCost + TurningPenalty (parent);
@@ -80,12 +85,6 @@ public class Square{
 		}
 		set {
 			position = value;
-		}
-	}
-
-	public Rect Rect {
-		get {
-			return this.rect;
 		}
 	}
 
@@ -123,8 +122,10 @@ public class Square{
 		}
 	}
 
+	//Returns the movement cost with a potential parent
+	//It will be set to the new parent (externally), if the resulting score is lower thant the current
 	public int MovementCostWithParent(Square _parent){
-		if (parent != null && Vector2.Distance (position, _parent.position) < 1f && grid.Grid[GridX, GridY].IsPartOfPath)
+		if (parent != null && Vector2.Distance (position, _parent.position) <= DoorDefinition.GlobalSize * 1f && grid.Grid[GridX, GridY].IsPartOfPath)
 			return 1;
 
 		return 3;
@@ -157,18 +158,18 @@ public class HallwayAStar{
 
 	private DoorDefinition startDoor;
 	private DoorDefinition endDoor;
-	private List<Square> openList;
-	private List<Square> closedList;
+	private List<Square> openList; //List of squares, that are candidates for the final path
+	private List<Square> closedList; 
 	private List<Square> finalPath;
 	private AStarGrid grid;
 
 	public HallwayAStar (DoorDefinition start, DoorDefinition end, AStarGrid grid){
-		Square.Grid = grid;
-		this.startDoor = start;
-		this.endDoor = end;
 		this.openList = new List<Square> ();
 		this.closedList = new List<Square> ();
 		this.finalPath = new List<Square> ();
+		this.startDoor = start;
+		Square.Grid = grid;
+		this.endDoor = end;
 		this.grid = grid;
 	}
 
@@ -239,17 +240,20 @@ public class HallwayAStar{
 		}
 	}
 
+	//Inserts an element in the openlist and resorts it. The lowest cost square will always be the first element in the list
 	private void InsertInOpenSteps(Square step){
 		openList.Add (step);
 		openList = openList.OrderBy (s => s.Score).ToList ();
 	}
 
+	//Using the manhattan distance as heuristic
 	private float ComputeHScore(Square start, Square end){
 		float width = Mathf.Abs(Mathf.Max (end.Position.x, start.Position.x) - Mathf.Min (end.Position.x, start.Position.x));
 		float height = Mathf.Abs(Mathf.Max (end.Position.y, start.Position.y) - Mathf.Min (end.Position.y, start.Position.y));
 		return width + height;
 	}
 
+	//Resturns adjascent squares and sorts out inacsessable squares
 	private List<Square> AdjacentSquares(Square square){
 		List<Square> squares = new List<Square> ();
 		squares.Add(grid.GetSquareInGrid(square.GridX + 1, square.GridY));
@@ -257,9 +261,10 @@ public class HallwayAStar{
 		squares.Add(grid.GetSquareInGrid(square.GridX, square.GridY - 1));
 		squares.Add(grid.GetSquareInGrid(square.GridX, square.GridY + 1));
 
-		return squares.Where (s => s != null).ToList();
+		return squares.Where (s => s != null && !grid.AreBothDoors(square, s)).ToList();
 	}
 
+	//Remove the Y coordiante of the vec3 and return a vec2
 	private Vector2 ClipY(Vector3 vec){
 		return new Vector2 (vec.x, vec.z);
 	}
@@ -277,11 +282,5 @@ public class HallwayAStar{
 	//The position of the end door will always be a bit off.
 	private bool SquarePositionEquals(Square a, Square b){
 		return Vector2.Distance (a.Position, b.Position) < 0.1f;
-	}
-
-	private void RoundByVal(ref Vector2 vec, float val){
-		vec.x = vec.x < 0 ? Mathf.Ceil (vec.x / val) : Mathf.Floor (vec.x / val);
-		vec.y = vec.y < 0 ? Mathf.Ceil (vec.y / val) : Mathf.Floor (vec.y / val);
-		vec *= val;
 	}
 }

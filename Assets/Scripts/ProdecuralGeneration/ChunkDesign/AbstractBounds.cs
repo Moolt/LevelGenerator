@@ -39,7 +39,7 @@ public class ChunkBoundsHelper{
 	public static Vector3 RoundVector(Vector3 input){
 		float factor = DoorDefinition.GlobalSize * 2f;
 		input.x = Mathf.Max (factor / 2f, RoundTo (input.x, factor));
-		input.y = Mathf.Max (factor / 2f, RoundTo (input.y, factor));
+		input.y = Mathf.Max (factor / 2f, RoundTo (input.y, factor / 4f));
 		input.z = Mathf.Max (factor / 2f, RoundTo (input.z, factor));
 		return input;
 	}
