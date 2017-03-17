@@ -177,7 +177,9 @@ public class ChunkHelper{
 	//Returns all chunks that allow the specified amount of doors
 	private List<ChunkMetadata> FilterByDoorCount(int doorCount){
 		return (from meta in chunkMetaData
-		        where meta.DoorManager.minCount <= doorCount && meta.DoorManager.maxCount >= doorCount
+		        where meta.DoorManager.minCount <= doorCount &&
+		            meta.DoorManager.maxCount >= doorCount &&
+		            meta.Chunk.name != GlobalPaths.NewChunkName
 		        select meta).ToList ();
 	}
 

@@ -250,7 +250,7 @@ CGINCLUDE
 
 		o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
 
-		o.screenPos = ComputeScreenPos(o.pos);
+		o.screenPos = ComputeNonStereoScreenPos(o.pos);
 		
 		o.normalInterpolator.xyz = nrml;
 		

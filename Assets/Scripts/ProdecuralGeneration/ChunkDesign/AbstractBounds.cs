@@ -58,6 +58,7 @@ public class AbstractBounds : TransformingProperty {
 	public float lerp;
 	public bool keepAspectRatio;
 	public AbstractBounds adaptToParent = null;
+	[SerializeField]
 	public ChunkBoundsHelper chunkBounds;
 
 	[SerializeField]

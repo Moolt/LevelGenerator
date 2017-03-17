@@ -57,9 +57,11 @@ public class ChunkInstantiator : ScriptableObject{
 	private void PushChildrenToStack(GameObject parent){		
 		Stack<Transform> children = new Stack<Transform>();
 
-		foreach (Transform t in parent.transform) {
-			if (t.gameObject.activeSelf) {
-				children.Push (t);
+		if (parent != null) {
+			foreach (Transform t in parent.transform) {
+				if (t.gameObject.activeSelf) {
+					children.Push (t);
+				}
 			}
 		}
 
@@ -77,7 +79,7 @@ public class ChunkInstantiator : ScriptableObject{
 		}
 
 		foreach (AbstractProperty property in properties) {
-			if(!property.IsDirty){
+			if(!property.IsDirty && !property.HasBeenDeleted){
 				if (processType == ProcessType.GENERATE || processType == ProcessType.INEDITOR) {
 					property.Generate ();
 					HandleGeneratedObjects (property); //Add generated objs to work stack, if there are any

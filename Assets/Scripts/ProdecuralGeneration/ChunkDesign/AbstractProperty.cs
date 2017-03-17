@@ -6,7 +6,7 @@ abstract public class AbstractProperty : MonoBehaviour {
 	private bool isDirty = false;
 	private ICollection<GameObject> generatedObjects = new List<GameObject> ();
 	private GizmoPreviewState previewState = GizmoPreviewState.ONSELECTION;
-
+	private bool hasBeenDeleted = false;
 	//Dirty flag used for components with delayed removal.
 	//Helps the generator to never execute a component twice
 	public bool IsDirty { get { return isDirty; } set { isDirty = value; } }
@@ -76,6 +76,15 @@ abstract public class AbstractProperty : MonoBehaviour {
 	public bool MeshFound(){
 		return PreviewMesh != null && PreviewMesh.sharedMesh != null;
 	}
+
+	public bool HasBeenDeleted {
+		get {
+			return this.hasBeenDeleted;
+		}
+		set {
+			hasBeenDeleted = value;
+		}
+	}
 }
 
 abstract public class ValueProperty : AbstractProperty{
@@ -129,6 +138,16 @@ abstract public class TagProperty : AbstractProperty{
 
 	public override RemovalTime RemovalTime{
 		get { return RemovalTime.MANUAL; }
+	}
+}
+
+abstract public class ConditionalProperty : AbstractProperty{
+	public override float ExecutionOrder{
+		get { return 0.1f; }
+	}
+
+	public override RemovalTime RemovalTime{
+		get { return RemovalTime.INSTANTLY; }
 	}
 }
 

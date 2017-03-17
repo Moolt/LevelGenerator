@@ -85,12 +85,12 @@ public class ChunkManagerWindow : EditorWindow {
 		DestroyOldCopy (); //Remove old generated chunk
 		SetChunkActive (true); //Has to be active or else the copy could be inactive, too
 		MostRecentCopy = (GameObject)GameObject.Instantiate (OriginalChunk, OriginalChunk.transform.position , Quaternion.identity);
-		MostRecentCopy.tag = "ChunkCopy";
 		SetChunkActive (false);
 
 		ChunkInstantiator generator = ChunkInstantiator.Instance;
 		generator.ProcessType = ProcessType.INEDITOR;
 		generator.InstantiateChunk (MostRecentCopy);
+		MostRecentCopy.tag = "ChunkCopy";
 		durationMillis = DateTime.Now.Millisecond - startMillis;
 	}
 
@@ -125,7 +125,7 @@ public class ChunkManagerWindow : EditorWindow {
 		Restore ();
 		ShowSaveFirstDialog ();
 		DestroyImmediate (OriginalChunk, true);
-		UnityEngine.Object newChunkPrefab = Resources.Load (GlobalPaths.RelativeChunkPath + "/NewChunk");
+		UnityEngine.Object newChunkPrefab = Resources.Load (GlobalPaths.RelativeChunkPath + "/" + GlobalPaths.NewChunkName);
 		if (newChunkPrefab != null) {
 			OriginalChunk = (GameObject)GameObject.Instantiate (newChunkPrefab);
 			SceneUpdater.UpdateScene ();
@@ -144,7 +144,6 @@ public class ChunkManagerWindow : EditorWindow {
 				Debug.Log (dialogPath);
 				PrefabUtility.CreatePrefab (dialogPath, OriginalChunk, ReplacePrefabOptions.ConnectToPrefab);
 			}
-
 		} else {
 			EditorUtility.DisplayDialog("No chunk found", "There is no GameObject with the tag \"Chunk\" in your scene or it is set inactive", "OK");
 		}
@@ -169,8 +168,8 @@ public class ChunkManagerWindow : EditorWindow {
 			DestroyImmediate (OriginalChunk, true);
 			OriginalChunk = null;
 			MostRecentCopy = null;
-			OriginalChunk = (GameObject)GameObject.Instantiate (Resources.Load (filePath));
-			//OriginalChunk = (GameObject) PrefabUtility.InstantiatePrefab (Resources.Load (filePath));
+			//OriginalChunk = (GameObject)GameObject.Instantiate (Resources.Load (filePath));
+			OriginalChunk = (GameObject) PrefabUtility.InstantiatePrefab (Resources.Load (filePath));
 			OriginalChunk.transform.position = Vector3.zero;
 			//PrefabUtility.DisconnectPrefabInstance(OriginalChunk);
 			SceneUpdater.UpdateScene ();

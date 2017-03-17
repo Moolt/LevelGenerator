@@ -136,4 +136,16 @@ public class AuroraFirstPersonController : MonoBehaviour {
 
 		//body.AddForceAtPosition (characterController.velocity * 0.1f, hit.point, ForceMode.Impulse);
 	}
+
+	public bool IsWalking {
+		get {
+			return previousMovement.magnitude > 0f;
+		}
+	}
+
+	public bool JumpTriggered {
+		get {
+			return this.jumpTriggered;
+		}
+	}
 }
