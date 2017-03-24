@@ -244,7 +244,7 @@ public class RoomMeshData{
 		foreach (DoorDefinition door in doors) {
 			if (door.Direction == direction) {
 				Vector2 pos2D = Vec3ToVec2 (door.RelPosition, direction);
-				Vector2 size2D = Vec3ToVec2 (door.Size, direction);
+				Vector2 size2D = Vec3ToVec2 (DoorDefinition.GlobalSize * Vector3.one, direction);
 				pos2D -= size2D * .5f;
 				doorRects.Add (new Rect (pos2D, size2D));
 			}
@@ -390,6 +390,7 @@ public class RoomMeshGenerator : MeshProperty {
 			if (true) {
 				doors.Clear ();
 				doors.AddRange (doorDefinitions.RandomDoors);
+				//doors.ForEach (d => Debug.Log (d.RelPosition));
 				meshData.Doors = doors;
 			}
 		}

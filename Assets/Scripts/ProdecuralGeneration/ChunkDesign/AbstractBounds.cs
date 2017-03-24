@@ -52,7 +52,7 @@ public class ChunkBoundsHelper{
 [DisallowMultipleComponent]
 public class AbstractBounds : TransformingProperty {
 	public Vector3 minSize = Vector3.one;
-	public Vector3 maxSize = Vector3.one * 2f;
+	public Vector3 maxSize = Vector3.one * DoorDefinition.GlobalSize * 2f;
 	public bool hasFixedSize;
 	[Range(0f, 1f)]
 	public float lerp;

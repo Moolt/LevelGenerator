@@ -25,7 +25,7 @@ public class ScatteredArray : MultiplyingProperty {
 		for (int i = 0; i < positions.Length; i++) {
 			if (MeshFound()) {
 				Gizmos.color = Color.black;
-				Gizmos.DrawWireMesh (PreviewMesh.sharedMesh, positions [i]);
+				Gizmos.DrawWireMesh (PreviewMesh.sharedMesh, positions [i], Quaternion.identity, PreviewMesh.gameObject.transform.localScale);
 			} else {
 				Gizmos.color = Color.black;
 				Gizmos.DrawWireCube(positions[i], new Vector3(1f, 1f, 1f));
@@ -40,8 +40,8 @@ public class ScatteredArray : MultiplyingProperty {
 	protected override Vector3[] CalculatePositions(){
 		calculatedCount = 0;
 		ICollection<Vector3> positions = new List<Vector3> ();
-		float meshSize = (MeshFound()) ? PreviewMesh.sharedMesh.bounds.extents.magnitude : 1f;
-		Vector3 meshBounds = (MeshFound()) ? PreviewMesh.sharedMesh.bounds.size : new Vector3(1f, 1f, 1f);
+		float meshSize = (MeshFound ()) ? Vector3.Scale (PreviewMesh.sharedMesh.bounds.size, PreviewMesh.gameObject.transform.localScale).magnitude * .5f : 1f;
+		Vector3 meshBounds = (MeshFound()) ? Vector3.Scale (PreviewMesh.sharedMesh.bounds.extents, PreviewMesh.gameObject.transform.localScale) : new Vector3(1f, 1f, 1f);
 		int producedPositions = 0;
 		bool done = false;
 
@@ -132,7 +132,7 @@ public class ScatteredArray : MultiplyingProperty {
 	}
 
 	//Overlapping is handled using positions and actual mesh bounds
-	private bool IsOverlapping(Vector3 meshExtends, Vector2 newPos, ICollection<Vector3> existingPos){		
+	private bool IsOverlapping(Vector3 meshExtends, Vector2 newPos, ICollection<Vector3> existingPos){
 		Vector2 meshSize = new Vector2 (meshExtends.x, meshExtends.z);
 		//Spacing is handled by adding the space onto the meshSize
 		meshSize.x += spacing;

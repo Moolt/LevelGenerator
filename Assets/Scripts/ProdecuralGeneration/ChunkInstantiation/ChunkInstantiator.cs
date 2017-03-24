@@ -8,6 +8,7 @@ public class ChunkInstantiator : ScriptableObject{
 	//There may  still be dependencies to transforming objects. Therefore they are destroyed last.
 	private ICollection<AbstractProperty> delayedRemovalCollection;
 	private static ICollection<AbstractProperty> manualRemovalCollection;
+	private static ICollection<GameObject> gameObjectRemoval;
 	private Stack<GameObject> workStack;
 	//Differentiate between in editor preview and actual generation
 	private ProcessType processType;
@@ -21,7 +22,7 @@ public class ChunkInstantiator : ScriptableObject{
 	//3. Sort the list depending on their priorities (Instantiating, Transforming, MeshGen)
 	//4. Execute the components
 
-	public void InstantiateChunk(GameObject chunk){
+	public void InstantiateChunk(GameObject chunk, bool setStatic){
 		Init ();
 		workStack.Push (chunk);
 		//chunk.tag = "Untagged";
@@ -34,19 +35,22 @@ public class ChunkInstantiator : ScriptableObject{
 		};
 
 		if (processType == ProcessType.GENERATE || processType == ProcessType.INEDITOR) {
-			CleanUp (); //Don't remove properties on preview
+			HandleDelayedRemoval (); //Don't remove properties on preview
 		}
+		RemoveRegisteredGameObjects();
+		//Set static improves performance, but also kicks off very hardware demanding processes inside of unity
+		chunk.isStatic = setStatic;
 	}
 
 	//Used by the Level Generator in order to dictate the amount of doors for a chunk
-	public void InstantiateChunk(GameObject chunk, int doorAmount){
+	public void InstantiateChunk(GameObject chunk, int doorAmount, bool isStatic){
 		DoorManager doorManager = chunk.GetComponent<DoorManager> ();
 
 		if (doorManager != null) {
 			doorManager.FixedAmount = doorAmount;
 		}
 
-		InstantiateChunk (chunk);
+		InstantiateChunk (chunk, isStatic);
 	}
 
 	private void Init(){
@@ -79,8 +83,8 @@ public class ChunkInstantiator : ScriptableObject{
 		}
 
 		foreach (AbstractProperty property in properties) {
-			if(!property.IsDirty && !property.HasBeenDeleted){
-				if (processType == ProcessType.GENERATE || processType == ProcessType.INEDITOR) {
+			if(property != null && !property.IsDirty && !property.HasBeenDeleted){
+				if (processType == ProcessType.GENERATE || processType == ProcessType.INEDITOR || ProceduralLevel.IsGenerating) {
 					property.Generate ();
 					HandleGeneratedObjects (property); //Add generated objs to work stack, if there are any
 					HandlePropertyRemoval (property); //Remove component after execution
@@ -129,10 +133,9 @@ public class ChunkInstantiator : ScriptableObject{
 	}
 
 	//Remove all components with delayed removal
-	private void CleanUp(){
-		foreach (AbstractProperty property in delayedRemovalCollection) {
-			DestroyImmediate (property);
-		}
+	private void HandleDelayedRemoval(){
+		delayedRemovalCollection.ToList ().ForEach (d => DestroyImmediate (d));
+		delayedRemovalCollection.Clear ();
 	}
 
 	public ProcessType ProcessType {
@@ -155,7 +158,26 @@ public class ChunkInstantiator : ScriptableObject{
 
 	public static void RemoveManualProperties(){
 		if (manualRemovalCollection != null) {
+			manualRemovalCollection.ToList ().ForEach (m => DestroyImmediate (m));
 			manualRemovalCollection.Clear ();
 		}
+	}
+
+	public static void RegisterForRemoval(GameObject gameobject){
+		if (gameObjectRemoval == null) {
+			gameObjectRemoval = new List<GameObject> ();
+		}
+		gameObjectRemoval.Add (gameobject);
+	}
+
+	private void RemoveRegisteredGameObjects(){
+		if (gameObjectRemoval != null) {
+			gameObjectRemoval.ToList ().ForEach (g => DestroyImmediate (g));
+			gameObjectRemoval.Clear ();
+		}
+	}
+
+	public void PushToWorkStack(GameObject newObject){
+		workStack.Push (newObject);
 	}
 }

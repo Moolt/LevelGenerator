@@ -294,7 +294,7 @@ public class HallwayMeshGenerator {
 		int[] indices = new int[]{ 0, 1, 1, 0, 0, -1, -1, 0 };
 		for (int i = 0; i < 4; i++) {
 			GridPosition adjacent = grid.Grid [gridPosition.i + indices [i * 2], gridPosition.j + indices [i * 2 + 1]];
-			if (adjacent.IsPartOfPath && gridPosition.AdjacentPositions[directions[i]] == null && Vector2.Distance (gridPosition.Position, adjacent.Position) <= DoorDefinition.GlobalSize) {
+			if (adjacent.IsPartOfPath && gridPosition.AdjacentPositions[directions[i]] == null && Vector2.Distance (gridPosition.Position, adjacent.Position) <= DoorDefinition.GlobalSize * 2f) {
 				gridPosition.AddAdjacent (directions [i], adjacent);
 			}
 		}

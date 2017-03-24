@@ -16,7 +16,7 @@ public static class SceneUpdater {
 			generator.ProcessType = ProcessType.PREVIEW;
 
 			if (chunk != null) {
-				generator.InstantiateChunk (chunk);
+				generator.InstantiateChunk (chunk, false);
 
 				HandleGizmoVisibility ();
 			}

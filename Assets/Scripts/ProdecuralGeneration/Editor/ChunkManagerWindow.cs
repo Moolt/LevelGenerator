@@ -89,7 +89,7 @@ public class ChunkManagerWindow : EditorWindow {
 
 		ChunkInstantiator generator = ChunkInstantiator.Instance;
 		generator.ProcessType = ProcessType.INEDITOR;
-		generator.InstantiateChunk (MostRecentCopy);
+		generator.InstantiateChunk (MostRecentCopy, false);
 		MostRecentCopy.tag = "ChunkCopy";
 		durationMillis = DateTime.Now.Millisecond - startMillis;
 	}

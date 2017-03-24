@@ -36,18 +36,6 @@ public class DoorManager : DoorProperty {
 		fixedAmount = -1;
 	}
 
-	private void ChooseFixedAmount(int amount){
-		randomDoors.Clear ();
-		List<DoorDefinition> allDoors = new List<DoorDefinition> (doors);
-
-		for (int i = 0; i < amount; i++) {
-			int randomIndex = (int)Mathf.Round ((allDoors.Count - 1) * Random.value);
-			DoorDefinition randomDoor = allDoors [randomIndex];
-			randomDoors.Add (randomDoor);
-			allDoors.Remove (randomDoor);
-		}
-	}
-
 	private void ChooseRandomDoors(int min, int max){
 		randomDoors.Clear ();
 		List<DoorDefinition> allDoors = new List<DoorDefinition> ();

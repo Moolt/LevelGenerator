@@ -98,7 +98,7 @@ public class AbstractValue : ValueProperty {
 	//For color, a random color from the list is being returned
 	private object GetRandomValue(){
 		//Randomize the seed when in editor mode, but not durin generation process
-		if (Application.isEditor && SceneUpdater.IsActive) {
+		if (Application.isEditor && SceneUpdater.IsActive && !ProceduralLevel.IsGenerating) {
 			UnityEngine.Random.InitState (System.DateTime.Now.Millisecond);			
 		}
 

@@ -36,19 +36,35 @@ abstract public class AbstractProperty : MonoBehaviour {
 		}
 	}
 
+	public Vector3 FindAbsoluteScale(Transform t){
+		Vector3 tmpScale = Vector3.one;
+		Transform tmpTransform = t;
+
+		while (tmpTransform != null) {
+			tmpScale = Vector3.Scale (tmpScale, tmpTransform.localScale);
+			tmpTransform = tmpTransform.parent;
+		}
+		return tmpScale;
+	}
+
 	public MeshFilter PreviewMesh{
 		get{
-			MeshFilter meshFilter = GetComponent<MeshFilter> ();
-			if (meshFilter == null) {
-				WildcardAsset wildcard = gameObject.GetComponent<WildcardAsset> ();
-				if (wildcard != null) {
-					meshFilter = wildcard.IndexedPreviewMesh;
-				}
+			if (PreviewMeshes.Length > 0) {
+				return PreviewMeshes [0];
 			}
-			if (meshFilter == null) {
-				meshFilter = gameObject.GetComponentInChildren<MeshFilter> ();
-			}
+			MeshFilter meshFilter = new MeshFilter ();
 			return meshFilter;
+		}
+	}
+
+	public MeshFilter[] PreviewMeshes{
+		get{
+			WildcardAsset wildcard = gameObject.GetComponentInChildren<WildcardAsset> ();
+			if (wildcard != null) {
+				return wildcard.IndexedPreviewMeshes;
+			} else {
+				return GetComponentsInChildren<MeshFilter> ();
+			}
 		}
 	}
 
@@ -89,7 +105,7 @@ abstract public class AbstractProperty : MonoBehaviour {
 
 abstract public class ValueProperty : AbstractProperty{
 	public override float ExecutionOrder{
-		get { return 1; }
+		get { return 0.2f; }
 	}
 
 	public override RemovalTime RemovalTime{
@@ -99,7 +115,7 @@ abstract public class ValueProperty : AbstractProperty{
 
 abstract public class InstantiatingProperty : AbstractProperty{
 	public override float ExecutionOrder{
-		get { return 3; }
+		get { return 0.3f; }
 	}
 
 	public override RemovalTime RemovalTime{
@@ -182,5 +198,26 @@ abstract public class MultiplyingProperty : InstantiatingProperty{
 				GeneratedObjects.Add (copy);
 			}
 		}
+	}
+
+	public Vector3 PreviewBounds(bool applyScale){
+		if (PreviewMeshes.Length > 0) {
+			Vector3 bounds = Vector3.zero;
+			foreach (MeshFilter meshFilter in PreviewMeshes) {
+				if (meshFilter.sharedMesh != null) {
+					Vector3 meshSize = meshFilter.sharedMesh.bounds.size;
+					meshSize = applyScale ? Vector3.Scale (meshSize, FindAbsoluteScale (meshFilter.transform)) : meshSize;
+					bounds.x = Mathf.Max (meshSize.x, bounds.x);
+					bounds.y = Mathf.Max (meshSize.y, bounds.y);
+					bounds.z = Mathf.Max (meshSize.z, bounds.z);
+				}
+			}
+			return bounds;
+		}
+		return Vector3.one;
+	}
+
+	public override float ExecutionOrder{
+		get { return 1f; }
 	}
 }

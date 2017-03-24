@@ -8,6 +8,7 @@ public class AbstractMesh : MeshProperty {
 	public Vector3 extends = Vector3.one;
 	public Material material;
 	public float tiling = 1f;
+	public AbstractBounds externBounds; //AbstractBounds from another gameObject
 	//Cylinder
 	public int iterations = 4;
 	//Terrain
@@ -91,8 +92,11 @@ public class AbstractMesh : MeshProperty {
 	}
 
 	public void AbstractBoundsBinding(){
-		if (AbstractBounds != null && AbstractBounds.gameObject == transform.gameObject) {
-			this.extends = AbstractBounds.Extends;
+		if (AbstractBounds != null && AbstractBounds.gameObject == transform.gameObject && externBounds == null) {
+			this.externBounds = AbstractBounds;
+		}
+		if (externBounds != null) {
+			this.extends = externBounds.Extends;
 		}
 	}
 

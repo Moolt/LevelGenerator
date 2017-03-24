@@ -118,7 +118,7 @@ public class LevelGeneratorWindow : EditorWindow {
 			//preset.DoorSize = EditorGUILayout.IntField ("Global door size", preset.DoorSize);
 			//preset.DoorSize = (int)Mathf.Floor (Mathf.Clamp (preset.DoorSize, 2f, preset.Spacing / 2f));
 			preset.RoomDistance = EditorGUILayout.FloatField ("Global distance", preset.RoomDistance);
-			preset.RoomDistance = Mathf.Clamp (preset.RoomDistance, 0.5f, 10f);
+			preset.RoomDistance = Mathf.Clamp (preset.RoomDistance, 0.1f, 10f);
 
 			if (preset.IsSeparateRooms) {
 				preset.Spacing = EditorGUILayout.FloatField ("Minimal margin", preset.Spacing);
@@ -239,6 +239,8 @@ public class LevelGeneratorWindow : EditorWindow {
 			EditorGUILayout.Space();
 		}
 		#endregion
+
+		#region Debug
 		ManageDebugObject ();
 		showDebugGUI = EditorGUILayout.Foldout (showDebugGUI, "Debug");
 		if (showDebugGUI) {
@@ -247,9 +249,11 @@ public class LevelGeneratorWindow : EditorWindow {
 			debugInfo.ShowConnections = EditorGUILayout.Toggle ("Show connections", debugInfo.ShowConnections);
 			debugInfo.ShowAStarGrid = EditorGUILayout.Toggle ("Path grid", debugInfo.ShowAStarGrid);
 			debugInfo.ShowRoomTypes = EditorGUILayout.Toggle ("Show room types", debugInfo.ShowRoomTypes);
+			debugInfo.SetStatic = EditorGUILayout.Toggle ("Set rooms static", debugInfo.SetStatic);
 		}
 
 		EditorGUILayout.Space ();
+		#endregion
 
 		isAutoUpdate = EditorGUILayout.Toggle ("Auto Update", isAutoUpdate);
 
@@ -287,7 +291,7 @@ public class LevelGeneratorWindow : EditorWindow {
 		Random.InitState (preset.Seed);
 		levelGraph = new LevelGraph ();
 		levelGraph.GenerateGraph (preset.RoomCount, preset.CritPathLength, preset.MaxDoors, preset.Distribution);
-		ProceduralLevel level = new ProceduralLevel (levelGraph, preset);
+		ProceduralLevel level = new ProceduralLevel (levelGraph, preset, debugInfo.SetStatic);
 		SetDebugData (level.DebugData);
 		//generatedObjects = level.GeneratedRooms;
 	}

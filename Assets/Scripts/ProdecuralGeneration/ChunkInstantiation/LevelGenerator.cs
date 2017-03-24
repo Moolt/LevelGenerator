@@ -109,6 +109,7 @@ public class RoomInstanceMeta{
 
 public class LevelGenerator {
 	private LevelGeneratorPreset preset;
+	private bool setLevelToStatic = true;
 
 	public LevelGenerator(){
 		preset = new LevelGeneratorPreset ();
@@ -134,12 +135,16 @@ public class LevelGenerator {
 		Random.InitState (seed);
 		LevelGraph levelGraph = new LevelGraph ();
 		levelGraph.GenerateGraph (preset.RoomCount, preset.CritPathLength, preset.MaxDoors, preset.Distribution);
-		ProceduralLevel level = new ProceduralLevel (levelGraph, preset);
+		ProceduralLevel level = new ProceduralLevel (levelGraph, preset, true);
 		return level.LevelMetadata;
 	}
 
 	public LevelMetadata GenerateLevel(string presetName, int seed, bool clear){
 		LoadPreset (presetName);
+		if (preset == null) {
+			Debug.LogError ("Error loading Preset");
+			return null;
+		}
 		if (clear) {
 			ClearLevel ();
 		}
@@ -147,7 +152,7 @@ public class LevelGenerator {
 	}
 
 	public LevelMetadata GenerateLevel(string presetName, int seed){
-		return GenerateLevel (presetName, seed, true);
+		return GenerateLevel (presetName, seed, setLevelToStatic);
 	}
 
 	public LevelMetadata GenerateLevel(int seed, bool clear){
@@ -165,6 +170,15 @@ public class LevelGenerator {
 		GameObject[] instances = GameObject.FindGameObjectsWithTag ("ChunkInstance");
 		foreach (GameObject room in instances) {
 			Object.DestroyImmediate (room);
+		}
+	}
+
+	public bool SetLevelToStatic {
+		get {
+			return this.setLevelToStatic;
+		}
+		set {
+			setLevelToStatic = value;
 		}
 	}
 }

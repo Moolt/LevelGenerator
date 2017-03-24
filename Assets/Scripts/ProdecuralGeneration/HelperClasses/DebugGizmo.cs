@@ -73,11 +73,13 @@ public class DebugInfo{
 	private bool showConnections;
 	private bool showAStarGrid;
 	private bool showRoomTypes;
+	private bool setStatic;
 
 	public DebugInfo(){
 		this.showPaths = false;
 		this.showConnections = false;
 		this.showAStarGrid = false;
+		this.setStatic = false;
 	}
 
 	public bool IsDebugUsed{
@@ -117,6 +119,15 @@ public class DebugInfo{
 		}
 		set {
 			showRoomTypes = value;
+		}
+	}
+
+	public bool SetStatic {
+		get {
+			return this.setStatic;
+		}
+		set {
+			setStatic = value;
 		}
 	}
 }

@@ -69,7 +69,7 @@ public class RoomTransformation{
 
 	public void AlignToGrid(){
 		Vector2 pos = rect.position;
-		float gridSize = DoorDefinition.GlobalSize * 2f;
+		float gridSize = DoorDefinition.GlobalSize;
 		pos.x = Mathf.Round (pos.x / gridSize) * gridSize;
 		pos.y = Mathf.Round (pos.y / gridSize) * gridSize;
 		rect.position = pos;
@@ -120,7 +120,8 @@ public class RoomTransformation{
 	private float FindYPosition(){
 		//Doors currently have a static size of 2*2 resulting in extends of 1*1
 		//Subtract 1 to compensate for the doors position being mesured from the center
-		return doors.Count == 0 ? 0f : -(doors [0].RelPosition.y - 1f);
+		//-> Writing this a few weeks later: Thank you past me. Very intuitive to hardcode this value *change*
+		return doors.Count == 0 ? 0f : -(doors [0].RelPosition.y - DoorDefinition.GlobalSize * 0.5f);
 	}
 
 	public Vector3 Position {
@@ -161,7 +162,8 @@ public class ProceduralLevel{
 	private RoomNode rootnode; //Rootnode of the level graph
 	private ChunkHelper helper; //Helps searching Chunks
 	private ChunkInstantiator chunkInstantiator;
-	private int tmpChunkPos = -10000; //Temporary variable used for instantiating chunks at position
+	private float tmpChunkPos; //Temporary variable used for instantiating chunks at position
+	private float tmpChunkStep;
 	private List<RoomTransformation> positionMeta;
 	private bool isConstraintError = false; //True, if no chunk could be found
 	private List<HallwayMeta> hallwayMeta;
@@ -170,8 +172,14 @@ public class ProceduralLevel{
 	private bool isSeparate; //Separate rooms, avoid overlapping
 	private Material[] hallwayMaterials;
 	private float hallwayTiling;
+	private bool setIsStatic;
 
-	public ProceduralLevel(LevelGraph graph, LevelGeneratorPreset preset){
+	public ProceduralLevel(LevelGraph graph, LevelGeneratorPreset preset, bool setIsStatic){
+		//IMPORTANT, multiply with the door size. Doors require the chunk to be aligned on the grid on GENERATION time
+		//Ensure, that chunks are on the grid, since the doors align to the grid regardless of the chunk position, which
+		//Will result in shifted doorpositions on repositioning the chunks
+		tmpChunkPos = DoorDefinition.GlobalSize * -5000f;
+		tmpChunkStep = DoorDefinition.GlobalSize * -50f;
 		isGenerating = true;
 		this.hallwayTiling = preset.HallwayTiling;
 		this.distance = preset.RoomDistance;
@@ -185,6 +193,7 @@ public class ProceduralLevel{
 		this.hallwayMeta = new List<HallwayMeta> ();
 		this.positionMeta = new List<RoomTransformation>();
 		this.levelMetadata = new LevelMetadata ();
+		this.setIsStatic = setIsStatic;
 
 		GenerateLevel (graph);
 		if (!isConstraintError) {
@@ -212,13 +221,13 @@ public class ProceduralLevel{
 
 	private void GenerateLevel(RoomNode node, RoomTransformation prevChunk){
 		//Place the Chunk somewhere, where it won't collide with another chunk
-		GameObject chunk = InstantiateChunk (node, new Vector3(tmpChunkPos, -100f, -100f));
+		GameObject chunk = InstantiateChunk (node, new Vector3(tmpChunkPos, 0f, tmpChunkStep));
 
 		if (isConstraintError) {
 			return;
 		}
 
-		tmpChunkPos += 100;
+		tmpChunkPos += tmpChunkStep;
 		//Obtain the actual position, the chunk will have later on
 		Vector3 chunkSize = ChunkSize (chunk);
 		RoomTransformation roomTransform = new RoomTransformation (chunk, node.Position, chunkSize, spacing);
@@ -251,7 +260,7 @@ public class ProceduralLevel{
 			//PrefabUtility.DisconnectPrefabInstance (randomChunk);
 			randomChunk.transform.position = position;
 			chunkInstantiator.ProcessType = ProcessType.GENERATE;
-			chunkInstantiator.InstantiateChunk (randomChunk, node.DoorCount); //Instantiate Abstract Object
+			chunkInstantiator.InstantiateChunk (randomChunk, node.DoorCount, setIsStatic); //Instantiate Abstract Object
 			randomChunk.tag = "ChunkInstance";
 		} else {
 			isConstraintError = true;
@@ -307,6 +316,7 @@ public class ProceduralLevel{
 		}
 		Mesh mesh = meshGenerator.GenerateMesh ();
 		GameObject hallways = new GameObject ("Hallways");
+		hallways.isStatic = setIsStatic;
 		hallways.tag = "ChunkInstance";
 		MeshFilter meshFilter = hallways.AddComponent<MeshFilter> ();
 		meshFilter.sharedMesh = mesh;
@@ -358,7 +368,7 @@ public class ProceduralLevel{
 					separated = false;
 
 					velocity.Normalize();
-					velocity *= DoorDefinition.GlobalSize * 2f;
+					velocity *= DoorDefinition.GlobalSize * 1.51f;
 					room.UpdateRect(room.Rect.position + velocity, room.Rect.size);
 				}
 			}

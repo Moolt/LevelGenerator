@@ -25,8 +25,12 @@ public class LinearArray : MultiplyingProperty {
 
 			if (MeshFound ()) {
 				for (int i = 1; i < positions.Length; i++) {
-					Gizmos.color = Color.black;
-					Gizmos.DrawWireMesh (meshFilter.sharedMesh, positions [i], transform.rotation, transform.localScale);
+					MeshFilter[] meshFilters = PreviewMeshes;
+					foreach (MeshFilter mesh in meshFilters) {
+						Gizmos.color = Color.black;
+						Vector3 pos = ContainsWildCard () ? positions [i] : positions [i] + (mesh.transform.position - transform.position);
+						Gizmos.DrawWireMesh (mesh.sharedMesh, pos, transform.rotation, FindAbsoluteScale(mesh.transform));
+					}
 				}
 			} else {
 				for (int i = 0; i < positions.Length; i++) {
@@ -43,8 +47,7 @@ public class LinearArray : MultiplyingProperty {
 
 	protected override Vector3[] CalculatePositions(){
 		Preparation ();
-		Vector3 meshFilterSize = (MeshFound()) ? meshFilter.sharedMesh.bounds.size : Vector3.one;	
-		Vector3 meshSize = Vector3.Scale (meshFilterSize, transform.localScale);
+		Vector3 meshSize = PreviewBounds (true);
 		Vector3 startPosition = transform.position;
 		int calculatedCount = duplicateCount;
 		float calculatedSpace;
@@ -83,5 +86,9 @@ public class LinearArray : MultiplyingProperty {
 		}
 
 		return positions;
+	}
+
+	private bool ContainsWildCard(){
+		return GetComponentsInChildren<WildcardAsset> ().Length > 0;
 	}
 }

@@ -206,14 +206,13 @@ public class AStarGrid {
 	private Rect[] InflateByRoomDistance(){
 		List<Rect> inflatedRects = new List<Rect> ();
 		for(int i = 0; i < roomRects.Count; i++) {			
-			Rect r = InflateBy (rooms [i].Rect, rooms[i].FurthestDistance / 2f);
+			Rect r = InflateBy (rooms [i].Rect, rooms[i].FurthestDistance * 0.6f);
 			inflatedRects.Add (r);
 		}
 		return inflatedRects.ToArray ();
 	}
 
 	private void BuildGrid(){
-		gridCellSize = 2f;
 		int xIterations = (int)(availableSpace.width / gridCellSize);
 		int yIterations = (int)(availableSpace.height / gridCellSize);
 

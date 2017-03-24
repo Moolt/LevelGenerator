@@ -3,8 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
+public enum DoorAction { CREATE, DELETE }
+public enum DoorCheck { AND, OR }
+
 public class LinkedToDoor : ConditionalProperty {
-	public string doorName = "";
+	public DoorAction action;
+	public DoorCheck check;
+	public string[] doorNames;
 
 	public override void Preview(){}
 
@@ -12,12 +17,25 @@ public class LinkedToDoor : ConditionalProperty {
 		DoorManager doorManager = GetComponentInParent<DoorManager> ();
 		if (doorManager != null) {
 			List<DoorDefinition> doors = doorManager.RandomDoors;
+			string[] allNames = doors.Select (d => d.Name).ToArray ();
 
-			if (!doors.Any (d => d.Name == doorName)) {
-				List<AbstractProperty> props = GetComponents<AbstractProperty> ().ToList();
-				props.ForEach (p => p.HasBeenDeleted = true);
-				DestroyImmediate (transform.gameObject);
+			bool and = check == DoorCheck.AND && doorNames.All (d => allNames.Contains (d));
+			bool or = check == DoorCheck.OR && doorNames.Any (d => allNames.Contains (d));
+			bool conditionTrue = !(and || or);
+
+			if (action == DoorAction.CREATE && conditionTrue) {
+				Remove ();
+			}
+
+			if (action == DoorAction.DELETE && !conditionTrue) {
+				Remove ();
 			}
 		}
+	}
+
+	private void Remove(){
+		List<AbstractProperty> props = GetComponents<AbstractProperty> ().ToList();
+		props.ForEach (p => p.HasBeenDeleted = true);
+		DestroyImmediate (transform.gameObject);
 	}
 }

@@ -4,9 +4,9 @@ using UnityEngine;
 
 [System.Serializable]
 public class DoorDefinition{
-	public static float GlobalSize = 2f;
+	public static float GlobalSize = 2.3f;
 	public int ID = 0; //For identification
-	public Vector3 Size; //Unused, use GlobalSize instead
+	//public Vector3 Size; //Unused, use GlobalSize instead
 	public Vector3 Position; //Acutal position
 	public Vector3 WorkingPosition; //For previewing
 	public Vector3 RelPosition; //Relative position in room
@@ -17,7 +17,7 @@ public class DoorDefinition{
 
 	public Vector3 Extends{
 		get{
-			return Size * 0.5f;
+			return Vector3.one * GlobalSize * 0.5f;
 		}
 	}
 }

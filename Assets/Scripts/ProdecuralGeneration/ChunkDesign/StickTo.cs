@@ -29,7 +29,10 @@ public class StickTo : TransformingProperty {
 		Gizmos.DrawSphere(origin , 0.125f);
 		Gizmos.color = new Color(1f, 0f, 0f, .5f);
 		if (MeshFound()) {
-			Gizmos.DrawWireMesh (PreviewMesh.sharedMesh, objectPosition, transform.rotation, transform.localScale);
+			MeshFilter[] meshes = PreviewMeshes;
+			foreach (MeshFilter meshFilter in meshes) {
+				Gizmos.DrawWireMesh (meshFilter.sharedMesh, objectPosition + (meshFilter.transform.position - transform.position),  transform.rotation, FindAbsoluteScale(meshFilter.transform));
+			}
 		}
 
 		if (applyTriggered) {

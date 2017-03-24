@@ -43,7 +43,7 @@ public class Square{
 	public float TurningPenalty(Square _parent){
 		if (_parent != null) {
 			Vector2 testDirection = DetermineDirection (_parent);
-			return _parent.direction == testDirection ? 0f : 5f;
+			return _parent.direction == testDirection ? 0f : 2.5f * DoorDefinition.GlobalSize;
 		}
 		return 0f;
 	}
@@ -126,9 +126,9 @@ public class Square{
 	//It will be set to the new parent (externally), if the resulting score is lower thant the current
 	public int MovementCostWithParent(Square _parent){
 		if (parent != null && Vector2.Distance (position, _parent.position) <= DoorDefinition.GlobalSize * 1f && grid.Grid[GridX, GridY].IsPartOfPath)
-			return 1;
+			return (int)Mathf.Round(DoorDefinition.GlobalSize * 0.5f);
 
-		return 3;
+		return (int)Mathf.Round (DoorDefinition.GlobalSize * 1.5f);
 	}
 
 	public int GridX{

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Reflection;
 using UnityEngine;
+using System.Linq;
 using System;
 
 [System.Serializable]
@@ -12,40 +13,114 @@ public struct WildcardChance{
 [System.Serializable]
 public class WildcardPreviewData{
 	public GameObject Asset{ get; set; }
-	public Mesh Mesh { get; set; }
-	public Transform Transform{ get; set; }
+	public Mesh[] Meshes { get; set; }
+	public Transform[] Transforms{ get; set; }
+	public Vector3[] Scale{get; set; }
+}
+
+public enum WildcardTarget{ PREFABS, CHILDREN }
+
+[Serializable]
+public class ChildKeyValue {
+	public string name;
+	public int chance;
+
+	public ChildKeyValue (string name, int chance){
+		this.name = name;
+		this.chance = chance;
+	}
 }
 
 [DisallowMultipleComponent]
 public class WildcardAsset : InstantiatingProperty {
+	public WildcardTarget wildcardTarget;
 	[HideInInspector]
 	public List<WildcardChance> chancesList = new List<WildcardChance>(0);
 	[HideInInspector]
 	public int selectedIndex = 0;
+	[SerializeField]
+	public List<ChildKeyValue> children = new List<ChildKeyValue> ();
 
 	public override void Preview(){
 		//Nothing to be done in preview
 	}
 
 	public override void Generate(){
-		GameObject chosenAsset = ChooseRandomAsset ();
-		if (chosenAsset != null) {
-			Component[] components = chosenAsset.GetComponents<Component> ();
+		if (wildcardTarget == WildcardTarget.PREFABS) {
+			GeneratePrefabs ();
+		} else {
+			SelectChild ();
+		}
+	}
 
-			foreach (Component go in components) {
-				//Transform can't be copied, since every GameObject has a transform component
-				//Kopy scale and rotation values instead
-				if (go is Transform) {
-					AssignTransform (go as Transform);
+	private void SelectChild(){
+		List<int> chances = children.Select (c => c.chance).ToList ();
+		GameObject chosenAsset = ChooseRandomAsset (chances, WildcardTarget.CHILDREN);
+
+		foreach (Transform _child in transform) {
+			if (_child.gameObject != null && _child.gameObject.name != chosenAsset.name) {
+				RemoveChild (_child);
+			}
+		}
+	}
+
+	private void RemoveChild(Transform _child){
+		ChunkInstantiator.RegisterForRemoval (_child.gameObject);
+		List<AbstractProperty> properties = _child.GetComponents<AbstractProperty> ().ToList ();
+		properties.ForEach (p => p.HasBeenDeleted = true);
+	}
+
+	private void GeneratePrefabs(){
+		List<int> chances = chancesList.Select (c => c.Chance).ToList();
+		GameObject chosenAsset = ChooseRandomAsset (chances, WildcardTarget.PREFABS);
+		if (chosenAsset != null) {
+			Component[] remainingProperties = gameObject.GetComponents<AbstractProperty> ();
+			GameObject instance = InstantiatePrefab (chosenAsset);
+
+			foreach (Component go in remainingProperties) {
+
+				if (go is WildcardAsset) {
 					continue;
 				}
 
-				Component newComponent = gameObject.AddComponent (go.GetType ());
+				Component newComponent = instance.AddComponent (go.GetType ());
 				if (newComponent != null) {
 					newComponent.GetCopyOf (go);
 				}
+
+				AbstractProperty property = go as AbstractProperty;
+				if (property != null) {
+					property.HasBeenDeleted = true;
+				}
 			}
+			RegisterNewProperties (instance);
+			RestoreOriginalAttributes (instance, chosenAsset);
+			ChunkInstantiator.RegisterForRemoval (gameObject);
 		}
+	}
+
+	//If this gameObject contained any other abstract properties, they were copied to the
+	//Newly instantiated one. Register these properties for them to get interpreted by the instantiator.
+	private void RegisterNewProperties(GameObject copy){
+		ChunkInstantiator instantiator = ChunkInstantiator.Instance;
+		instantiator.PushToWorkStack (copy);
+	}
+
+	//When copying the components, the attributes seem to get lost for some reason
+	//The attributes in question are restored here
+	private void RestoreOriginalAttributes(GameObject instance, GameObject prefab){
+		instance.tag = prefab.gameObject.tag;
+		instance.name = prefab.gameObject.name;
+		instance.layer = prefab.gameObject.layer;
+		instance.transform.position = prefab.transform.position + transform.position;
+	}
+
+	private GameObject InstantiatePrefab(GameObject prefab){
+		GameObject instance = (GameObject)Instantiate (prefab);
+		instance.transform.SetParent (transform.parent, true);
+		instance.transform.position = prefab.transform.position + transform.position;
+		instance.transform.rotation = transform.rotation;
+		return instance;
 	}
 
 	//Assign the scale and rotation instead of copying / adding the other transform
@@ -59,13 +134,17 @@ public class WildcardAsset : InstantiatingProperty {
 
 	//Choses a random GameObject and returns it
 	//Chances are considered
-	private GameObject ChooseRandomAsset(){
-		float[] rangeTable = GenerateRangeTable ();
+	private GameObject ChooseRandomAsset(List<int> chances, WildcardTarget target){
+		float[] rangeTable = GenerateRangeTable (chances);
 		float randomFloat = UnityEngine.Random.value;
 
 		for (int i = 0; i < rangeTable.Length; i++) {
 			if (randomFloat > rangeTable [i] && randomFloat < rangeTable [i + 1]) {
-				return chancesList [i].Asset;
+				if (target == WildcardTarget.PREFABS) {
+					return chancesList [i].Asset;
+				} else {
+					return GameObject.Find (children.ElementAt(i).name);
+				}
 			}
 		}
 		return null;
@@ -73,14 +152,14 @@ public class WildcardAsset : InstantiatingProperty {
 
 	//Creates a table with ranges from 0f to 1f which represent the chances given by each asset
 	//The table is later used to randomly choose an asset
-	private float[] GenerateRangeTable(){
-		float[] rangeTable = new float[chancesList.Count + 1];
+	private float[] GenerateRangeTable(List<int> chances){
+		float[] rangeTable = new float[chances.Count + 1];
 		float sum = 0f;
 
 		rangeTable [0] = 0f;
 
-		for (int i = 0; i < chancesList.Count - 1; i++) {
-			sum += chancesList [i].Chance / 100f;
+		for (int i = 0; i < chances.Count - 1; i++) {
+			sum += chances [i] / 100f;
 			rangeTable [i + 1] = sum;
 		}
 
@@ -105,28 +184,53 @@ public class WildcardAsset : InstantiatingProperty {
 			
 			WildcardPreviewData previewData = new WildcardPreviewData ();
 			previewData.Asset = chancesList [selectedIndex].Asset;
-			MeshFilter meshFilter = previewData.Asset.GetComponent<MeshFilter> ();
-			previewData.Mesh = meshFilter.sharedMesh;
-			previewData.Transform = previewData.Asset.GetComponent<Transform> ();
+			MeshFilter[] meshFilters = previewData.Asset.GetComponentsInChildren<MeshFilter> ();
+			previewData.Meshes = meshFilters.Select(mf => mf.sharedMesh).ToArray();
+			previewData.Transforms = meshFilters.Select (mf => mf.gameObject.transform).ToArray();
+			previewData.Scale = previewData.Transforms.ToList ().Select (t => FindAbsoluteScale (t)).ToArray();
 
-			if (meshFilter != null) {
+			for (int i = 0; i < meshFilters.Length; i++) {
+				if (previewData.Meshes[i] != null) {
 
-				Gizmos.color = Color.cyan;
-				Gizmos.DrawMesh (previewData.Mesh, transform.position, 
-					previewData.Transform.rotation,
-					previewData.Transform.localScale + transform.localScale - Vector3.one);				
+					Gizmos.color = Color.cyan;
+					Gizmos.DrawMesh (previewData.Meshes[i], previewData.Transforms[i].position + transform.position, 
+						previewData.Transforms[i].rotation,
+						previewData.Scale[i]);
+				}
 			}
 		}
+	}
+
+	public void UpdateChildren(){
+		List<ChildKeyValue> newChildren = new List<ChildKeyValue> ();
+
+		//Fill with all children
+		foreach (Transform child in transform) {
+			newChildren.Add (new ChildKeyValue (child.name, 0));
+		}
+			
+		//Add new children to the main dict
+		foreach (ChildKeyValue _child in newChildren) {
+
+			bool childAlreadyExists = children.Any (c => c.name == _child.name);
+
+			if (childAlreadyExists) {
+				ChildKeyValue existing = children.Single (c => c.name == _child.name);
+				_child.chance = existing.chance;
+			}
+		}
+		children = newChildren;
 	}
 
 	//Debug function printing out the actual percantages when generating the assets
 	//Choose an accuracy of 1000 for good enough results
 	private void TestRandomFunctionality(int accuracy){
+		List<int> chances = chancesList.Select (c => c.Chance).ToList ();
 		Dictionary<string, int> results = new Dictionary<string,int> ();
 		string generatedObj;
 
 		for (int i = 0; i < accuracy; i++) {
-			generatedObj = ChooseRandomAsset ().name;
+			generatedObj = ChooseRandomAsset (chances, WildcardTarget.PREFABS).name;
 			if (results.ContainsKey (generatedObj)) {
 				results [generatedObj] += 1;
 			} else {
@@ -141,9 +245,13 @@ public class WildcardAsset : InstantiatingProperty {
 		}
 	}
 
-	public MeshFilter IndexedPreviewMesh{
+	public MeshFilter[] IndexedPreviewMeshes{
 		get{
-			return chancesList [selectedIndex].Asset.GetComponent<MeshFilter>();
+			if (chancesList.Count > 0) {
+				return chancesList [selectedIndex].Asset.GetComponentsInChildren<MeshFilter> ();
+			} else{
+				return new MeshFilter[]{ };
+			}
 		}
 	}
 }

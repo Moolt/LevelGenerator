@@ -23,6 +23,8 @@ public class AbstractMeshEditor : Editor{
 		abstractMesh.extends = EditorGUILayout.Vector3Field ("Extends", abstractMesh.extends);
 		GUI.enabled = true;
 
+		abstractMesh.externBounds = (AbstractBounds)EditorGUILayout.ObjectField ("Abstract Bounds", abstractMesh.externBounds, typeof(AbstractBounds), true) as AbstractBounds;
+
 		if (abstractMesh.meshShape == MeshShape.CYLINDER) {
 			abstractMesh.iterations = (int)EditorGUILayout.Slider ("Iterations", abstractMesh.iterations, 3, 20);
 		}
