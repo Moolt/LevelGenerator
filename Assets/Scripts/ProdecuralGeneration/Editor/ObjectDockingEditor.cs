@@ -24,6 +24,11 @@ public class ObjectDockingEditor : Editor {
 		if (SceneUpdater.IsActive) {
 			ObjectDocking child = target as ObjectDocking;
 			child.UpdateOffset ();
+
+			if (child.ParentsAbstractBounds == null) {
+				return;
+			}
+
 			Vector3[] corners = child.ParentsAbstractBounds.Corners;
 
 			//Drawing the Grid

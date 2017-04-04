@@ -240,10 +240,10 @@ public class HallwayMeshGenerator {
 		this.uvs = new List<Vector2> ();
 	}
 
-	public Mesh GenerateMesh(){
+	public Mesh GenerateMesh(bool searchForAdjacents){
 		mesh = new Mesh ();
 
-		PrepareHallwaySegments ();
+		PrepareHallwaySegments (searchForAdjacents);
 
 		int currentVertexIndex = 0;
 		foreach (HallwaySegment segment in hallwaySegments) {
@@ -274,11 +274,13 @@ public class HallwayMeshGenerator {
 		return mesh;
 	}
 
-	private void PrepareHallwaySegments(){
+	private void PrepareHallwaySegments(bool searchForAdjacents){
 		foreach (List<Square> squares in hallwayPaths) {
 			foreach (Square square in squares) {
 				GridPosition gridPosition = grid.Grid [square.GridX, square.GridY];
-				SearchForIndirectAdjacents (gridPosition);
+				if (searchForAdjacents) {
+					SearchForIndirectAdjacents (gridPosition);
+				}
 				HallwaySegment newSegment = new HallwaySegment (gridPosition);
 				if (!hallwaySegments.Contains (newSegment)) {
 					hallwaySegments.Add (newSegment);
@@ -306,7 +308,7 @@ public class HallwayMeshGenerator {
 
 	public Mesh Mesh{
 		get{ 
-			GenerateMesh ();
+			GenerateMesh (true);
 			return mesh; 
 		}
 	}

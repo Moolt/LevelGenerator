@@ -12,6 +12,7 @@ public static class SceneUpdater {
 	public static void UpdateScene(){
 		if (isActive) {
 			GameObject chunk = GameObject.FindGameObjectWithTag ("Chunk");
+			chunk = chunk == null ? GameObject.FindGameObjectWithTag ("HallwayPrototype") : chunk;
 			ChunkInstantiator generator = ChunkInstantiator.Instance;
 			generator.ProcessType = ProcessType.PREVIEW;
 

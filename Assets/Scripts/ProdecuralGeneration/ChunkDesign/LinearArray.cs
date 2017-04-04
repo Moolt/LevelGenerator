@@ -11,31 +11,33 @@ public class LinearArray : MultiplyingProperty {
 	public bool autoCount; //If set to true, as many objects as fit are created
 
 	//Used for both GizmoPreview and position calculation, as the size of the mesh is considered
-	private MeshFilter meshFilter;
+	//private MeshFilter meshFilter;
 	//private Vector3 offset;
 
 	private void Preparation(){
-		meshFilter = PreviewMesh;
+		//meshFilter = PreviewMesh;
 	}
 
 	public override void DrawEditorGizmos(){		
 		Vector3[] positions = CalculatePositions ();
-		if (positions.Length > 0) {
+		if (positions.Length > 0 && RecursivePreviewPositions().Count > 0) {
 			transform.position = positions [0];
 
+			List<Vector3> previewPositions = RecursivePreviewPositions ();
+
 			if (MeshFound ()) {
-				for (int i = 1; i < positions.Length; i++) {
+				for (int i = 1; i < previewPositions.Count; i++) {
 					MeshFilter[] meshFilters = PreviewMeshes;
 					foreach (MeshFilter mesh in meshFilters) {
 						Gizmos.color = Color.black;
-						Vector3 pos = ContainsWildCard () ? positions [i] : positions [i] + (mesh.transform.position - transform.position);
+						Vector3 pos = ContainsWildCard () ? previewPositions [i] : previewPositions [i] + (mesh.transform.position - transform.position);
 						Gizmos.DrawWireMesh (mesh.sharedMesh, pos, transform.rotation, FindAbsoluteScale(mesh.transform));
 					}
 				}
 			} else {
-				for (int i = 0; i < positions.Length; i++) {
+				for (int i = 0; i < previewPositions.Count; i++) {
 					Gizmos.color = Color.black;
-					Gizmos.DrawWireCube (positions [i], new Vector3 (1f, 1f, 1f));
+					Gizmos.DrawWireCube (previewPositions [i], new Vector3 (1f, 1f, 1f));
 				}
 			}
 		}

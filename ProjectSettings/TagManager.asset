@@ -4,6 +4,9 @@
 TagManager:
   serializedVersion: 2
   tags:
+  - HallwayPrototype
+  - HallwayInstance
+  - HallwayTemplate
   - Chunk
   - ChunkCopy
   - ChunkInstance
@@ -18,20 +21,20 @@ TagManager:
   - UI
   - 
   - 
+  - LevelGeometry
+  - RoomGeometry
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
   - Dragable
   - Gun
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
   - 
   - 
   - 

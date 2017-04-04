@@ -62,7 +62,7 @@ public class ChunkHelperProgress{
 			return sideRoomsCreated;
 		}
 		return 1;
-	}		
+	}
 
 	public void NoteChunkUsed(ChunkMetadata meta, NodeType nodeType){
 		if (meta != null) {
@@ -177,34 +177,14 @@ public class ChunkHelper{
 	//Returns all chunks that allow the specified amount of doors
 	private List<ChunkMetadata> FilterByDoorCount(int doorCount){
 		return (from meta in chunkMetaData
-		        where meta.DoorManager.minCount <= doorCount &&
-		            meta.DoorManager.maxCount >= doorCount &&
-		            meta.Chunk.name != GlobalPaths.NewChunkName
-		        select meta).ToList ();
+			where meta.DoorManager.minCount <= doorCount &&
+			meta.DoorManager.maxCount >= doorCount &&
+			meta.Chunk.name != GlobalPaths.NewChunkName
+			select meta).ToList ();
 	}
 
 	private bool IsConstraintTargetMatching(ConstraintTarget cTarget, NodeType nType){
-		return targetMapping [cTarget].Contains (nType);
-	}
-
-	//Returns a list of all user defined tags without duplicates
-	public static string[] GlobalUserTags{
-		get{
-			List<string> globalUserTags = new List<string> ();
-			List<GameObject> chunks = Resources.LoadAll<GameObject> (GlobalPaths.RelativeChunkPath).ToList();
-			List<ChunkTags> chunkTags = new List<ChunkTags> ();
-
-			chunks.Where (c => c.GetComponent<ChunkTags> () != null)
-				.ToList ()
-				.ForEach (c => chunkTags.Add (c.GetComponent<ChunkTags> ()));
-			
-			chunkTags.SelectMany (ct => ct.userGenerated)
-				.Where (t => !globalUserTags.Contains (t.Name))
-				.ToList ()
-				.ForEach (t => globalUserTags.Add (t.Name));
-			
-			return globalUserTags.ToArray ();
-		}
+		return targetMapping.ContainsKey (cTarget) && targetMapping [cTarget].Contains (nType);
 	}
 
 	public int MaxDoors(){

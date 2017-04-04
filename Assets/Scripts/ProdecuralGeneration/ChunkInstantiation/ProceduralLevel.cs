@@ -170,6 +170,7 @@ public class ProceduralLevel{
 	private float spacing; //Space between rooms, used is separation is active
 	private float distance; //Distance used in the FreeTree algorithm
 	private bool isSeparate; //Separate rooms, avoid overlapping
+	private LevelGeneratorPreset preset;
 	private Material[] hallwayMaterials;
 	private float hallwayTiling;
 	private bool setIsStatic;
@@ -181,6 +182,7 @@ public class ProceduralLevel{
 		tmpChunkPos = DoorDefinition.GlobalSize * -5000f;
 		tmpChunkStep = DoorDefinition.GlobalSize * -50f;
 		isGenerating = true;
+		this.preset = preset;
 		this.hallwayTiling = preset.HallwayTiling;
 		this.distance = preset.RoomDistance;
 		this.rootnode = graph.Rootnode;
@@ -262,6 +264,7 @@ public class ProceduralLevel{
 			chunkInstantiator.ProcessType = ProcessType.GENERATE;
 			chunkInstantiator.InstantiateChunk (randomChunk, node.DoorCount, setIsStatic); //Instantiate Abstract Object
 			randomChunk.tag = "ChunkInstance";
+			randomChunk.layer = LayerMask.NameToLayer ("LevelGeometry");
 		} else {
 			isConstraintError = true;
 		}
@@ -314,15 +317,22 @@ public class ProceduralLevel{
 			AddLevelMetadataPath (path);
 			meshGenerator.AddPath (path);
 		}
-		Mesh mesh = meshGenerator.GenerateMesh ();
+		Mesh mesh = meshGenerator.GenerateMesh (true);
 		GameObject hallways = new GameObject ("Hallways");
 		hallways.isStatic = setIsStatic;
 		hallways.tag = "ChunkInstance";
+		hallways.layer = LayerMask.NameToLayer ("LevelGeometry");
 		MeshFilter meshFilter = hallways.AddComponent<MeshFilter> ();
 		meshFilter.sharedMesh = mesh;
 		MeshRenderer meshRenderer = hallways.AddComponent<MeshRenderer> ();
 		meshRenderer.sharedMaterials = hallwayMaterials;
 		hallways.AddComponent<MeshCollider> ();
+		FillHallways (grid, hallways);
+	}
+
+	private void FillHallways(AStarGrid grid, GameObject hallwayObject){
+		HallwayHelper helper = new HallwayHelper (grid, preset, hallwayObject);
+		helper.InsertHallwaySegments ();
 	}
 
 	private List<Rect> GetRoomRects(){		
@@ -376,18 +386,6 @@ public class ProceduralLevel{
 		} while(!separated);
 	}
 
-	public DebugData DebugData {
-		get {
-			return this.debugData;
-		}
-	}
-
-	public static bool IsGenerating {
-		get {
-			return isGenerating;
-		}
-	}
-
 	private void AddLevelMetadataPath(List<Square> path){
 		List<Vector3> _path = new List<Vector3> ();
 		path.ForEach (s => _path.Add (new Vector3 (s.Position.x, DoorDefinition.GlobalSize, s.Position.y)));
@@ -401,6 +399,18 @@ public class ProceduralLevel{
 	public LevelMetadata LevelMetadata {
 		get {
 			return this.levelMetadata;
+		}
+	}
+
+	public DebugData DebugData {
+		get {
+			return this.debugData;
+		}
+	}
+
+	public static bool IsGenerating {
+		get {
+			return isGenerating;
 		}
 	}
 }

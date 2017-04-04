@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Xml.Serialization;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 using System.IO;
 
@@ -167,10 +168,12 @@ public class LevelGenerator {
 	}
 
 	public static void ClearLevel(){
-		GameObject[] instances = GameObject.FindGameObjectsWithTag ("ChunkInstance");
+		List<GameObject> instances = GameObject.FindGameObjectsWithTag ("ChunkInstance").ToList();
 		foreach (GameObject room in instances) {
 			Object.DestroyImmediate (room);
 		}
+		List<GameObject> hallways = GameObject.FindGameObjectsWithTag ("HallwayTemplate").ToList();
+		hallways.ForEach (h => h.SetActive (false));
 	}
 
 	public bool SetLevelToStatic {

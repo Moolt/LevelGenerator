@@ -78,7 +78,7 @@ public class AbstractBounds : TransformingProperty {
 		//MinSize is both used for min and fidexSize
 		//The Inspector will change the label to "Size" if fixedSize is true
 		//However, this vector and preview is used for both
-		pos.y = (IsChunk) ? MinSize.y / 2f + originalY : originalY;
+		pos.y = (IsChunk || IsHallway) ? MinSize.y / 2f + originalY : originalY;
 		Gizmos.color = (hasFixedSize) ? Color.cyan : Color.yellow;
 		Gizmos.DrawWireCube (pos, MinSize);
 
@@ -89,7 +89,7 @@ public class AbstractBounds : TransformingProperty {
 			Gizmos.DrawWireCube (pos, MaxSize);
 		}
 
-		pos.y = (IsChunk) ? Size.y / 2f + originalY: originalY;
+		pos.y = (IsChunk || IsHallway) ? Size.y / 2f + originalY: originalY;
 		Gizmos.color = Color.green;
 		Gizmos.DrawWireCube (pos, size);
 	}
@@ -142,6 +142,10 @@ public class AbstractBounds : TransformingProperty {
 		get{
 			return gameObject.tag.StartsWith ("Chunk");
 		}
+	}
+
+	public bool IsHallway{
+		get{ return gameObject.tag == "HallwayPrototype"; }
 	}
 
 	public StretchInfo[] StretchInfos{
@@ -230,10 +234,12 @@ public class AbstractBounds : TransformingProperty {
 
 			size += Vector3.Scale (stretchSize - size, LockedAxes);
 			size += Vector3.Scale (definedSize - size, Vector3.one - LockedAxes);
-		} else if (IsChunk) {
+		} else if (IsChunk || IsHallway) {
 			//Set size to minSize if the size is fixed. Else: lerp between min / max
 			size = hasFixedSize ? minSize : RandomizeVector(randomize, MinSize, MaxSize);
-			ApplyRoundedChunkValues ();
+			if (IsChunk) {
+				ApplyRoundedChunkValues ();
+			}
 		}
 	}
 

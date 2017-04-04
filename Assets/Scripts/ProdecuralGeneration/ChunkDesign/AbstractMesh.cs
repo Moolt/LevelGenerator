@@ -71,6 +71,7 @@ public class AbstractMesh : MeshProperty {
 		AbstractBoundsBinding ();
 		AssignMesh ();
 		UpdateCollider ();
+		gameObject.layer = LayerMask.NameToLayer ("RoomGeometry");
 	}
 
 	private void UpdateCollider(){

@@ -218,6 +218,8 @@ public abstract class DynamicTag{
 	}
 }
 
+public enum TagTarget{ HALLWAY, CHUNK }
+
 [ExecuteInEditMode]
 public class ChunkTags : TagProperty {
 
@@ -269,5 +271,24 @@ public class ChunkTags : TagProperty {
 
 	public override RemovalTime RemovalTime{
 		get { return RemovalTime.MANUAL; }
+	}
+
+	//Returns a list of all user defined tags without duplicates
+	public static string[] GlobalUserTags(TagTarget _target){
+		string path = _target == TagTarget.CHUNK ? GlobalPaths.RelativeChunkPath : GlobalPaths.RelativeHallwayPath;
+		List<string> globalUserTags = new List<string> ();
+		List<GameObject> chunks = Resources.LoadAll<GameObject> (path).ToList();
+		List<ChunkTags> chunkTags = new List<ChunkTags> ();
+
+		chunks.Where (c => c.GetComponentInChildren<ChunkTags> () != null)
+			.ToList ()
+			.ForEach (c => chunkTags.Add (c.GetComponentInChildren<ChunkTags> ()));
+
+		chunkTags.SelectMany (ct => ct.userGenerated)
+			.Where (t => !globalUserTags.Contains (t.Name))
+			.ToList ()
+			.ForEach (t => globalUserTags.Add (t.Name));
+
+		return globalUserTags.ToArray ();
 	}
 }

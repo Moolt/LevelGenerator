@@ -1,10 +1,12 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
 using System.Collections;
-using System.Collections.Generic;
+using UnityEngine;
+using System.Linq;
 
 abstract public class AbstractProperty : MonoBehaviour {
 	private bool isDirty = false;
 	private ICollection<GameObject> generatedObjects = new List<GameObject> ();
+	[SerializeField]
 	private GizmoPreviewState previewState = GizmoPreviewState.ONSELECTION;
 	private bool hasBeenDeleted = false;
 	//Dirty flag used for components with delayed removal.
@@ -200,7 +202,7 @@ abstract public class MultiplyingProperty : InstantiatingProperty{
 		}
 	}
 
-	public Vector3 PreviewBounds(bool applyScale){
+	protected Vector3 PreviewBounds(bool applyScale){
 		if (PreviewMeshes.Length > 0) {
 			Vector3 bounds = Vector3.zero;
 			foreach (MeshFilter meshFilter in PreviewMeshes) {
@@ -212,9 +214,59 @@ abstract public class MultiplyingProperty : InstantiatingProperty{
 					bounds.z = Mathf.Max (meshSize.z, bounds.z);
 				}
 			}
+			List<AbstractBounds> abstractBounds = GetComponentsInChildren<AbstractBounds> ().ToList();
+			foreach (AbstractBounds ab in abstractBounds) {
+				ab.Preview ();
+				bounds.x = Mathf.Max (ab.Size.x, bounds.x);
+				bounds.y = Mathf.Max (ab.Size.y, bounds.y);
+				bounds.z = Mathf.Max (ab.Size.z, bounds.z);
+			}
 			return bounds;
 		}
 		return Vector3.one;
+	}
+
+	protected bool HasMultiplyingParents(){
+		List<MultiplyingProperty> mulProps = GetComponentsInParent<MultiplyingProperty> ().ToList ();
+		return mulProps.Any (mp => mp.gameObject != gameObject);
+	}
+
+	protected bool HasMultiplyingChildren(){
+		List<MultiplyingProperty> mulProps = GetComponentsInChildren<MultiplyingProperty> ().ToList ();
+		return mulProps.Any (mp => mp.gameObject != gameObject);
+	}
+		
+	protected List<Vector3> RecursivePreviewPositions(){
+		return CalculatePositions ().ToList();
+		/*if (HasMultiplyingParents ()) {
+			return new List<Vector3> ();
+		} else if (!HasMultiplyingChildren ()) {
+			return CalculatePositions ().ToList();
+		}
+
+		List<MultiplyingProperty> mulProps = GetComponentsInChildren<MultiplyingProperty> ().ToList (); //Also contains this object
+		List<List<Vector3>> positionLists = mulProps.Select(mp => mp.CalculatePositions().ToList()).ToList();
+
+		for (int i = 0; i < mulProps.Count; i++) {
+			for (int j = 0; j < positionLists [i].Count; j++) {
+				positionLists [i] [j] = mulProps[].transform.position - positionLists [i] [j];
+			}
+		}
+
+		List<Vector3> completeList = new List<Vector3> (positionLists[0]);
+		for (int i = 1; i < positionLists.Count; i++) {
+			List<Vector3> workingList = new List<Vector3> (completeList);
+			completeList.Clear ();
+			List<Vector3> newPositions = new List<Vector3> ();
+			for (int j = 0; j < positionLists [i].Count; j++) {
+				workingList.ForEach (p => newPositions.Add (positionLists [i][j] + p));
+			}
+			completeList.AddRange (newPositions);
+		}
+
+		//completeList.ForEach (p => p += transform.position);
+		*/
+		//return completeList;
 	}
 
 	public override float ExecutionOrder{

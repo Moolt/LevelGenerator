@@ -153,70 +153,44 @@ public class LevelGeneratorWindow : EditorWindow {
 
 			Separator();
 			EditorGUILayout.Space();
-			for (int i = 0; i < constraints.Count; i++) {				
+			for (int i = 0; i < constraints.Count; i++) {
 				Constraint constraint = constraints[i];
 				constraint.Target = (ConstraintTarget)EditorGUILayout.EnumPopup("Target", constraint.Target);
-				constraint.Type = (ConstraintType)EditorGUILayout.EnumPopup("Type", constraint.Type);
 
-				if(constraint.Target == ConstraintTarget.AllRooms ||
-					constraint.Target == ConstraintTarget.MiddleRooms ||
-					constraint.Target == ConstraintTarget.SideRooms){
-					constraint.Amount = (ConstraintAmount)EditorGUILayout.EnumPopup("Rooms", constraint.Amount);
-
-					if(constraint.Amount != ConstraintAmount.All && constraint.Amount != ConstraintAmount.None){
-						EditorGUILayout.BeginHorizontal();
-						if(constraint.AmountType == ConstraintAmountType.Absolute){
-							constraint.AbsoluteAmount = EditorGUILayout.IntField("Amount (absolute)", constraint.AbsoluteAmount);
-							int maxVal = 0;
-
-							switch(constraint.Target){
-								case ConstraintTarget.AllRooms: maxVal = preset.RoomCount; break;
-								case ConstraintTarget.SideRooms: maxVal = preset.RoomCount - preset.CritPathLength; break;
-								case ConstraintTarget.MiddleRooms: maxVal = preset.CritPathLength; break;
-							}
-							constraint.AbsoluteAmount = Mathf.Clamp(constraint.AbsoluteAmount, 0, maxVal);
-						} else{
-							constraint.RelativeAmount = EditorGUILayout.FloatField("Amount (relative)", constraint.RelativeAmount);
-							constraint.RelativeAmount = Mathf.Clamp(constraint.RelativeAmount, 0f, 1f);
-						}
-						string toggleButtonText = constraint.AmountType == ConstraintAmountType.Absolute ? "P" : "A";
-						if (GUILayout.Button (toggleButtonText, GUILayout.Width(20))) {
-							if(constraint.AmountType == ConstraintAmountType.Absolute){
-								constraint.AmountType = ConstraintAmountType.Percentual;
-							} else {
-								constraint.AmountType = ConstraintAmountType.Absolute;
-							}
-						}
-						EditorGUILayout.EndHorizontal();
+				if(constraint.Target == ConstraintTarget.Hallways){
+					constraint.HallwayAmount = (HallwayAmount)EditorGUILayout.EnumPopup("Amount", constraint.HallwayAmount);
+					if(constraint.HallwayAmount == HallwayAmount.AtMost){
+						DrawAmountValueInput(constraint, false);
 					}
-				}
-
-				if(constraint.Type == ConstraintType.FuzzyProperties){
-					constraint.AutoTagIndex = EditorGUILayout.Popup("Tag", constraint.AutoTagIndex, FuzzyTagDictionary.Descriptors);
-					EditorGUILayout.MinMaxSlider(ref constraint.Min, ref constraint.Max, 0f, 1f);
-					EditorGUILayout.BeginHorizontal();
-					EditorGUILayout.LabelField(FuzzyTagDictionary.FindAttribute(constraint.AutoTagIndex, constraint.Min));
-					EditorGUILayout.LabelField(FuzzyTagDictionary.FindAttribute(constraint.AutoTagIndex, constraint.Max), GUILayout.Width(80));
-					EditorGUILayout.EndHorizontal();
+					if(constraint.HallwayAmount == HallwayAmount.Priority){
+						constraint.HallwayPriority = EditorGUILayout.FloatField("Priority", constraint.HallwayPriority);
+						constraint.HallwayPriority = Mathf.Clamp(constraint.HallwayPriority, 0f, 1f);
+						EditorGUILayout.LabelField(" ", "(Value larger than 0.5 cancels out randomness)");
+					}
+					DrawTagSelection(constraint, TagTarget.HALLWAY);
 				} else{
-					EditorGUILayout.BeginHorizontal();
-					constraint.RawTags = EditorGUILayout.TextField("Containing tag(s)", constraint.RawTags);
-					GUI.SetNextControlName("PlusButton");
-					if (GUILayout.Button ("+", GUILayout.Width(20))) {
-						GUI.FocusControl("PlusButton");
-						List<string> userTags = new List<string>();
-						string[] allUserTags = ChunkHelper.GlobalUserTags;
-						//Filtering all tags that are already used
-						allUserTags.ToList()
-							.Where(s => !constraint.ParsedTags.Contains(s)).ToList()
-							.ForEach(s => userTags.Add(s));
+					constraint.Type = (ConstraintType)EditorGUILayout.EnumPopup("Type", constraint.Type);
 
-						TagContextMenu(userTags, constraint);
-						//selectedTag = EditorGUILayout.GetControlRect(selectedTag, userTags);
-						//constraint.RawTags += ";" + userTags[selectedTag];
+					if(constraint.Target == ConstraintTarget.AllRooms ||
+						constraint.Target == ConstraintTarget.MiddleRooms ||
+						constraint.Target == ConstraintTarget.SideRooms){
+						constraint.Amount = (ConstraintAmount)EditorGUILayout.EnumPopup("Rooms", constraint.Amount);
+
+						if(constraint.Amount != ConstraintAmount.All && constraint.Amount != ConstraintAmount.None){
+							DrawAmountValueInput(constraint, true);
+						}
 					}
-					EditorGUILayout.EndHorizontal();
-					EditorGUILayout.LabelField(" ", "(Separated by semicolons)");
+
+					if(constraint.Type == ConstraintType.FuzzyProperties){
+						constraint.AutoTagIndex = EditorGUILayout.Popup("Tag", constraint.AutoTagIndex, FuzzyTagDictionary.Descriptors);
+						EditorGUILayout.MinMaxSlider(ref constraint.Min, ref constraint.Max, 0f, 1f);
+						EditorGUILayout.BeginHorizontal();
+						EditorGUILayout.LabelField(FuzzyTagDictionary.FindAttribute(constraint.AutoTagIndex, constraint.Min));
+						EditorGUILayout.LabelField(FuzzyTagDictionary.FindAttribute(constraint.AutoTagIndex, constraint.Max), GUILayout.Width(80));
+						EditorGUILayout.EndHorizontal();
+					} else{
+						DrawTagSelection(constraint, TagTarget.CHUNK);
+					}
 				}
 
 				if (GUILayout.Button ("Remove", EditorStyles.miniButton)) {
@@ -229,7 +203,6 @@ public class LevelGeneratorWindow : EditorWindow {
 			}
 
 			toDelete.ForEach(c => constraints.Remove(c));
-
 			EditorGUILayout.BeginHorizontal();
 			if (GUILayout.Button ("Add Constraint", EditorStyles.miniButton)) {
 				constraints.Add(new Constraint());
@@ -266,6 +239,67 @@ public class LevelGeneratorWindow : EditorWindow {
 				isAutoUpdate = false;
 			}
 		}
+	}
+
+	private void DrawAmountValueInput(Constraint constraint, bool useChunkValues){
+		EditorGUILayout.BeginHorizontal();
+		if(constraint.AmountType == ConstraintAmountType.Absolute){
+			constraint.AbsoluteAmount = EditorGUILayout.IntField("Amount (absolute)", constraint.AbsoluteAmount);
+			int maxVal = 0;
+
+			if (useChunkValues) {
+				switch (constraint.Target) {
+				case ConstraintTarget.AllRooms:
+					maxVal = preset.RoomCount;
+					break;
+				case ConstraintTarget.SideRooms:
+					maxVal = preset.RoomCount - preset.CritPathLength;
+					break;
+				case ConstraintTarget.MiddleRooms:
+					maxVal = preset.CritPathLength;
+					break;
+				}
+			} else {
+				maxVal = 1000;
+			}
+			constraint.AbsoluteAmount = Mathf.Clamp(constraint.AbsoluteAmount, 0, maxVal);
+		} else{
+			constraint.RelativeAmount = EditorGUILayout.FloatField("Amount (relative)", constraint.RelativeAmount);
+			constraint.RelativeAmount = Mathf.Clamp(constraint.RelativeAmount, 0f, 1f);
+		}
+		string toggleButtonText = constraint.AmountType == ConstraintAmountType.Absolute ? "P" : "A";
+		if (GUILayout.Button (toggleButtonText, GUILayout.Width(20))) {
+			if(constraint.AmountType == ConstraintAmountType.Absolute){
+				constraint.AmountType = ConstraintAmountType.Percentual;
+			} else {
+				constraint.AmountType = ConstraintAmountType.Absolute;
+			}
+		}
+		EditorGUILayout.EndHorizontal();
+	}
+
+	private void DrawTagSelection(Constraint constraint, TagTarget target){
+		EditorGUILayout.BeginHorizontal();
+		constraint.RawTags = EditorGUILayout.TextField("Containing tag(s)", constraint.RawTags);
+		if (GUILayout.Button (constraint.TagMethod.ToString(), GUILayout.Width(32))) {
+			constraint.ToggleTagMethod ();
+		}
+		GUI.SetNextControlName("PlusButton");
+		if (GUILayout.Button ("+", GUILayout.Width(20))) {
+			GUI.FocusControl("PlusButton");
+			List<string> userTags = new List<string>();
+			string[] allUserTags = ChunkTags.GlobalUserTags (target);
+			//Filtering all tags that are already used
+			allUserTags.ToList()
+				.Where(s => !constraint.ParsedTags.Contains(s)).ToList()
+				.ForEach(s => userTags.Add(s));
+
+			TagContextMenu(userTags, constraint);
+			//selectedTag = EditorGUILayout.GetControlRect(selectedTag, userTags);
+			//constraint.RawTags += ";" + userTags[selectedTag];
+		}
+		EditorGUILayout.EndHorizontal();
+		EditorGUILayout.LabelField(" ", "(Separated by semicolons)");
 	}
 
 	private void ManageDebugObject(){
@@ -305,6 +339,10 @@ public class LevelGeneratorWindow : EditorWindow {
 
 	private void ClearLevel(){
 		LevelGenerator.ClearLevel ();
+		GameObject _debug = GameObject.FindGameObjectWithTag ("Debug");
+		if (_debug != null) {
+			DestroyImmediate (_debug);
+		}
 	}
 
 	private void ResetValues(){

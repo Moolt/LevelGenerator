@@ -9,17 +9,22 @@ using System;
 //UserDefinedTags = Simple strings that the user can define
 public enum ConstraintType{ FuzzyProperties, UserDefinedTags }
 //The target rooms that the constraint applies to. Can be further specified by the ConstraintAmount
-public enum ConstraintTarget{ AllRooms, StartRoom, EndRoom, MiddleRooms, SideRooms, Disabled}
+public enum ConstraintTarget{ AllRooms, StartRoom, EndRoom, MiddleRooms, SideRooms, Hallways, Disabled}
 //The ConstraintTarget is further narrowed down with the ConstraintAmount
 public enum ConstraintAmount{ All, AtLeast, AtMost, Exactly, None}
+//Relative Amount of segments to be used by Hallway Templates
+public enum HallwayAmount{ Fill, Priority, AtMost, None }
+public enum TagComparisonMethod{ And, Or }
 //Absolute amount of rooms or relative/percentual amount (relative to the total amount of rooms)
 public enum ConstraintAmountType{ Absolute, Percentual }
 
 [Serializable]
 public class Constraint {
 	protected ConstraintAmountType amountType;
+	protected TagComparisonMethod tagMethod;
 	protected ConstraintTarget target;
 	protected ConstraintAmount amount;
+	protected HallwayAmount hAmount;
 	protected ConstraintType type;
 	protected List<string> parsedTags; //Parsed from the rawTags by separating the string by semicolons
 	protected string fuzzyTagName; //The name of the selected fuzzy property
@@ -27,28 +32,70 @@ public class Constraint {
 	protected int absoluteAmount; //Absolute amount, see above
 	protected int autoTagIndex; //Used by the GUI to store the index of the fuzzyTag in the ChunkTags list
 	protected string rawTags; //The raw string of user definied tags, separated by semicolons
+	protected float hallwayPriority = 0f; //Decides which segment is used
 	public float Min = 0f; //The minimal value of the fuzzyTag value interval
 	public float Max = 1f; //Maximal value, see above
 	//Only used during instantiation and later reset
 	private int matchingChunksUsed = 0; //Stores the amount of chunks that matched this constraint and were actually used in the level
+	private int matchingHallwaysUsed = 0;
 	private int atMostAmount = -1; //Only relevant inf ConstraintAmount = atMost. Stores a (random) number of rooms, that are allowed to match this constraint
 
 	public Constraint(){
 		parsedTags = new List<string> ();
 		rawTags = "";
 	}
-		
+
+	//Used only for Chunks by the ChunkHelper Class
 	public bool IsConstraintSatisfied(ChunkMetadata meta, ChunkHelperProgress progress){
 		ChunkTags chunkTags = meta.Chunk.GetComponent<ChunkTags> ();
 		bool result = ConstraintResult (chunkTags);
-	
+
 		if (amount == ConstraintAmount.None) {
+			//Eventhough the amount is none, we don't want to return false
+			//If the result was true, meaning the constraint applies to this chunk, we want to negate it to false
+			//This will result in the chunk not being used. If the result was false before, this means that this constraint
+			//Doesn't apply to the given chunk, meaning, that we don't want to affect it's creation by returning false, thus returning true
 			result = !result;
 		} else if (amount != ConstraintAmount.All) {
 			result = HandleRoomAmount (meta, progress, result);
 		}
 
 		return result;
+	}
+
+	public bool IsConstraintSatisfied(HallwayTemplateMeta meta){
+		type = ConstraintType.UserDefinedTags; //Never actually set by the GUI
+		bool result = ConstraintResult (meta.tags);
+	
+		switch (hAmount) {
+		case HallwayAmount.None:
+			result = !result;
+			break;
+		case HallwayAmount.Fill:
+			result = true;
+			break;
+		case HallwayAmount.AtMost:
+			//Either the constraint doesn't apply to this segment or when it does
+			//Check whether the amount is within bounds
+			if (result) {
+				meta.RegisterAtMostConstraint (this);
+			}
+			result = !result || (result && matchingHallwaysUsed < absoluteAmount);
+			break;
+		case HallwayAmount.Priority:
+			result = true;
+			break;
+		}
+
+		return result;
+	}
+
+	public void CalculateHallwayPriority(HallwayTemplateMeta meta){
+		type = ConstraintType.UserDefinedTags; //Never actually set by the GUI
+		bool result = ConstraintResult (meta.tags);
+		if (result && hAmount == HallwayAmount.Priority) {
+			meta.ConstraintPriority += hallwayPriority;
+		}
 	}
 
 	//Other than IsConstraintSatisfied, this method depends on the current context of the chunk generation
@@ -104,6 +151,10 @@ public class Constraint {
 		matchingChunksUsed++;
 	}
 
+	public void MatchingHallwayHasBeenUsed(){
+		matchingHallwaysUsed++;
+	}
+
 	//Returns, wether a constraint has beend satisfied.
 	//Detects whether this is a user or fuzzy tag
 	private bool ConstraintResult(ChunkTags chunkTags){
@@ -116,11 +167,11 @@ public class Constraint {
 		return result;
 	}
 
-	/*private bool IsCheckForAmount(){
-		return target != ConstraintTarget.StartRoom && target != ConstraintTarget.EndRoom &&
-			amount != ConstraintAmount.All && amount != ConstraintAmount.None;
-	}*/
-
+	//Used to check for all masks that are effected by this constraint
+	public bool IsAffectedByConstraints(ChunkTags tags){
+		return ConstraintResult (tags);
+	}
+		
 	private bool IsFuzzySatisfied (ChunkTags chunkTags){
 		if (chunkTags != null) {
 			List<TagInstance> autoTags = chunkTags.autoGenerated;
@@ -134,9 +185,13 @@ public class Constraint {
 
 	private bool IsUserTagsSatisfied (ChunkTags chunkTags){
 		IEnumerable<string> userTags = chunkTags.userGenerated.Select(ct => ct.Name);
-		return parsedTags.All (pt => userTags.Contains (pt));
+		if (tagMethod == TagComparisonMethod.And) {
+			return parsedTags.All (pt => userTags.Contains (pt));
+		} else {
+			return parsedTags.Any (pt => userTags.Contains (pt));
+		}
 	}
-		
+
 	public ConstraintType Type {
 		get {
 			return this.type;
@@ -216,9 +271,38 @@ public class Constraint {
 			amountType = value;
 		}
 	}
-		
+
 	public void ResetConstraint(){
 		matchingChunksUsed = 0;
+		matchingHallwaysUsed = 0;
 		atMostAmount = -1;
+	}
+
+	public HallwayAmount HallwayAmount {
+		get {
+			return this.hAmount;
+		}
+		set {
+			hAmount = value;
+		}
+	}
+
+	public TagComparisonMethod TagMethod {
+		get {
+			return this.tagMethod;
+		}
+	}
+
+	public float HallwayPriority {
+		get {
+			return this.hallwayPriority;
+		}
+		set {
+			hallwayPriority = value;
+		}
+	}
+
+	public void ToggleTagMethod(){
+		tagMethod = tagMethod == TagComparisonMethod.And ? TagComparisonMethod.Or : TagComparisonMethod.And;
 	}
 }
