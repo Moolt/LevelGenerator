@@ -101,7 +101,7 @@ public class LevelGeneratorWindow : EditorWindow {
 			EditorGUI.indentLevel += 1;
 			preset.RoomCount = EditorGUILayout.IntField ("Room Count", preset.RoomCount);
 			preset.RoomCount = Mathf.Clamp (preset.RoomCount, 2, 100);
-			preset.CritPathLength = EditorGUILayout.IntField ("Critical Path", preset.CritPathLength);
+			preset.CritPathLength = EditorGUILayout.IntField ("Main Path", preset.CritPathLength);
 			preset.CritPathLength = Mathf.Clamp (preset.CritPathLength, Mathf.Min (2, preset.RoomCount), Mathf.Max (2, preset.RoomCount));
 			preset.MaxDoors = EditorGUILayout.IntField ("Max. Doors", preset.MaxDoors);
 			preset.MaxDoors = Mathf.Clamp (preset.MaxDoors, 3, 10);
@@ -162,7 +162,7 @@ public class LevelGeneratorWindow : EditorWindow {
 					if(constraint.HallwayAmount == HallwayAmount.AtMost){
 						DrawAmountValueInput(constraint, false);
 					}
-					if(constraint.HallwayAmount == HallwayAmount.Priority){
+					if(constraint.HallwayAmount == HallwayAmount.SetPriority){
 						constraint.HallwayPriority = EditorGUILayout.FloatField("Priority", constraint.HallwayPriority);
 						constraint.HallwayPriority = Mathf.Clamp(constraint.HallwayPriority, 0f, 1f);
 						EditorGUILayout.LabelField(" ", "(Value larger than 0.5 cancels out randomness)");

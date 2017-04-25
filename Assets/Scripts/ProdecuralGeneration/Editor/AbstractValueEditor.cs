@@ -8,7 +8,7 @@ using System;
 
 [CustomEditor (typeof(AbstractValue))]
 public class AbstractValueEditor : Editor {
-	public List<string> supportedTypes = new List<string>{ "Color", "Single", "Vector3", "Vector2", "Int32" };
+	public List<string> supportedTypes = new List<string>{ "Color", "Single", "Vector3", "Vector2", "Int32", "Bool" };
 	public List<AbstractVariableInfo> variableInfos = new List<AbstractVariableInfo>();
 	public List<string> variableNames = new List<string>();
 	public AbstractValue aValue;

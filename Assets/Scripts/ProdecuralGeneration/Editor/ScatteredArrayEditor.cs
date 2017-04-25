@@ -46,8 +46,10 @@ public class ScatteredArrayEditor : Editor {
 				sArray.duplicateCount = EditorGUILayout.IntField ("Duplicates", sArray.duplicateCount, GUILayout.ExpandWidth(false));
 			}
 
-			sArray.spacing = EditorGUILayout.FloatField ("Spacing", sArray.spacing);
-			sArray.spacing = Mathf.Max (0f, sArray.spacing);
+			if (sArray.preventOverlapping || sArray.autoFill) {
+				sArray.spacing = EditorGUILayout.FloatField ("Spacing", sArray.spacing);
+				sArray.spacing = Mathf.Max (0f, sArray.spacing);
+			}
 
 			sArray.duplicateCount = Mathf.Max (0, sArray.duplicateCount);
 		}

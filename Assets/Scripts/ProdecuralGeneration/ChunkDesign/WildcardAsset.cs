@@ -119,7 +119,7 @@ public class WildcardAsset : InstantiatingProperty {
 		GameObject instance = (GameObject)Instantiate (prefab);
 		instance.transform.SetParent (transform.parent, true);
 		instance.transform.position = prefab.transform.position + transform.position;
-		instance.transform.rotation = transform.rotation;
+		instance.transform.rotation = transform.rotation * prefab.transform.rotation;
 		return instance;
 	}
 

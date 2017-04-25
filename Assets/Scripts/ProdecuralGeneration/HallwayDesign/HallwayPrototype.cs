@@ -5,13 +5,32 @@ using System.Linq;
 using System;
 
 [Serializable]
+public class MatchResult{
+	public int[] Position;
+	public int Rotation;
+	public bool IsMatching;
+
+	public MatchResult (bool isMatching, int[] position, int rotation){
+		this.IsMatching = isMatching;
+		this.Position = position;
+		this.Rotation = rotation;
+	}
+
+	public GridPosition GridPosition(AStarGrid grid){
+		return grid.Grid [Position [0], Position [1]];
+	}
+}
+
+[Serializable]
 public struct MaskSegment{
 	public int[] Offset;
 	public MaskState State;
+	public int RotatedBy;
 
-	public MaskSegment (int[] offset, MaskState state){
+	public MaskSegment (int[] offset, MaskState state, int rotation){
 		this.Offset = offset;
 		this.State = state;
+		this.RotatedBy = rotation;
 	}
 }
 
@@ -19,13 +38,15 @@ public struct MaskSegment{
 public class HallwayMask{
 	private MaskState[,] mask;
 	private int[] center;
-	private List<MaskSegment> relativePositions;
-	private int[][] matchingPositions;
+	private List<List<MaskSegment>> relativePositions;
+	private List<MatchResult> matchingPositions;
+	private bool allowRotate;
 
-	public HallwayMask(MaskState[,] mask, int[] center){
+	public HallwayMask(MaskState[,] mask, int[] center, bool allowRotate){
 		this.mask = mask;
 		this.center = center;
-		relativePositions = new List<MaskSegment> ();
+		this.allowRotate = allowRotate;
+		relativePositions = new List<List<MaskSegment>> ();
 		FindMaskPositions ();
 	}
 
@@ -33,53 +54,82 @@ public class HallwayMask{
 	//If found, calculate their relative position to the center and push them to list
 	//This will heavily increase the efficiency for comparing the matrix with the generated hallways
 	private void FindMaskPositions(){
-		//relativePositions.Add (new MaskSegment(new int[]{0,0); //center
+		List<MaskSegment> originalPositions = new List<MaskSegment> ();
 		for (int i = 0; i < mask.GetLength (0); i++) {
 			for (int j = 0; j < mask.GetLength (1); j++) {
 				if (mask [i, j] != MaskState.UNUSED) { //Both EMPTY and FILL have to be tested, UNUSED can be ignored
 					int[] relativePosition = new int[]{ i - center [0], j - center [1] };
-					relativePositions.Add (new MaskSegment (relativePosition, mask [i, j]));
+					originalPositions.Add (new MaskSegment (relativePosition, mask [i, j], 0));
 				}
+			}
+		}
+		relativePositions.Add (originalPositions);
+		if (allowRotate) {
+			List<MaskSegment> rotateThis = originalPositions;
+			for (int i = 0; i < 3; i++) {
+				rotateThis = RotateClockwise (rotateThis);
+				relativePositions.Add (rotateThis);
 			}
 		}
 	}
 
+	private List<MaskSegment> RotateClockwise(List<MaskSegment> input){
+		List<MaskSegment> rotatedPositions = new List<MaskSegment> ();
+		foreach (MaskSegment oldSegment in input) {
+			int[] mirrored = new int[]{ oldSegment.Offset [0] * -1, oldSegment.Offset [1] };
+			int[] swapped = new int[]{ mirrored [1], mirrored [0] };
+			rotatedPositions.Add (new MaskSegment (swapped, oldSegment.State, oldSegment.RotatedBy + 90));
+		}
+		return rotatedPositions;
+	}
+
 	public void ApplyMask(AStarGrid grid){
-		matchingPositions = grid.UsedPositions.Where (p => IsMatchingMaskAt (grid, p)).Select (p => new int[]{ p.i, p.j }).ToArray ();
+		matchingPositions = grid.UsedPositions.Select (p => IsMatchingMaskAt (grid, p)).Where (r => r.IsMatching).ToList ();
 	}
 
 	public void UpdateMatches(AStarGrid grid){
-		matchingPositions = matchingPositions.Where (p => IsMatchingMaskAt (grid, p)).ToArray ();
+		matchingPositions = matchingPositions.Select (mr => IsMatchingMaskAt (grid, mr.GridPosition (grid))).Where (mr => mr.IsMatching).ToList();
 	}
 
 	//Marks the positions of the mask relative to the given position in the grid
 	//This will hinder other masks from matching at this position, thus instantiating several hallways
 	//at the same position
-	public void MarkPositionAsUsed(AStarGrid grid, int[] position){
-		foreach (MaskSegment relative in relativePositions) {
-			int x = relative.Offset [0] + position [0];
-			int y = relative.Offset [1] + position [1];
+	public void MarkPositionAsUsed(AStarGrid grid, MatchResult match){
+		List<MaskSegment> _mask = FindMaskByRotation (match.Rotation);
+		foreach (MaskSegment relative in _mask) {
+			int x = relative.Offset [0] + match.Position [0];
+			int y = relative.Offset [1] + match.Position [1];
 			grid.Grid [x, y].UsedByHallwayTemplate = true;
 		}
 	}
 
-	private bool IsMatchingMaskAt(AStarGrid grid, GridPosition pos){
-		foreach (MaskSegment segment in relativePositions) {
+	private List<MaskSegment> FindMaskByRotation(int rotation){
+		int index = rotation / 90;
+		return relativePositions [index];
+	}
+
+	private MatchResult IsMatchingMaskAt(AStarGrid grid, GridPosition pos){
+		foreach (List<MaskSegment> rotatedMask in relativePositions) {
+			if (IsMatchingMaskAt (grid, rotatedMask, pos)) {
+				return new MatchResult (true, new int[]{ pos.i, pos.j }, rotatedMask [0].RotatedBy);
+			}
+		}
+		return new MatchResult (false, new int[]{ 0, 0 }, 0);
+	}
+
+	private bool IsMatchingMaskAt(AStarGrid grid, List<MaskSegment> _mask, GridPosition pos){
+		foreach (MaskSegment segment in _mask) {
 			int[] absolutePosition = new int[]{ segment.Offset [0] + pos.i, segment.Offset [1] + pos.j };
 			GridPosition testPosition = grid.Grid [absolutePosition [0], absolutePosition [1]];
-			bool matchesSegment = IsMatchingSegment(segment.State, testPosition) && !testPosition.UsedByHallwayTemplate;
+			bool matchesSegment = IsMatchingSegment (segment.State, testPosition) && !testPosition.UsedByHallwayTemplate;
 			if (!matchesSegment) {
 				return false;
 			}
 		}
 		return true;
 	}
-
-	private bool IsMatchingMaskAt(AStarGrid grid, int[] pos){
-		return IsMatchingMaskAt (grid, grid.Grid [pos [0], pos [1]]);
-	}
-
-	public int[][] MatchingPositions {
+		
+	public List<MatchResult> MatchingPositions {
 		get {
 			return this.matchingPositions;
 		}
@@ -101,7 +151,7 @@ public class HallwayPrototype : MonoBehaviour{
 	[SerializeField]
 	[HideInInspector]
 	public GridRow[] mapping;
-
+	public bool allowRotation = true;
 	private List<Square> squares;
 	private delegate void TraverseMethod(int x, int y);
 	private MaskState[,] mask;
@@ -337,7 +387,7 @@ public class HallwayPrototype : MonoBehaviour{
 					mask [i, j] = mapping [i] [j];
 				}
 			}
-			return new HallwayMask (mask, CenterIndices);
+			return new HallwayMask (mask, CenterIndices, allowRotation);
 		}
 	}
 }

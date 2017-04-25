@@ -20,7 +20,10 @@ public class AbstractScaling : TransformingProperty {
 			float uniformRndScale = uniformMinSize + (uniformMaxSize - uniformMinSize) * Random.value;
 			transform.localScale = transform.localScale + Vector3.one * uniformRndScale - Vector3.one;
 		} else {
-			transform.localScale =  transform.localScale + Vector3.Lerp (minSize, maxSize, Random.value) - Vector3.one;
+			Vector3 randomScale = new Vector3 (Random.Range (minSize.x, maxSize.x), 
+				Random.Range (minSize.y, maxSize.y), 
+				Random.Range (minSize.z, maxSize.z));
+			transform.localScale =  transform.localScale + randomScale - Vector3.one;
 		}
 	}
 
@@ -29,9 +32,9 @@ public class AbstractScaling : TransformingProperty {
 
 		if (meshfilter != null) {
 			Gizmos.color = Color.red;
-			Gizmos.DrawWireMesh (meshfilter.sharedMesh, transform.position, transform.rotation, GetIntervalLimit(Interval.MIN));
+			Gizmos.DrawWireMesh (meshfilter.sharedMesh, transform.position, transform.rotation, transform.localScale + GetIntervalLimit(Interval.MIN) - Vector3.one);
 			Gizmos.color = Color.green;
-			Gizmos.DrawWireMesh (meshfilter.sharedMesh, transform.position, transform.rotation, GetIntervalLimit(Interval.MAX));
+			Gizmos.DrawWireMesh (meshfilter.sharedMesh, transform.position, transform.rotation, transform.localScale + GetIntervalLimit(Interval.MAX) - Vector3.one);
 		}
 	}		
 

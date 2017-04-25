@@ -2,7 +2,6 @@
 using System.Collections;
 using System;
 
-[DisallowMultipleComponent]
 public class AbstractRotation : TransformingProperty {
 
 	public bool useX = true;

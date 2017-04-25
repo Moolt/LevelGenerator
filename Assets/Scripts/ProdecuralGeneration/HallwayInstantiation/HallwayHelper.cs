@@ -43,8 +43,8 @@ public class HallwayTemplateMeta{
 		atMostConstraints.ForEach (c => c.MatchingHallwayHasBeenUsed());
 	}
 
-	public void MarkPositionAsUsed(AStarGrid grid, int[] position){
-		mask.MarkPositionAsUsed (grid, position);
+	public void MarkPositionAsUsed(AStarGrid grid, MatchResult match){
+		mask.MarkPositionAsUsed (grid, match);
 	}
 
 	public void ApplyMask(AStarGrid grid){
@@ -55,8 +55,18 @@ public class HallwayTemplateMeta{
 		mask.UpdateMatches (grid);
 	}
 
-	public int[][] Positions{
+	public List<MatchResult> Positions{
 		get{ return mask.MatchingPositions; }
+	}
+
+	public MatchResult MatchByPosition(int[] position){
+		foreach (MatchResult match in mask.MatchingPositions) {
+			if (match.Position [0] == position [0] && match.Position [1] == position [1]) {
+				return match;
+			}
+		}
+		Debug.Log ("not found");
+		return null;
 	}
 
 	public float SortIndex {
@@ -77,7 +87,7 @@ public class HallwayTemplateMeta{
 
 public class HallwayHelper {
 	private List<HallwayTemplateMeta> hallwayTemplates; //The masks defined by the user + metadata
-	private List<GridPosition> segmentPositions; //Position of each segment, generated beforehand by the A*
+	//private List<GridPosition> segmentPositions; //Position of each segment, generated beforehand by the A*
 	private ChunkInstantiator chunkInstantiator; //Used to instantiate the content of a hallway template
 	private List<Constraint> constraints; //List of constraints that only apply to hallways (filtered)
 	private LevelGeneratorPreset preset; //Preset, used to obtain constraints
@@ -100,7 +110,7 @@ public class HallwayHelper {
 		_hallways.RemoveAll (h => h.name == GlobalPaths.NewHallwayName); //Don't consider the default prefab
 		_hallways.ForEach (h => hallwayTemplates.Add (new HallwayTemplateMeta (h))); //Create a metadata object from each prefab
 		//hallwayTemplates = hallwayTemplates.OrderBy (h => h.SortIndex).ToList();
-		segmentPositions = ShuffledSegments; //Obtain a shuffled list of all segments
+		//segmentPositions = ShuffledSegments; //Obtain a shuffled list of all segments
 	}
 
 	private List<GridPosition> ShuffledSegments{
@@ -120,7 +130,7 @@ public class HallwayHelper {
 	/// </summary>
 	public void InsertHallwaySegments(){
 		hallwayTemplates.ForEach (hs => hs.ApplyMask (grid)); //Search applicable positions in the grid for each mask
-		InitializedRelativeLimits();
+		InitializeRelativeLimits();
 		HandlePrioritizedSegments ();
 
 		foreach (GridPosition segmentPosition in ShuffledSegments) {
@@ -135,7 +145,7 @@ public class HallwayHelper {
 
 			masks = masks.OrderByDescending (m => m.SortIndex).ToList();
 			if (masks.Count > 0) {
-				InstantiateHallway (masks [0], sPos);
+				InstantiateHallway (masks [0], masks[0].MatchByPosition(sPos));
 				UpdateMasks ();
 			}
 		}
@@ -149,21 +159,21 @@ public class HallwayHelper {
 	//Where the mask applies, will be used by the segment. The only exception are other masks with even higher priorities
 	private void HandlePrioritizedSegments(){
 		ApplyPriorities ();
-		List<int[]> badPositions = new List<int[]> (); //Positions that fit the mask but not the constraints
+		List<MatchResult> badPositions = new List<MatchResult> (); //Positions that fit the mask but not the constraints
 		List<HallwayTemplateMeta> prioritized = hallwayTemplates.Where (ht => ht.ConstraintPriority > 0.5f).ToList();
 		prioritized = prioritized.OrderByDescending (p => p.ConstraintPriority).ToList ();
 		foreach (HallwayTemplateMeta template in prioritized) {
 
 			//While the mask still has positions and not all of them are badPositions
 			//Positions will decrease, since instantiating segments will fill the grid
-			while (template.Positions.GetLength(0) != 0 && badPositions.Count < template.Positions.GetLength(0)) {
-				foreach (int[] templatePosition in template.Positions) {
-					if(!badPositions.Contains(templatePosition)){ //Ensures this position is unused
+			while (template.Positions.Count != 0 && badPositions.Count < template.Positions.Count) {
+				foreach (MatchResult templateMatch in template.Positions) {
+					if(!badPositions.Contains(templateMatch)){ //Ensures this position is unused
 						if (AppliesToAllConstraints (template)) {
-							InstantiateHallway (template, templatePosition);
+							InstantiateHallway (template, templateMatch);
 							UpdateMasks (); //Update masks only if a new segment has been instantiated
 						} else {
-							badPositions.Add (templatePosition);
+							badPositions.Add (templateMatch);
 						}
 						break;
 					}
@@ -185,7 +195,7 @@ public class HallwayHelper {
 	}
 
 	private bool MaskContainsPosition(HallwayTemplateMeta template, int[] position){
-		return template.Positions.Any (tp => tp [0] == position [0] && tp [1] == position [1]);
+		return template.Positions.Any (tp => tp.Position [0] == position [0] && tp.Position [1] == position [1]);
 	}
 
 	private bool AppliesToAllConstraints(HallwayTemplateMeta templateMeta){
@@ -196,7 +206,7 @@ public class HallwayHelper {
 		constraints.ForEach (c => c.ResetConstraint ());
 	}
 
-	private void InitializedRelativeLimits(){
+	private void InitializeRelativeLimits(){
 		List<Constraint> relativeConstraints = constraints
 			.Where (c => c.HallwayAmount == HallwayAmount.AtMost && c.AmountType == ConstraintAmountType.Percentual)
 			.ToList();
@@ -209,29 +219,33 @@ public class HallwayHelper {
 		}
 	}
 
-	private void AddToHashSet(HashSet<int[]> hashSet, int[][] val){
-		foreach (int[] _val in val) {
-			hashSet.Add (_val);
+	private void AddToHashSet(HashSet<int[]> hashSet, List<MatchResult> matches){
+		foreach (MatchResult match in matches) {
+			hashSet.Add (match.Position);
 		}
 	}
 
-	private void InstantiateHallway(HallwayTemplateMeta segment, int[] position){
+	private void InstantiateHallway(HallwayTemplateMeta segment, MatchResult match){
 		//Debug.Log ("Hallway Instantiated");
 		//Find position
-		Vector2 pos2D = grid.Grid [position [0], position [1]].Position;
+		Vector2 pos2D = grid.Grid [match.Position [0], match.Position [1]].Position;
 		Vector3 pos3D = new Vector3 (pos2D.x, 0f, pos2D.y);
+		pos3D += segment.child.transform.position - new Vector3 (-1f, 0f, -1f) * DoorDefinition.GlobalSize * 0.5f;
+
 		//Vector3 offset = new Vector3 (-1f, 0, 1f) * DoorDefinition.GlobalSize * 0.5f;
-		pos3D += segment.child.transform.position - new Vector3(-1f, 0f, -1f) * DoorDefinition.GlobalSize * 0.5f;
 		//Instantiate Prefab and position it correctly
 		GameObject segmentCopy = GameObject.Instantiate (segment.child);
-		segmentCopy.transform.position = pos3D;
+		//segmentCopy.transform.position = pos3D;
 		//Set the parent to the hallway object (ensures the segments can be deleted easily later)
-		segmentCopy.transform.SetParent(hallwayObject.transform);
 		//Instantiate the copy as a Chunk
 		chunkInstantiator.ProcessType = ProcessType.GENERATE;
 		chunkInstantiator.InstantiateChunk (segmentCopy, true);
+		segmentCopy.transform.SetParent (hallwayObject.transform);
+		segmentCopy.transform.position = pos3D;
+		segmentCopy.transform.RotateAround (new Vector3 (pos2D.x, 0f, pos2D.y), Vector3.up, match.Rotation);
+		//segmentCopy.transform.rotation = Quaternion.Euler (Vector3.up * match.Rotation);
 		//Update the grid, since positions are now occupied
-		segment.MarkPositionAsUsed (grid, position);
+		segment.MarkPositionAsUsed (grid, match);
 		segment.NotifyCreated ();
 	}
 }

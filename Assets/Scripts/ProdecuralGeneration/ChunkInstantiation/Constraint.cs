@@ -13,7 +13,7 @@ public enum ConstraintTarget{ AllRooms, StartRoom, EndRoom, MiddleRooms, SideRoo
 //The ConstraintTarget is further narrowed down with the ConstraintAmount
 public enum ConstraintAmount{ All, AtLeast, AtMost, Exactly, None}
 //Relative Amount of segments to be used by Hallway Templates
-public enum HallwayAmount{ Fill, Priority, AtMost, None }
+public enum HallwayAmount{ Unconstrained, WithTag, WithoutTag, SetPriority, AtMost }
 public enum TagComparisonMethod{ And, Or }
 //Absolute amount of rooms or relative/percentual amount (relative to the total amount of rooms)
 public enum ConstraintAmountType{ Absolute, Percentual }
@@ -68,10 +68,12 @@ public class Constraint {
 		bool result = ConstraintResult (meta.tags);
 	
 		switch (hAmount) {
-		case HallwayAmount.None:
+		case HallwayAmount.WithTag:
+			break; //The result is already the one we want, only true if tags are the same
+		case HallwayAmount.WithoutTag:
 			result = !result;
 			break;
-		case HallwayAmount.Fill:
+		case HallwayAmount.Unconstrained:
 			result = true;
 			break;
 		case HallwayAmount.AtMost:
@@ -82,7 +84,7 @@ public class Constraint {
 			}
 			result = !result || (result && matchingHallwaysUsed < absoluteAmount);
 			break;
-		case HallwayAmount.Priority:
+		case HallwayAmount.SetPriority:
 			result = true;
 			break;
 		}
@@ -93,7 +95,7 @@ public class Constraint {
 	public void CalculateHallwayPriority(HallwayTemplateMeta meta){
 		type = ConstraintType.UserDefinedTags; //Never actually set by the GUI
 		bool result = ConstraintResult (meta.tags);
-		if (result && hAmount == HallwayAmount.Priority) {
+		if (result && hAmount == HallwayAmount.SetPriority) {
 			meta.ConstraintPriority += hallwayPriority;
 		}
 	}

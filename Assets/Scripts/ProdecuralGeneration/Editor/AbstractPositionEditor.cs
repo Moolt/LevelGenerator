@@ -16,9 +16,11 @@ public class AbstractPositionEditor : Editor {
 			EditorGUILayout.Space ();
 
 			aPosition.useRaycast = EditorGUILayout.Toggle ("Raycast", aPosition.useRaycast);
-			aPosition.useAvailableSpace = EditorGUILayout.Toggle ("Fill", aPosition.useAvailableSpace);
+			if (aPosition.useRaycast) {				
+				aPosition.useAvailableSpace = EditorGUILayout.Toggle ("Fill", aPosition.useAvailableSpace);
+			}
 
-			if (!aPosition.useAvailableSpace) {
+			if (!aPosition.useAvailableSpace || !aPosition.useRaycast) {
 				aPosition.minValue = EditorGUILayout.FloatField ("Min", aPosition.minValue);
 				aPosition.maxValue = EditorGUILayout.FloatField ("Max", aPosition.maxValue);
 				//Clamping

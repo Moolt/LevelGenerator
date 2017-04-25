@@ -279,7 +279,10 @@ public class AbstractBounds : TransformingProperty {
 			requiredSpace = doorManager.RequiredSpace;
 		}
 
-		this.transform.localScale = Vector3.one;
+		if (IsChunk) {
+			this.transform.localScale = Vector3.one;
+		}
+
 		maxSize = Clamp (maxSize, MinSize, maxSize);
 		minSize = Clamp (minSize, requiredSpace, MaxSize);
 		//chunkBounds.UpdateValues (minSize, maxSize, size);

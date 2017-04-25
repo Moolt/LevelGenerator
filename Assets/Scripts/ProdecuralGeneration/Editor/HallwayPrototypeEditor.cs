@@ -21,7 +21,7 @@ public class HallwayPrototypeEditor : Editor {
 				Handles.color = StateColor (i, j);
 				Vector3 absolutePosition = hallway.GetPosition (i, j);
 
-				if (hallway.HasAdjacents(i,j) && Handles.Button (absolutePosition, Quaternion.identity, 0.5f, 0.5f, Handles.CubeCap)) {
+				if (hallway.HasAdjacents(i,j) && Handles.Button (absolutePosition, Quaternion.identity, 0.5f, 0.5f, Handles.CubeHandleCap)) {
 					hallway.SwitchState (i, j, MaskState.FILL);
 					hallway.DrawGeometry ();
 					SceneUpdater.UpdateScene ();
@@ -30,7 +30,7 @@ public class HallwayPrototypeEditor : Editor {
 				if (hallway.GetState (i, j) == MaskState.EMPTY) {
 					Handles.color = new Color (1f, 0f, 0f, 0.5f);
 					Vector3 cubePosition = new Vector3 (absolutePosition.x, DoorDefinition.GlobalSize / 2f, absolutePosition.z);
-					Handles.CubeCap (0, cubePosition, Quaternion.identity, DoorDefinition.GlobalSize);
+					Handles.CubeHandleCap (0, cubePosition, Quaternion.identity, DoorDefinition.GlobalSize, EventType.Repaint);
 				}
 			}
 		}

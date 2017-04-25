@@ -42,8 +42,8 @@ public class AbstractPosition : TransformingProperty {
 		Logic ();
 		Gizmos.color = Color.cyan;
 		Gizmos.DrawLine (fromVec, toVec);
-		Gizmos.DrawCube (fromVec, Vector3.one * 0.8f);
-		Gizmos.DrawCube (toVec, Vector3.one * 0.8f);
+		Gizmos.DrawCube (fromVec, Vector3.one * 0.6f);
+		Gizmos.DrawCube (toVec, Vector3.one * 0.6f);
 	}
 
 	public override void Preview(){
