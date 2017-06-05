@@ -12,6 +12,7 @@ TagManager:
   - ChunkInstance
   - ChunkRemove
   - Debug
+  - Enemy
   layers:
   - Default
   - TransparentFX

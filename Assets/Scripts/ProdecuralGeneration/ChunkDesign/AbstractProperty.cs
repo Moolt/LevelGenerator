@@ -160,6 +160,13 @@ abstract public class TagProperty : AbstractProperty{
 }
 
 abstract public class ConditionalProperty : AbstractProperty{
+
+	protected void Remove(){
+		List<AbstractProperty> props = GetComponents<AbstractProperty> ().ToList();
+		props.ForEach (p => p.HasBeenDeleted = true);
+		DestroyImmediate (transform.gameObject);
+	}
+
 	public override float ExecutionOrder{
 		get { return 0.1f; }
 	}

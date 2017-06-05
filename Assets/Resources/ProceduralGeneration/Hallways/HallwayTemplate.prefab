@@ -105,6 +105,7 @@ MeshRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
 --- !u!33 &33520753119885654
 MeshFilter:
@@ -195,3 +196,4 @@ MonoBehaviour:
     length: 9
   - data: 000000000000000000000000000000000000000000000000000000000000000000000000
     length: 9
+  allowRotation: 1

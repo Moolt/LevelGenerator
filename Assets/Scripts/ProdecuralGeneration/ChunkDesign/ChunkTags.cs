@@ -4,35 +4,83 @@ using UnityEngine;
 using System.Linq;
 using System;
 
+[Serializable]
+public class FuzzyAttributes{
+	public FuzzyAttribute[] attributes;
+}
+
+[Serializable]
+public class FuzzyAttribute{
+	public string name;
+	public string[] attributes;
+
+	public FuzzyDescriptor[] descriptors;
+}
+
+[Serializable]
+public class FuzzyDescriptor{
+	public string name;
+	public float value;
+}
+
 public enum TagType{ GENERATED, USER };
 
 public static class FuzzyTagDictionary{
-	public static Dictionary<string, List<string>> Mapping = new Dictionary<string, List<string>> {
-		{ "Size", new List<string>{ "Small", "Normal", "Medium", "Large", "Huge" } },
-		{ "RelativeHeight", new List<string>{ "Small", "Normal", "Medium", "Large", "Huge" } },
-		{ "AbsoluteHeight", new List<string>{ "Small", "Normal", "Medium", "Large", "Huge" } },
-		{ "AspectRatio", new List<string>{ "VerySlim", "Slim", "Balanced", "Squarish" } },
-		{ "RoomType", new List<string>{ "Single", "Connector", "Center" } },
-		{ "Detail", new List<string>{ "VeryLow", "Low", "Medium", "High", "VeryHigh" } },
-		{ "Variability", new List<string>{ "Static", "DynamicElements", "Dynamic" } },
-		{ "Instantiation", new List<string>{ "VeryEfficient", "Efficient", "Normal", "Inefficient", "VeryInefficient"} },
-		{ "Lighting", new List<string>{ "PitchBlack", "VeryDark", "Dark", "Normal", "WellLit", "Bright"} }
-	};
 
-	public static TagInstance FindTag(string descriptor, float value){
-		List<string> tags = Mapping [descriptor];
-		int index = (int)Mathf.Round ((tags.Count - 1) * value);
-		return new TagInstance (descriptor, TagType.GENERATED, tags [index], value);
+	public static Dictionary<string, List<FuzzyDescriptor>> mapping;
+	private static string oldFile;
+
+	private static void LoadDictionary(){
+		TextAsset textAsset = Resources.Load ("DynamicTags") as TextAsset;
+		if (oldFile != textAsset.text) {
+			oldFile = textAsset.text;
+			FuzzyAttributes attributes = JsonUtility.FromJson<FuzzyAttributes> (textAsset.text);
+			mapping = new Dictionary<string, List<FuzzyDescriptor>> ();
+			foreach (FuzzyAttribute attribute in attributes.attributes) {
+				List<FuzzyDescriptor> descriptors = attribute.descriptors.OrderBy (d => d.value).ToList ();
+				descriptors [descriptors.Count - 1].value = 1f;
+				mapping.Add (attribute.name, descriptors);
+			}
+		}
+	}
+
+	public static Dictionary<string, List<FuzzyDescriptor>> Mapping{
+		get{
+			LoadDictionary ();
+			return mapping;
+		}
+	}
+
+	public static TagInstance FindTag(string attributeName, float value){
+		List<FuzzyDescriptor> tags = Mapping [attributeName];
+		int index = 0;
+
+		for (int i = 0; i < tags.Count; i++) {
+			if (value <= tags [i].value) {
+				index = i;
+				break;
+			}
+		}
+		return new TagInstance (attributeName, TagType.GENERATED, tags [index].name, value);
 	}
 
 	public static string[] Descriptors{
-		get{
+		get{			
 			return Mapping.Select (x => x.Key).ToArray();
 		}
 	}
 
 	public static string FindAttribute(int index, float value){
 		return FindTag (Descriptors [index], value).Name;
+	}
+}
+
+public class EnemyTag : DynamicTag{
+	protected override float InterpolationValue(){
+		int amount = GameObject.FindGameObjectsWithTag ("Enemy").Length;
+		float smallestValue = 0;
+		float highestValue = 10;
+		return Mathf.InverseLerp (smallestValue, highestValue, amount);
 	}
 }
 

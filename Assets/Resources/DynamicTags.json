@@ -1,0 +1,252 @@
+{
+    "attributes": [
+        {
+            "name": "Size",
+            "attributes": [],
+            "descriptors": [
+                {
+                    "name": "Small",
+                    "value": 0.20000000298023225
+                },
+                {
+                    "name": "Normal",
+                    "value": 0.4000000059604645
+                },
+                {
+                    "name": "Medium",
+                    "value": 0.6000000238418579
+                },
+                {
+                    "name": "Large",
+                    "value": 0.800000011920929
+                },
+                {
+                    "name": "Huge",
+                    "value": 1.0
+                }
+            ]
+        },
+        {
+            "name": "RelativeHeight",
+            "attributes": [],
+            "descriptors": [
+                {
+                    "name": "Small",
+                    "value": 0.20000000298023225
+                },
+                {
+                    "name": "Medium",
+                    "value": 0.4000000059604645
+                },
+                {
+                    "name": "Normal",
+                    "value": 0.6000000238418579
+                },
+                {
+                    "name": "Large",
+                    "value": 0.800000011920929
+                },
+                {
+                    "name": "Huge",
+                    "value": 1.0
+                }
+            ]
+        },
+        {
+            "name": "AbsoluteHeight",
+            "attributes": [],
+            "descriptors": [
+                {
+                    "name": "Small",
+                    "value": 0.20000000298023225
+                },
+                {
+                    "name": "Medium",
+                    "value": 0.4000000059604645
+                },
+                {
+                    "name": "Normal",
+                    "value": 0.6000000238418579
+                },
+                {
+                    "name": "Large",
+                    "value": 0.800000011920929
+                },
+                {
+                    "name": "Huge",
+                    "value": 1.0
+                }
+            ]
+        },
+        {
+            "name": "AspectRatio",
+            "attributes": [],
+            "descriptors": [
+                {
+                    "name": "VerySlim",
+                    "value": 0.25
+                },
+                {
+                    "name": "Slim",
+                    "value": 0.5
+                },
+                {
+                    "name": "Balanced",
+                    "value": 0.75
+                },
+                {
+                    "name": "Squarish",
+                    "value": 1.0
+                }
+            ]
+        },
+        {
+            "name": "RoomType",
+            "attributes": [],
+            "descriptors": [
+                {
+                    "name": "Single",
+                    "value": 0.3333333432674408
+                },
+                {
+                    "name": "Connector",
+                    "value": 0.6666666865348816
+                },
+                {
+                    "name": "Center",
+                    "value": 1.0
+                }
+            ]
+        },
+        {
+            "name": "Detail",
+            "attributes": [],
+            "descriptors": [
+                {
+                    "name": "VeryLow",
+                    "value": 0.20000000298023225
+                },
+                {
+                    "name": "Low",
+                    "value": 0.4000000059604645
+                },
+                {
+                    "name": "Medium",
+                    "value": 0.6000000238418579
+                },
+                {
+                    "name": "High",
+                    "value": 0.800000011920929
+                },
+                {
+                    "name": "VeryHigh",
+                    "value": 1.0
+                }
+            ]
+        },
+        {
+            "name": "Variability",
+            "attributes": [],
+            "descriptors": [
+                {
+                    "name": "Static",
+                    "value": 0.3333333432674408
+                },
+                {
+                    "name": "DynamicElements",
+                    "value": 0.6666666865348816
+                },
+                {
+                    "name": "Dynamic",
+                    "value": 1.0
+                }
+            ]
+        },
+        {
+            "name": "Instantiation",
+            "attributes": [],
+            "descriptors": [
+                {
+                    "name": "VeryEfficient",
+                    "value": 0.20000000298023225
+                },
+                {
+                    "name": "Efficient",
+                    "value": 0.4000000059604645
+                },
+                {
+                    "name": "Normal",
+                    "value": 0.6000000238418579
+                },
+                {
+                    "name": "Inefficient",
+                    "value": 0.800000011920929
+                },
+                {
+                    "name": "VeryInefficient",
+                    "value": 1.0
+                }
+            ]
+        },
+        {
+            "name": "Lighting",
+            "attributes": [],
+            "descriptors": [
+                {
+                    "name": "PitchBlack",
+                    "value": 0.1666666716337204
+                },
+                {
+                    "name": "VeryDark",
+                    "value": 0.3333333432674408
+                },
+                {
+                    "name": "Dark",
+                    "value": 0.5
+                },
+                {
+                    "name": "Normal",
+                    "value": 0.6666666865348816
+                },
+                {
+                    "name": "WellLit",
+                    "value": 0.8333333134651184
+                },
+                {
+                    "name": "Bright",
+                    "value": 1.0
+                }
+            ]
+        },
+        {
+            "name": "Enemy",
+            "attributes": [],
+            "descriptors": [
+                {
+                    "name": "Safe",
+                    "value": 0.1666666716337204
+                },
+                {
+                    "name": "Easy",
+                    "value": 0.3333333432674408
+                },
+                {
+                    "name": "Normal",
+                    "value": 0.5
+                },
+                {
+                    "name": "Hard",
+                    "value": 0.6666666865348816
+                },
+                {
+                    "name": "Dangerous",
+                    "value": 0.8333333134651184
+                },
+                {
+                    "name": "Deadly",
+                    "value": 1.0
+                }
+            ]
+        }
+    ]
+}

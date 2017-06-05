@@ -116,7 +116,7 @@ public class LevelGenerator {
 		preset = new LevelGeneratorPreset ();
 	}
 
-	public void LoadPreset(string presetName){
+	public LevelGeneratorPreset LoadPreset(string presetName){
 		XmlSerializer xmlSerializer = new XmlSerializer (typeof(LevelGeneratorPreset));
 		string absolutePath = Application.dataPath + GlobalPaths.PresetPath;
 		string pathWithFilename = absolutePath + presetName + ".xml";
@@ -130,6 +130,7 @@ public class LevelGenerator {
 				preset = loadedPreset;
 			}
 		}
+		return preset;
 	}
 
 	public LevelMetadata GenerateLevel(int seed){

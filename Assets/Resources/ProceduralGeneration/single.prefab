@@ -135,6 +135,7 @@ MeshRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
 --- !u!23 &23947062140163770
 MeshRenderer:
@@ -168,6 +169,7 @@ MeshRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
 --- !u!33 &33292442260745990
 MeshFilter:
@@ -213,6 +215,7 @@ MonoBehaviour:
     length: 9
   - data: 000000000000000000000000000000000000000000000000000000000000000000000000
     length: 9
+  allowRotation: 1
 --- !u!114 &114125984657235330
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -224,6 +227,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c66450f5850aff45952d6191834895b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  previewState: 1
   meshShape: 2
   extends: {x: 1, y: 1, z: 1}
   material: {fileID: 0}
@@ -245,6 +249,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0415933dd954ca4084866980274c917, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  previewState: 1
   minSize: {x: 2.3000002, y: 2.3, z: 2.3000002}
   maxSize: {x: 16.099998, y: 4.6, z: 18.4}
   hasFixedSize: 1
@@ -282,6 +287,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 814822df91ad07340b177af993f22028, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  previewState: 1
   userGenerated:
   - Descriptor: 
     Type: 0
