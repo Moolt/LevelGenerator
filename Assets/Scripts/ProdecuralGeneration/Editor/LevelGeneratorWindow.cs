@@ -19,6 +19,7 @@ public struct TagMenuData{
 
 public class LevelGeneratorWindow : EditorWindow {
 	private LevelGraph levelGraph;
+	private bool randomizeSeed = false;
 	//Preset Properties
 	//private string presetPath = @"/Resources/Presets/";
 	private string currentPresetPath = "";
@@ -91,7 +92,10 @@ public class LevelGeneratorWindow : EditorWindow {
 		GUI.enabled = true;
 		EditorGUILayout.EndHorizontal ();
 		EditorGUILayout.Space ();
+		randomizeSeed = EditorGUILayout.Toggle ("Randomize Seed", randomizeSeed);
+		GUI.enabled = !randomizeSeed;
 		preset.Seed = EditorGUILayout.IntField ("Seed", preset.Seed);
+		GUI.enabled = true;
 
 		scrollVector = EditorGUILayout.BeginScrollView(scrollVector, GUILayout.Height(position.height - 100));
 		#region LevelGraphProperties
@@ -100,7 +104,7 @@ public class LevelGeneratorWindow : EditorWindow {
 		if (showLevelGraph) {
 			EditorGUI.indentLevel += 1;
 			preset.RoomCount = EditorGUILayout.IntField ("Room Count", preset.RoomCount);
-			preset.RoomCount = Mathf.Clamp (preset.RoomCount, 2, 100);
+			preset.RoomCount = Mathf.Clamp (preset.RoomCount, 2, 1000);
 			preset.CritPathLength = EditorGUILayout.IntField ("Main Path", preset.CritPathLength);
 			preset.CritPathLength = Mathf.Clamp (preset.CritPathLength, Mathf.Min (2, preset.RoomCount), Mathf.Max (2, preset.RoomCount));
 			preset.MaxDoors = EditorGUILayout.IntField ("Max. Doors", preset.MaxDoors);
@@ -322,6 +326,9 @@ public class LevelGeneratorWindow : EditorWindow {
 
 	private void Generate(){
 		ClearLevel ();
+		if(randomizeSeed){
+			preset.Seed = Random.Range (0, 10000);
+		}
 		Random.InitState (preset.Seed);
 		levelGraph = new LevelGraph ();
 		levelGraph.GenerateGraph (preset.RoomCount, preset.CritPathLength, preset.MaxDoors, preset.Distribution);

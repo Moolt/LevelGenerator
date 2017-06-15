@@ -44,7 +44,7 @@ public class FuzzyTagEditor : EditorWindow {
 
 	private void Save(){
 		string serialized = JsonUtility.ToJson (attributes, true);
-		string path = Application.dataPath + "/Resources/DynamicTags.json";
+		string path = Application.dataPath + "/Resources/ProceduralGeneration/DynamicTags.json";
 		File.WriteAllText (path, serialized);
 	}
 
@@ -75,7 +75,7 @@ public class FuzzyTagEditor : EditorWindow {
 	}
 
 	private void Load(){
-		TextAsset textAsset = Resources.Load ("DynamicTags") as TextAsset;
+		TextAsset textAsset = Resources.Load ("ProceduralGeneration/DynamicTags") as TextAsset;
 		attributes = JsonUtility.FromJson<FuzzyAttributes> (textAsset.text);
 		UpdateNameList ();
 	}

@@ -1,0 +1,68 @@
+{
+    "tooltips": [
+        {
+            "typeName": "LinkToSize",
+            "tooltip": "Deletes or preserves an object depending on wether the size of the chunk is larger or smaller than the given threshold."
+        },
+        {
+            "typeName": "LinkedToDoor",
+            "tooltip": "Deletes or preserves an object in relation to wether a door position is used."
+        },
+        {
+            "typeName": "DoorManager",
+            "tooltip": "Enables the user to create and edit door positions. Only used with the chunk object, don't add this manually."
+        },
+        {
+            "typeName": "WildcardAsset",
+            "tooltip": "Chooses on of several prefabs to be created at the object's position at runtime."
+        },
+        {
+            "typeName": "AbstractMesh",
+            "tooltip": "Procedurally creates a mesh (e.g. cube, terrain, cylinder). Mesh can be transformed by AbstractBounds."
+        },
+        {
+            "typeName": "RoomMeshGenerator",
+            "tooltip": "Generates the room mesh from the size defined in AbstractBounds. Only used with the chunk object, don't add this manually."
+        },
+        {
+            "typeName": "LinearArray",
+            "tooltip": "Copies an object several times along an axis defined by the user."
+        },
+        {
+            "typeName": "ScatteredArray",
+            "tooltip": "Copies an object and randomly positions the copies within the given area."
+        },
+        {
+            "typeName": "ChunkTags",
+            "tooltip": "Used to define dynamic and static tags. Tags can be used to define constraints in the LevelGeneratorWindow. Only used with the chunk object, don't add this manually."
+        },
+        {
+            "typeName": "AbstractBounds",
+            "tooltip": "Gives an abstract, non-final and random size to another abstract component. Can be used with arrays and meshes."
+        },
+        {
+            "typeName": "AbstractPosition",
+            "tooltip": "Randomly positions an object along one axis inside of an user-defined interval. Can be used multiple times on the same object."
+        },
+        {
+            "typeName": "AbstractRotation",
+            "tooltip": "Randomly rotates an object along the given axes. Angle can be rounded."
+        },
+        {
+            "typeName": "AbstractScaling",
+            "tooltip": "Randomly scales an object between a given interval."
+        },
+        {
+            "typeName": "ObjectDocking",
+            "tooltip": "Docks and object to one of 27 anchor points of the AbstractBounds component nearest in the hierarchy. This enables the use of relative positioning."
+        },
+        {
+            "typeName": "StickTo",
+            "tooltip": "Shoots a raycast into the specified direction. The object will stick to where the raycast collided with another object."
+        },
+        {
+            "typeName": "AbstractValue",
+            "tooltip": "Enables you to randomize any given variable of any component of the same object. Supported types are float, int, color, vector3 and vector2."
+        }
+    ]
+}

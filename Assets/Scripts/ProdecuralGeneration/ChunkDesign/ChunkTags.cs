@@ -31,7 +31,7 @@ public static class FuzzyTagDictionary{
 	private static string oldFile;
 
 	private static void LoadDictionary(){
-		TextAsset textAsset = Resources.Load ("DynamicTags") as TextAsset;
+		TextAsset textAsset = Resources.Load ("ProceduralGeneration/DynamicTags") as TextAsset;
 		if (oldFile != textAsset.text) {
 			oldFile = textAsset.text;
 			FuzzyAttributes attributes = JsonUtility.FromJson<FuzzyAttributes> (textAsset.text);
