@@ -161,7 +161,7 @@ abstract public class TagProperty : AbstractProperty{
 
 abstract public class ConditionalProperty : AbstractProperty{
 
-	protected void Remove(){
+	protected virtual void Remove(){
 		List<AbstractProperty> props = GetComponents<AbstractProperty> ().ToList();
 		props.ForEach (p => p.HasBeenDeleted = true);
 		DestroyImmediate (transform.gameObject);

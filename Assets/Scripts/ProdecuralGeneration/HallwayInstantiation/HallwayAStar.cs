@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
+//using UnityEditor;
 using System.Linq;
 
 //Used by the AStar algorithm to navigate on

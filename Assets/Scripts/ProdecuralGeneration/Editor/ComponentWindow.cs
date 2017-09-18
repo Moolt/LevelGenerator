@@ -79,7 +79,7 @@ public class ComponentWindow : EditorWindow {
 	}
 
 	public void GenerateJSON(List<Type> types){
-		TextAsset textAsset = Resources.Load ("ProceduralGeneration/Tooltips") as TextAsset;
+		//TextAsset textAsset = Resources.Load ("ProceduralGeneration/Tooltips") as TextAsset;
 		TooltipsContainer container = new TooltipsContainer ();
 		List<ComponentTooltip> attributes = new List<ComponentTooltip> ();
 		foreach (Type t in types) {

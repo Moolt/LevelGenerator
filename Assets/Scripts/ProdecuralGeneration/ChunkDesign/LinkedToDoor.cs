@@ -32,10 +32,4 @@ public class LinkedToDoor : ConditionalProperty {
 			}
 		}
 	}
-
-	private void Remove(){
-		List<AbstractProperty> props = GetComponents<AbstractProperty> ().ToList();
-		props.ForEach (p => p.HasBeenDeleted = true);
-		DestroyImmediate (transform.gameObject);
-	}
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+#if UNITY_EDITOR
 using UnityEditor;
 
 [System.Serializable]
@@ -57,3 +58,4 @@ public static class EditorGUIExtension {
 		return initialDir;
 	}
 }
+#endif

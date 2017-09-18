@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using System.Linq;
 using System.Xml.Serialization;
 using System.IO;
@@ -129,13 +131,17 @@ public class LevelGeneratorPreset{
 	[XmlIgnore]
 	public Material[] HallwayMaterials {
 		get {
-			UpdateMatPaths ();
-			return this.hallwayMaterials;
+#if UNITY_EDITOR
+            UpdateMatPaths();
+#endif
+            return this.hallwayMaterials;
 		}
 		set {
 			hallwayMaterials = value;
-			UpdateMatPaths ();
-		}
+#if UNITY_EDITOR
+            UpdateMatPaths();
+#endif
+        }
 	}
 
 	public float HallwayTiling {
@@ -159,7 +165,8 @@ public class LevelGeneratorPreset{
 		}
 	}
 
-	private void UpdateMatPaths(){
+#if UNITY_EDITOR
+    private void UpdateMatPaths(){
 		if (hallwayMaterials == null) {
 			hallwayMaterials = new Material[3];
 		}
@@ -177,8 +184,9 @@ public class LevelGeneratorPreset{
 			}
 		}
 	}
+#endif
 
-	public void LoadMaterials(){
+    public void LoadMaterials(){
 		hallwayMaterials = new Material[3];
 		for (int i = 0; i < hallwayMaterials.Length; i++) {
 			if (hallwayMaterialPaths [i] != "null") {

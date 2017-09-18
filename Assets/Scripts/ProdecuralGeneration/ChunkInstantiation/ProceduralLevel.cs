@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor;
+//using UnityEditor;
 using System.Linq;
 
 public class RoomTransformation{
@@ -257,8 +257,8 @@ public class ProceduralLevel{
 	private GameObject InstantiateChunk(RoomNode node, Vector3 position){
 		GameObject randomChunk = helper.PickRandomChunk (node);
 		if (randomChunk != null) {
-			//randomChunk = GameObject.Instantiate (randomChunk); //Instantiate Unity Object
-			randomChunk = (GameObject) PrefabUtility.InstantiatePrefab(randomChunk);
+			randomChunk = GameObject.Instantiate (randomChunk); //Instantiate Unity Object
+			//randomChunk = (GameObject) PrefabUtility.InstantiatePrefab(randomChunk);
 			//PrefabUtility.DisconnectPrefabInstance (randomChunk);
 			randomChunk.transform.position = position;
 			chunkInstantiator.ProcessType = ProcessType.GENERATE;

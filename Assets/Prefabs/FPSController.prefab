@@ -22,8 +22,7 @@ GameObject:
   - component: {fileID: 143264019136596380}
   - component: {fileID: 54664567052786926}
   - component: {fileID: 82594747480296104}
-  - component: {fileID: 114390547600743574}
-  - component: {fileID: 114712382313480540}
+  - component: {fileID: 114437215072059900}
   m_Layer: 0
   m_Name: FPSController
   m_TagString: Untagged
@@ -100,12 +99,14 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294966783
+    m_Bits: 4294967295
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 0
+  m_AllowMSAA: 1
+  m_ForceIntoRT: 0
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
@@ -212,23 +213,7 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
---- !u!114 &114390547600743574
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1014372444455232}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45930da73d77ad442afbb4533fc8b280, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  grabDistance: 10
-  holdDistance: 2
-  throwStrength: 2.5
-  tossStrength: 2.5
-  isDragging: 0
---- !u!114 &114712382313480540
+--- !u!114 &114437215072059900
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -239,12 +224,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aac5f687bbd46bb4aa1903f16a33e7d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 4.2
-  airMove: 0
-  runSpeed: 6.35
-  jumpSpeed: 3.96
-  stickToGroundForce: 10
-  gravityMultiplier: 2
+  walkSpeed: 4
+  airMove: 1
+  runSpeed: 7
+  jumpSpeed: 2
+  stickToGroundForce: 0.3
+  gravityMultiplier: 1
   mouseLook:
     XSensitivity: 2
     YSensitivity: 2

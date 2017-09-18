@@ -118,18 +118,19 @@ public class LevelGenerator {
 
 	public LevelGeneratorPreset LoadPreset(string presetName){
 		XmlSerializer xmlSerializer = new XmlSerializer (typeof(LevelGeneratorPreset));
-		string absolutePath = Application.dataPath + GlobalPaths.PresetPath;
-		string pathWithFilename = absolutePath + presetName + ".xml";
-
-		if (File.Exists (pathWithFilename)) {			
-			FileStream fileStream = new FileStream (pathWithFilename, FileMode.Open);
-			LevelGeneratorPreset loadedPreset = xmlSerializer.Deserialize (fileStream) as LevelGeneratorPreset;
-			loadedPreset.LoadMaterials ();
-			fileStream.Close ();
-			if (loadedPreset != null) {
-				preset = loadedPreset;
-			}
+		string path = GlobalPaths.PresetPathIngame;
+        string pathWithFilename = path + presetName;// + ".xml";
+        TextAsset textAsset = Resources.Load(pathWithFilename) as TextAsset;
+        TextReader textReader = new StringReader(textAsset.text);
+		
+		//FileStream fileStream = new FileStream (pathWithFilename, FileMode.Open);            
+		LevelGeneratorPreset loadedPreset = xmlSerializer.Deserialize (textReader) as LevelGeneratorPreset;
+		loadedPreset.LoadMaterials ();
+		//fileStream.Close ();
+		if (loadedPreset != null) {
+			preset = loadedPreset;
 		}
+
 		return preset;
 	}
 

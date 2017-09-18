@@ -71,10 +71,11 @@ public class AbstractValue : ValueProperty {
 		return Type.GetType(varInfo.Type) == t;
 	}
 
-	//Draw a preview Gizmo, if showPreview is enabled
-	//For int and float, a disc for the min and max values is drawn
-	//For vector3, a box for each min and max value is drawn
-	public override void DrawEditorGizmos(){
+    //Draw a preview Gizmo, if showPreview is enabled
+    //For int and float, a disc for the min and max values is drawn
+    //For vector3, a box for each min and max value is drawn
+#if UNITY_EDITOR
+    public override void DrawEditorGizmos(){
 		if (component != null && showPreview) {
 			if (IsSelectedOfType (typeof(int))) {
 				EditorGUIExtension.RadiusDisc (transform.position, minIntVal, Color.red);
@@ -91,12 +92,13 @@ public class AbstractValue : ValueProperty {
 			}
 		}
 	}
+#endif
 
-	//Depending on which type of variable is selected, a random value is being returned
-	//For int, float and vector3 a lerp function is being used
-	//For bool, true of false are being returned with a chance of 50/50
-	//For color, a random color from the list is being returned
-	private object GetRandomValue(){
+    //Depending on which type of variable is selected, a random value is being returned
+    //For int, float and vector3 a lerp function is being used
+    //For bool, true of false are being returned with a chance of 50/50
+    //For color, a random color from the list is being returned
+    private object GetRandomValue(){
 		//Randomize the seed when in editor mode, but not durin generation process
 		if (Application.isEditor && SceneUpdater.IsActive && !ProceduralLevel.IsGenerating) {
 			UnityEngine.Random.InitState (System.DateTime.Now.Millisecond);			
