@@ -5,7 +5,7 @@ I've developed a plug-in for Unity  that basically enables you to click together
 The idea of the plug-in is to visualize the process of procedural content generation, as it get's more complicated the more complex your levels are. In order to make PCG less of a black box and more accessible for level designers, all the logic responsible for generation of meshes or other randomized properties are encapsulated in so called abstract components, which are basically ordinary unity components which will only have definite values once the level has been generated. Abstract components are the interface between level designers, who use the components for actual level design, and programmers, who can create additional components depending on the project. The video below explains all components currently included in the plug-in and shows the generation of whole levels:
 
 # Demo
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/P2rAnXnNdSI/0.jpg)](https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_HERE)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/P2rAnXnNdSI/0.jpg)](https://www.youtube.com/watch?v=P2rAnXnNdSI)
 
 # Chunks
 
