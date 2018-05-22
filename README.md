@@ -24,4 +24,4 @@ For now I consider the plug-in completed, even though it's still a bit buggy. De
 You can find the plug-in on my Github: https://github.com/Moolt/LevelGenerator/tree/master/
 Or the whole project as zip file: https://github.com/Moolt/LevelGenerator/archive/master.zip
 
-I hope anyone has any uses for my plug-in. Besides from creating whole games with it, it can also be very handy for prototyping FPS games. Use it to your hearts desire, you may also use it in commercial projects ~~if you give me credits.~~ Actually it's fine if you don't credit me.
+I hope anyone has any uses for my plug-in. Besides from creating whole games with it, it can also be very handy for prototyping FPS games. Use it to your hearts desire, you may also use it in commercial projects ~~if you give me credits.~~ ~~Actually it's fine if you don't credit me.~~ __The project is now under the MIT license.__
