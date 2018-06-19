@@ -27,7 +27,7 @@ public class NodeEditor : EditorWindow {
 
 		//Right clicked?
 		if (e.button == 1 && !isMakingTransition) {
-			if (e.type == EventType.mouseDown) {
+			if (e.type == EventType.MouseDown) {
 
 				if (!clickedOnNode) {
 					ShowWindowContextMenu ();
@@ -51,7 +51,7 @@ public class NodeEditor : EditorWindow {
 			}
 			e.Use ();
 
-		} else if (e.button == 0 && e.type == EventType.mouseDown && !isMakingTransition) {
+		} else if (e.button == 0 && e.type == EventType.MouseDown && !isMakingTransition) {
 			if (selectedNodeIndex != -1) {
 				BaseNode nodeToChange = nodes [selectedNodeIndex].ClickedOnInput (mousePos);
 
