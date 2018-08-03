@@ -41,11 +41,13 @@ public class HallwayMask{
 	private List<List<MaskSegment>> relativePositions;
 	private List<MatchResult> matchingPositions;
 	private bool allowRotate;
+    private bool makeCenterNonAffecting;
 
-	public HallwayMask(MaskState[,] mask, int[] center, bool allowRotate){
+	public HallwayMask(MaskState[,] mask, int[] center, bool allowRotate, bool makeCenterNonAffecting){
 		this.mask = mask;
 		this.center = center;
 		this.allowRotate = allowRotate;
+        this.makeCenterNonAffecting = makeCenterNonAffecting;
 		relativePositions = new List<List<MaskSegment>> ();
 		FindMaskPositions ();
 	}
@@ -99,6 +101,8 @@ public class HallwayMask{
 		foreach (MaskSegment relative in _mask) {
 			int x = relative.Offset [0] + match.Position [0];
 			int y = relative.Offset [1] + match.Position [1];
+
+            if (0 == relative.Offset[0] && 0 == relative.Offset[1] && makeCenterNonAffecting) continue;
 			grid.Grid [x, y].UsedByHallwayTemplate = true;
 		}
 	}
@@ -136,11 +140,11 @@ public class HallwayMask{
 	}
 
 	private bool IsMatchingSegment(MaskState state, GridPosition pos){
-		return (state == MaskState.FILL && pos.IsPartOfPath || state == MaskState.EMPTY && !pos.IsPartOfPath);
+		return ((state == MaskState.DOOR && pos.IsDoor) || (state == MaskState.FILL && pos.IsPartOfPath) || (state == MaskState.EMPTY && !pos.IsPartOfPath));
 	}
 }
 
-public enum MaskState{ UNUSED, FILL, EMPTY }
+public enum MaskState{ UNUSED, FILL, EMPTY, DOOR }
 
 [ExecuteInEditMode]
 public class HallwayPrototype : MonoBehaviour{
@@ -152,7 +156,8 @@ public class HallwayPrototype : MonoBehaviour{
 	[HideInInspector]
 	public GridRow[] mapping;
 	public bool allowRotation = true;
-	private List<Square> squares;
+    public bool makeCenterNonAffecting = false;
+    private List<Square> squares;
 	private delegate void TraverseMethod(int x, int y);
 	private MaskState[,] mask;
 	private float extends = 4.5f;
@@ -194,18 +199,28 @@ public class HallwayPrototype : MonoBehaviour{
 	public void SetState(int x, int y, MaskState state){
 		GridPosition _p = grid.Grid [x, y];
 		if (state == MaskState.UNUSED) {
-			_p.IsPartOfPath = false;
+            _p.DoorID = -1;
+            _p.IsPartOfPath = false;
 			_p.ShouldBeEmpty = false;
 		} else if (state == MaskState.FILL) {
-			_p.IsPartOfPath = true;
+            _p.DoorID = -1;
+            _p.IsPartOfPath = true;
 			_p.ShouldBeEmpty = false;
 		} else if(state == MaskState.EMPTY){
-			_p.IsPartOfPath = false;
+            _p.DoorID = -1;
+            _p.IsPartOfPath = false;
 			_p.ShouldBeEmpty = true;
-		}
+		} else if(state == MaskState.DOOR){
+            _p.DoorID = 1;
+            _p.IsPartOfPath = false;
+            _p.ShouldBeEmpty = false;
+        }
 	}
 
 	public static MaskState GetState(int x, int y, AStarGrid _grid){
+        if(_grid.Grid[x,y].IsDoor){
+            return MaskState.DOOR;
+        }
 		if (_grid.Grid [x, y].IsPartOfPath) {
 			return MaskState.FILL;
 		} else if (_grid.Grid [x, y].ShouldBeEmpty) {
@@ -227,9 +242,12 @@ public class HallwayPrototype : MonoBehaviour{
 			SetState (x, y, MaskState.EMPTY);
 			break;
 		case MaskState.EMPTY:
-			SetState (x, y, MaskState.UNUSED);
+			SetState (x, y, MaskState.DOOR);
 			break;
-		}
+        case MaskState.DOOR:
+            SetState(x, y, MaskState.UNUSED);
+            break;
+        }
 	}
 
 	public Vector3 GetPosition(int x, int y){
@@ -323,7 +341,7 @@ public class HallwayPrototype : MonoBehaviour{
 	}
 
 	public void DrawGeometry(){
-		SetState (CenterIndices [0], CenterIndices [1], MaskState.FILL);
+		SetState (CenterIndices [0], CenterIndices [1], MaskState.FILL);        
 		squares.Clear ();
 		TraverseThroughGrid (SetAdjacents);
 		HallwayMeshGenerator meshGenerator = new HallwayMeshGenerator (grid, 1f);
@@ -333,7 +351,7 @@ public class HallwayPrototype : MonoBehaviour{
 		meshFilter.sharedMesh = m;
 		AdjustAbstractBounds (m);
 		MappingFromGrid ();
-	}
+    }
 
 	public void AdjustAbstractBounds(Mesh mesh){
 		AbstractBounds boundsObject = GetComponentInChildren<AbstractBounds> ();
@@ -387,7 +405,7 @@ public class HallwayPrototype : MonoBehaviour{
 					mask [i, j] = mapping [i] [j];
 				}
 			}
-			return new HallwayMask (mask, CenterIndices, allowRotation);
+			return new HallwayMask (mask, CenterIndices, allowRotation, makeCenterNonAffecting);
 		}
 	}
 }

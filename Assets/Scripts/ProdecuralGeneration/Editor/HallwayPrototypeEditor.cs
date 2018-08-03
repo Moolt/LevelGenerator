@@ -27,8 +27,9 @@ public class HallwayPrototypeEditor : Editor {
 					SceneUpdater.UpdateScene ();
 				}
 
-				if (hallway.GetState (i, j) == MaskState.EMPTY) {
-					Handles.color = new Color (1f, 0f, 0f, 0.5f);
+                var state = hallway.GetState(i, j);
+				if (NeedsToDrawCube(state)) {
+                    Handles.color = ColorForState(state);
 					Vector3 cubePosition = new Vector3 (absolutePosition.x, DoorDefinition.GlobalSize / 2f, absolutePosition.z);
 					Handles.CubeHandleCap (0, cubePosition, Quaternion.identity, DoorDefinition.GlobalSize, EventType.Repaint);
 				}
@@ -36,7 +37,22 @@ public class HallwayPrototypeEditor : Editor {
 		}
 	}
 
-	private Color StateColor(int i, int j){
+    private bool NeedsToDrawCube(MaskState state)
+    {        
+        return state == MaskState.EMPTY || state == MaskState.DOOR;
+    }
+
+    private Color ColorForState(MaskState state)
+    {
+        switch(state)
+        {
+            case MaskState.DOOR: return new Color(0f, 0f, 1f, 0.5f); ;
+            case MaskState.EMPTY: return new Color(1f, 0f, 0f, 0.5f); ;
+            default: return Color.white;
+        }
+    }
+
+    private Color StateColor(int i, int j){
 		int[] center = hallway.CenterIndices;
 		MaskState state = hallway.GetState (i, j);
 		if (i == center [0] && j == center [1]) {
@@ -49,7 +65,9 @@ public class HallwayPrototypeEditor : Editor {
 				return Color.cyan;
 			case MaskState.EMPTY:
 				return Color.red;
-			}
+            case MaskState.DOOR:
+                return Color.blue;
+            }
 		}
 		return Color.white;
 	}
