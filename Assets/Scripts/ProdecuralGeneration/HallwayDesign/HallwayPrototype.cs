@@ -99,6 +99,7 @@ public class HallwayMask{
 	public void MarkPositionAsUsed(AStarGrid grid, MatchResult match){
 		List<MaskSegment> _mask = FindMaskByRotation (match.Rotation);
 		foreach (MaskSegment relative in _mask) {
+            if (relative.State == MaskState.EMPTY) continue;
 			int x = relative.Offset [0] + match.Position [0];
 			int y = relative.Offset [1] + match.Position [1];
 
